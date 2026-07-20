@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSuspenseQuery, queryOptions } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import logoAsset from "@/assets/logo.png.asset.json";
+import logoAsset from "@/assets/aurora-logo.png";
 import { listPublicCategories, listPublicProducts } from "@/lib/public.functions";
 
 const categoriesQO = queryOptions({
@@ -36,7 +36,7 @@ function Home() {
       <header className="border-b border-border/40">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
           <Link to="/" className="flex items-center">
-            <img src={logoAsset.url} alt="Aurora" className="h-10 w-auto" width={200} height={48} />
+            <img src={logoAsset} alt="Aurora" className="h-10 w-auto" width={200} height={48} />
           </Link>
           <div className="flex gap-2">
             <Button asChild variant="ghost" size="sm">
@@ -50,7 +50,7 @@ function Home() {
       </header>
 
       <section className="mx-auto max-w-6xl px-4 py-16 text-center">
-        <img src={logoAsset.url} alt="Aurora" className="mx-auto mb-8 h-auto w-full max-w-sm" width={400} height={120} />
+        <img src={logoAsset} alt="Aurora" className="mx-auto mb-8 h-auto w-full max-w-sm" width={400} height={120} />
         <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Prodotti selezionati, consegna curata.</h1>
         <p className="mx-auto mt-4 max-w-xl text-muted-foreground">
           Scegli un prodotto dal catalogo e invia la tua richiesta. Ti risponderemo per email per confermare disponibilità e consegna.

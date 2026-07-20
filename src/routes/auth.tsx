@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import logoAsset from "@/assets/logo.png.asset.json";
+import logoAsset from "@/assets/aurora-logo.png";
 
 export const Route = createFileRoute("/auth")({
   component: AuthPage,
@@ -51,7 +51,7 @@ function AuthPage() {
     <div className="flex min-h-screen items-center justify-center bg-background px-4 py-8">
       <div className="w-full max-w-sm">
         <Link to="/" className="mb-8 flex justify-center">
-          <img src={logoAsset.url} alt="Aurora" className="h-auto w-full max-w-[240px]" width={240} height={72} />
+          <img src={logoAsset} alt="Aurora" className="h-auto w-full max-w-[240px]" width={240} height={72} />
         </Link>
         <Card>
           <CardHeader>

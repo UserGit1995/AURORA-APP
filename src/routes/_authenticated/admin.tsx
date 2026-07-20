@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { makeUserAdmin } from "@/lib/admin.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import logoAsset from "@/assets/logo.png.asset.json";
+import logoAsset from "@/assets/aurora-logo.png";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   component: AdminLayout,
@@ -28,7 +28,7 @@ function AdminLayout() {
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
           <Link to="/">
-            <img src={logoAsset.url} alt="Aurora" className="h-10 w-auto" width={200} height={48} />
+            <img src={logoAsset} alt="Aurora" className="h-10 w-auto" width={200} height={48} />
           </Link>
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Pannello Aurora</h1>

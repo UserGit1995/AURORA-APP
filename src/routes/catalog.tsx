@@ -3,7 +3,7 @@ import { useSuspenseQuery, queryOptions } from "@tanstack/react-query";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import logoAsset from "@/assets/logo.png.asset.json";
+import logoAsset from "@/assets/aurora-logo.png";
 import { listPublicCategories, listPublicProducts } from "@/lib/public.functions";
 
 const searchSchema = z.object({ category: z.string().uuid().optional() });
@@ -48,7 +48,7 @@ function Catalog() {
       <header className="border-b border-border/40">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
           <Link to="/">
-            <img src={logoAsset.url} alt="Aurora" className="h-10 w-auto" width={200} height={48} />
+            <img src={logoAsset} alt="Aurora" className="h-10 w-auto" width={200} height={48} />
           </Link>
           <div className="flex items-center gap-2">
             <Button asChild variant="ghost" size="sm">

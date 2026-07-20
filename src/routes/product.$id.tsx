@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
 import { Info } from "lucide-react";
-import logoAsset from "@/assets/logo.png.asset.json";
+import logoAsset from "@/assets/aurora-logo.png";
 import { getPublicProduct, submitProductRequest } from "@/lib/public.functions";
 
 const ITALIAN_REGIONS = [
@@ -94,7 +94,7 @@ function ProductPage() {
     <div className="min-h-screen bg-background">
       <header className="border-b border-border/40">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
-          <Link to="/"><img src={logoAsset.url} alt="Aurora" className="h-10 w-auto" width={200} height={48} /></Link>
+          <Link to="/"><img src={logoAsset} alt="Aurora" className="h-10 w-auto" width={200} height={48} /></Link>
           <Button asChild variant="ghost" size="sm"><Link to="/catalog">← Catalogo</Link></Button>
         </div>
       </header>
