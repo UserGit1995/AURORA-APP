@@ -130,7 +130,7 @@ function ProductPage() {
               <span>Informazioni sulla Spedizione</span>
             </div>
             <p className="leading-relaxed">
-              Le consegne vengono effettuate entro <strong>24/48 h lavorative</strong> in tutto il <strong>Lazio</strong> con spese di spedizione di <strong>€ 4 e 90 cent.</strong> mentre <strong>altre regioni italiane</strong> entro <strong>5 giorni lavorativi</strong>.
+              Le consegne vengono effettuate entro <strong>24/48 h lavorative</strong> in tutto il <strong>Lazio</strong> con spese di spedizione di <strong>€ 4 e 90 cent.</strong> mentre il costo di spedizione su <strong>altre regioni italiane</strong> è di <strong>€ 6 e 90 cent</strong> entro <strong>5 giorni lavorativi</strong>.
             </p>
           </div>
         </div>
