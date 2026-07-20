@@ -21,7 +21,8 @@ const ITALIAN_REGIONS = [
 ];
 
 function shippingFor(region: string) {
-  return region ? 4.90 : 0;
+  if (!region) return 0;
+  return region.trim().toLowerCase() === "lazio" ? 4.90 : 6.90;
 }
 
 const productQO = (id: string) =>

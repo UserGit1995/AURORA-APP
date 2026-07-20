@@ -90,8 +90,8 @@ const requestSchema = z.object({
 });
 
 function shippingFor(region: string) {
-  // € 4 e 90 cent flat rate
-  return 4.90;
+  // € 4,90 per il Lazio, € 6,90 per le altre regioni italiane
+  return region?.trim().toLowerCase() === "lazio" ? 4.90 : 6.90;
 }
 
 export const submitProductRequest = createServerFn({ method: "POST" })
