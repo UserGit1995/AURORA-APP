@@ -1,0 +1,6 @@
+{
+  "name": "Aurora",
+  "description": "Catalogo privato di prodotti Aurora con gestione ordini ed email di notifica.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
