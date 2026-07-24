@@ -63,6 +63,7 @@ export type Database = {
           customer_phone: string | null
           customer_region: string
           id: string
+          order_group_id: string | null
           product_id: string | null
           product_name: string | null
           product_price: number | null
@@ -84,6 +85,7 @@ export type Database = {
           customer_phone?: string | null
           customer_region: string
           id?: string
+          order_group_id?: string | null
           product_id?: string | null
           product_name?: string | null
           product_price?: number | null
@@ -105,6 +107,7 @@ export type Database = {
           customer_phone?: string | null
           customer_region?: string
           id?: string
+          order_group_id?: string | null
           product_id?: string | null
           product_name?: string | null
           product_price?: number | null

@@ -5,6 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import logoAsset from "@/assets/aurora-logo.png";
 import { listPublicCategories, listPublicProducts } from "@/lib/public.functions";
+import { CartLink } from "@/components/CartLink";
+import { useCart } from "@/lib/cart-context";
+import { Plus } from "lucide-react";
+import { toast } from "sonner";
 
 const searchSchema = z.object({ category: z.string().uuid().optional() });
 
@@ -51,6 +55,7 @@ function Catalog() {
             <img src={logoAsset} alt="Aurora" className="h-10 w-auto" width={200} height={48} />
           </Link>
           <div className="flex items-center gap-2">
+            <CartLink />
             <Button asChild variant="ghost" size="sm">
               <Link to="/auth">Area riservata</Link>
             </Button>
@@ -108,34 +113,58 @@ function Catalog() {
 }
 
 function ProductGrid({ products }: { products: Awaited<ReturnType<typeof listPublicProducts>> }) {
+  const { addItem } = useCart();
+
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      {products.map((p) => (
-        <Link key={p.id} to="/product/$id" params={{ id: p.id }}>
-          <Card className="overflow-hidden transition hover:border-primary">
-            {p.image_url && (
-              <div className="aspect-video w-full overflow-hidden bg-muted">
-                <img src={p.image_url} alt={p.name} className="h-full w-full object-cover" loading="lazy" />
-              </div>
-            )}
-            <CardContent className="p-4">
-              <h3 className="font-semibold">{p.name}</h3>
-              {p.description && (
-                <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{p.description}</p>
-              )}
-              {p.is_offer && p.offer_price !== null ? (
-                <div className="mt-2 flex items-center gap-2">
-                  <span className="text-primary font-semibold">€ {Number(p.offer_price).toFixed(2)}</span>
-                  <span className="text-xs text-muted-foreground line-through">€ {Number(p.price).toFixed(2)}</span>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-red-500 bg-red-500/10 px-1 rounded">Offerta</span>
+      {products.map((p) => {
+        const activePrice = p.is_offer && p.offer_price !== null ? Number(p.offer_price) : Number(p.price);
+        return (
+          <Card key={p.id} className="overflow-hidden transition hover:border-primary">
+            <Link to="/product/$id" params={{ id: p.id }}>
+              {p.image_url && (
+                <div className="aspect-video w-full overflow-hidden bg-muted">
+                  <img src={p.image_url} alt={p.name} className="h-full w-full object-cover" loading="lazy" />
                 </div>
-              ) : (
-                <p className="mt-2 text-primary font-semibold">€ {Number(p.price).toFixed(2)}</p>
               )}
+              <CardContent className="p-4 pb-2">
+                <h3 className="font-semibold">{p.name}</h3>
+                {p.description && (
+                  <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{p.description}</p>
+                )}
+                {p.is_offer && p.offer_price !== null ? (
+                  <div className="mt-2 flex items-center gap-2">
+                    <span className="text-primary font-semibold">€ {Number(p.offer_price).toFixed(2)}</span>
+                    <span className="text-xs text-muted-foreground line-through">€ {Number(p.price).toFixed(2)}</span>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-red-500 bg-red-500/10 px-1 rounded">Offerta</span>
+                  </div>
+                ) : (
+                  <p className="mt-2 text-primary font-semibold">€ {Number(p.price).toFixed(2)}</p>
+                )}
+              </CardContent>
+            </Link>
+            <CardContent className="px-4 pb-4 pt-0">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="w-full"
+                onClick={() => {
+                  addItem({
+                    productId: p.id,
+                    name: p.name,
+                    price: activePrice,
+                    imageUrl: p.image_url,
+                  });
+                  toast.success(`${p.name} aggiunto al carrello`);
+                }}
+              >
+                <Plus className="h-4 w-4" /> Aggiungi al carrello
+              </Button>
             </CardContent>
           </Card>
-        </Link>
-      ))}
+        );
+      })}
     </div>
   );
 }

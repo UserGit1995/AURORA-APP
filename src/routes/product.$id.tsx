@@ -13,6 +13,9 @@ import { toast } from "sonner";
 import { Info } from "lucide-react";
 import logoAsset from "@/assets/aurora-logo.png";
 import { getPublicProduct, submitProductRequest } from "@/lib/public.functions";
+import { useCart } from "@/lib/cart-context";
+import { CartLink } from "@/components/CartLink";
+import { ShoppingCart } from "lucide-react";
 
 const ITALIAN_REGIONS = [
   "Abruzzo","Basilicata","Calabria","Campania","Emilia-Romagna","Friuli-Venezia Giulia",
@@ -45,6 +48,7 @@ function ProductPage() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
   const { data: product } = useSuspenseQuery(productQO(id));
+  const { addItem } = useCart();
   const submit = useServerFn(submitProductRequest);
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState({
@@ -96,7 +100,10 @@ function ProductPage() {
       <header className="border-b border-border/40">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
           <Link to="/"><img src={logoAsset} alt="Aurora" className="h-10 w-auto" width={200} height={48} /></Link>
-          <Button asChild variant="ghost" size="sm"><Link to="/catalog">← Catalogo</Link></Button>
+          <div className="flex items-center gap-2">
+            <CartLink />
+            <Button asChild variant="ghost" size="sm"><Link to="/catalog">← Catalogo</Link></Button>
+          </div>
         </div>
       </header>
 
@@ -135,9 +142,34 @@ function ProductPage() {
           </div>
         </div>
 
+        <div className="space-y-4">
+          <Card>
+            <CardContent className="p-6">
+              <h2 className="mb-2 text-lg font-semibold">Aggiungi al carrello</h2>
+              <p className="mb-4 text-sm text-muted-foreground">
+                Vuoi ordinare più prodotti insieme? Aggiungili al carrello e completa un solo ordine alla fine.
+              </p>
+              <Button
+                type="button"
+                className="w-full"
+                onClick={() => {
+                  addItem({
+                    productId: product!.id,
+                    name: product!.name,
+                    price: activePrice,
+                    imageUrl: product!.image_url,
+                  }, form.quantity);
+                  toast.success(`${product!.name} aggiunto al carrello`);
+                }}
+              >
+                <ShoppingCart className="h-4 w-4" /> Aggiungi al carrello
+              </Button>
+            </CardContent>
+          </Card>
+
         <Card>
           <CardContent className="p-6">
-            <h2 className="mb-2 text-lg font-semibold">Ordina questo prodotto</h2>
+            <h2 className="mb-2 text-lg font-semibold">Oppure ordina subito solo questo prodotto</h2>
             <Alert className="mb-4">
               <AlertDescription>Pagamento alla consegna. Ti contattiamo per confermare.</AlertDescription>
             </Alert>
@@ -193,6 +225,7 @@ function ProductPage() {
             </form>
           </CardContent>
         </Card>
+        </div>
       </div>
     </div>
   );

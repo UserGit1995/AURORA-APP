@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import logoAsset from "@/assets/aurora-logo.png";
 import { listPublicCategories, listPublicProducts } from "@/lib/public.functions";
+import { CartLink } from "@/components/CartLink";
 
 const categoriesQO = queryOptions({
   queryKey: ["public", "categories"],
@@ -42,6 +43,7 @@ function Home() {
             <Button asChild variant="ghost" size="sm">
               <Link to="/catalog">Catalogo</Link>
             </Button>
+            <CartLink />
             <Button asChild variant="outline" size="sm">
               <Link to="/auth">Area riservata</Link>
             </Button>
