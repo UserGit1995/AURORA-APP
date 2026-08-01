@@ -7,8 +7,15 @@ const categorySchema = z.object({
   sortOrder: z.number().int().default(0),
 });
 
+const subcategorySchema = z.object({
+  categoryId: z.string().uuid(),
+  name: z.string().min(1).max(100),
+  sortOrder: z.number().int().default(0),
+});
+
 const productSchema = z.object({
   categoryId: z.string().uuid().nullable(),
+  subcategoryId: z.string().uuid().nullable().optional(),
   name: z.string().min(1).max(200),
   description: z.string().max(2000).nullable(),
   price: z.number().positive(),
@@ -127,10 +134,115 @@ export const deleteCategory = createServerFn({ method: "POST" })
     if (!process.env.SUPABASE_URL || !process.env.SUPABASE_PUBLISHABLE_KEY) {
       const { db } = await import("./mockDb");
       db.categories = db.categories.filter(c => c.id !== data.id);
+      db.subcategories = db.subcategories.filter(s => s.category_id !== data.id);
       return { ok: true };
     }
     const { error } = await context.supabase.from("categories").delete().eq("id", data.id);
-    if (error) throw error;
+    if (error) {
+      // Messaggio leggibile invece del codice tecnico grezzo di Postgres
+      if (error.code === "23503") {
+        throw new Error("Impossibile eliminare: ci sono ancora elementi collegati a questa categoria.");
+      }
+      if (error.code === "42501" || /permission|rls/i.test(error.message || "")) {
+        throw new Error("Permesso negato dal database (RLS). Verifica di essere loggato come admin.");
+      }
+      throw new Error(error.message || "Errore sconosciuto durante l'eliminazione della categoria.");
+    }
+    return { ok: true };
+  });
+
+export const listSubcategories = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await requireAdmin(context);
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_PUBLISHABLE_KEY) {
+      const { db } = await import("./mockDb");
+      return [...db.subcategories].sort((a, b) => (a.sort_order - b.sort_order) || a.name.localeCompare(b.name));
+    }
+    const { data, error } = await context.supabase
+      .from("subcategories")
+      .select("*")
+      .order("sort_order", { ascending: true })
+      .order("name", { ascending: true });
+    if (error) throw new Error(error.message);
+    return data ?? [];
+  });
+
+export const createSubcategory = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => subcategorySchema.parse(data))
+  .handler(async ({ data, context }) => {
+    await requireAdmin(context);
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_PUBLISHABLE_KEY) {
+      const { db, generateUuid } = await import("./mockDb");
+      const newSub = {
+        id: generateUuid(),
+        category_id: data.categoryId,
+        name: data.name,
+        sort_order: data.sortOrder,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+      db.subcategories.push(newSub);
+      return newSub;
+    }
+    const { data: subcategory, error } = await context.supabase
+      .from("subcategories")
+      .insert({ category_id: data.categoryId, name: data.name, sort_order: data.sortOrder })
+      .select()
+      .single();
+    if (error) throw new Error(error.message);
+    return subcategory;
+  });
+
+export const updateSubcategory = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { id: string; categoryId: string; name: string; sortOrder: number }) =>
+    z
+      .object({
+        id: z.string().uuid(),
+        categoryId: z.string().uuid(),
+        name: z.string().min(1).max(100),
+        sortOrder: z.number().int(),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    await requireAdmin(context);
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_PUBLISHABLE_KEY) {
+      const { db } = await import("./mockDb");
+      const idx = db.subcategories.findIndex(s => s.id === data.id);
+      if (idx !== -1) {
+        db.subcategories[idx] = {
+          ...db.subcategories[idx],
+          category_id: data.categoryId,
+          name: data.name,
+          sort_order: data.sortOrder,
+          updated_at: new Date().toISOString(),
+        };
+      }
+      return { ok: true };
+    }
+    const { error } = await context.supabase
+      .from("subcategories")
+      .update({ category_id: data.categoryId, name: data.name, sort_order: data.sortOrder })
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const deleteSubcategory = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { id: string }) => z.object({ id: z.string().uuid() }).parse(data))
+  .handler(async ({ data, context }) => {
+    await requireAdmin(context);
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_PUBLISHABLE_KEY) {
+      const { db } = await import("./mockDb");
+      db.subcategories = db.subcategories.filter(s => s.id !== data.id);
+      return { ok: true };
+    }
+    const { error } = await context.supabase.from("subcategories").delete().eq("id", data.id);
+    if (error) throw new Error(error.message);
     return { ok: true };
   });
 
@@ -142,16 +254,18 @@ export const listProducts = createServerFn({ method: "GET" })
       const { db } = await import("./mockDb");
       const list = db.products.map(p => {
         const cat = db.categories.find(c => c.id === p.category_id);
+        const sub = db.subcategories.find(s => s.id === (p as any).subcategory_id);
         return {
           ...p,
-          categories: cat ? { name: cat.name } : null
+          categories: cat ? { name: cat.name } : null,
+          subcategories: sub ? { name: sub.name } : null,
         };
       });
       return list.sort((a, b) => (a.sort_order - b.sort_order) || a.name.localeCompare(b.name));
     }
     const { data, error } = await context.supabase
       .from("products")
-      .select("*, categories(name)")
+      .select("*, categories(name), subcategories(name)")
       .order("sort_order", { ascending: true })
       .order("name", { ascending: true });
     if (error) throw error;
@@ -168,6 +282,7 @@ export const createProduct = createServerFn({ method: "POST" })
       const newProd = {
         id: generateUuid(),
         category_id: data.categoryId || null,
+        subcategory_id: data.subcategoryId || null,
         name: data.name,
         description: data.description || null,
         price: data.price,
@@ -186,6 +301,7 @@ export const createProduct = createServerFn({ method: "POST" })
       .from("products")
       .insert({
         category_id: data.categoryId || null,
+        subcategory_id: data.subcategoryId || null,
         name: data.name,
         description: data.description || null,
         price: data.price,
@@ -208,6 +324,7 @@ export const updateProduct = createServerFn({ method: "POST" })
       .object({
         id: z.string().uuid(),
         categoryId: z.string().uuid().nullable(),
+        subcategoryId: z.string().uuid().nullable().optional(),
         name: z.string().min(1).max(200),
         description: z.string().max(2000).nullable(),
         price: z.number().positive(),
@@ -228,6 +345,7 @@ export const updateProduct = createServerFn({ method: "POST" })
         db.products[idx] = {
           ...db.products[idx],
           category_id: data.categoryId || null,
+          subcategory_id: data.subcategoryId || null,
           name: data.name,
           description: data.description || null,
           price: data.price,
@@ -245,6 +363,7 @@ export const updateProduct = createServerFn({ method: "POST" })
       .from("products")
       .update({
         category_id: data.categoryId || null,
+        subcategory_id: data.subcategoryId || null,
         name: data.name,
         description: data.description || null,
         price: data.price,

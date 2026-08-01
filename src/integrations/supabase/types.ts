@@ -36,6 +36,41 @@ export type Database = {
         }
         Relationships: []
       }
+      subcategories: {
+        Row: {
+          category_id: string
+          created_at: string | null
+          id: string
+          name: string
+          sort_order: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          category_id: string
+          created_at?: string | null
+          id?: string
+          name: string
+          sort_order?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          category_id?: string
+          created_at?: string | null
+          id?: string
+          name?: string
+          sort_order?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subcategories_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       settings: {
         Row: {
           key: string
@@ -131,6 +166,7 @@ export type Database = {
       products: {
         Row: {
           category_id: string | null
+          subcategory_id: string | null
           created_at: string | null
           description: string | null
           id: string
@@ -145,6 +181,7 @@ export type Database = {
         }
         Insert: {
           category_id?: string | null
+          subcategory_id?: string | null
           created_at?: string | null
           description?: string | null
           id?: string
@@ -159,6 +196,7 @@ export type Database = {
         }
         Update: {
           category_id?: string | null
+          subcategory_id?: string | null
           created_at?: string | null
           description?: string | null
           id?: string
@@ -177,6 +215,13 @@ export type Database = {
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "products_subcategory_id_fkey"
+            columns: ["subcategory_id"]
+            isOneToOne: false
+            referencedRelation: "subcategories"
             referencedColumns: ["id"]
           },
         ]

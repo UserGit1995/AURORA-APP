@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { listProducts, listCategories, createProduct, updateProduct, deleteProduct } from "@/lib/admin.functions";
+import { listProducts, listCategories, listSubcategories, createProduct, updateProduct, deleteProduct } from "@/lib/admin.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,6 +22,7 @@ export const Route = createFileRoute("/_authenticated/admin/products")({
 function ProductsPage() {
   const fetchProducts = useServerFn(listProducts);
   const fetchCategories = useServerFn(listCategories);
+  const fetchSubcategories = useServerFn(listSubcategories);
   const createProductFn = useServerFn(createProduct);
   const updateProductFn = useServerFn(updateProduct);
   const deleteProductFn = useServerFn(deleteProduct);
@@ -34,6 +35,10 @@ function ProductsPage() {
     queryKey: ["categories"],
     queryFn: () => fetchCategories({ data: undefined }),
   });
+  const { data: subcategories = [] } = useQuery({
+    queryKey: ["subcategories"],
+    queryFn: () => fetchSubcategories({ data: undefined }),
+  });
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -45,11 +50,16 @@ function ProductsPage() {
     price: "",
     imageUrl: "",
     categoryId: "",
+    subcategoryId: "",
     isActive: true,
     sortOrder: 0,
     isOffer: false,
     offerPrice: "",
   });
+
+  const subcategoriesForSelectedCategory = subcategories.filter(
+    (s: any) => s.category_id === form.categoryId
+  );
 
   function resetForm() {
     setEditingId(null);
@@ -59,6 +69,7 @@ function ProductsPage() {
       price: "",
       imageUrl: "",
       categoryId: "",
+      subcategoryId: "",
       isActive: true,
       sortOrder: 0,
       isOffer: false,
@@ -77,6 +88,7 @@ function ProductsPage() {
       price: String(product.price),
       imageUrl: product.image_url || "",
       categoryId: product.category_id || "",
+      subcategoryId: product.subcategory_id || "",
       isActive: product.is_active ?? true,
       sortOrder: product.sort_order ?? 0,
       isOffer: product.is_offer ?? false,
@@ -134,6 +146,7 @@ function ProductsPage() {
       price: parseFloat(form.price),
       imageUrl: form.imageUrl || null,
       categoryId: form.categoryId || null,
+      subcategoryId: form.subcategoryId || null,
       isActive: form.isActive,
       sortOrder: form.sortOrder,
       isOffer: form.isOffer,
@@ -183,13 +196,33 @@ function ProductsPage() {
         </div>
         <div className="space-y-2">
           <Label htmlFor="category">Categoria</Label>
-          <Select value={form.categoryId} onValueChange={(v) => setForm({ ...form, categoryId: v })}>
+          <Select
+            value={form.categoryId}
+            onValueChange={(v) => setForm({ ...form, categoryId: v, subcategoryId: "" })}
+          >
             <SelectTrigger>
               <SelectValue placeholder="Nessuna categoria" />
             </SelectTrigger>
             <SelectContent>
               {categories.map((c: any) => (
                 <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="subcategory">Sottocategoria</Label>
+          <Select
+            value={form.subcategoryId}
+            onValueChange={(v) => setForm({ ...form, subcategoryId: v })}
+            disabled={!form.categoryId || subcategoriesForSelectedCategory.length === 0}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder={form.categoryId ? "Nessuna sottocategoria" : "Scegli prima una categoria"} />
+            </SelectTrigger>
+            <SelectContent>
+              {subcategoriesForSelectedCategory.map((s: any) => (
+                <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -284,6 +317,7 @@ function ProductsPage() {
             <TableHead>Prezzo Listino</TableHead>
             <TableHead>In Offerta / Prezzo Scontato</TableHead>
             <TableHead>Categoria</TableHead>
+            <TableHead>Sottocategoria</TableHead>
             <TableHead>Stato</TableHead>
             <TableHead className="text-right">Azioni</TableHead>
           </TableRow>
@@ -313,6 +347,7 @@ function ProductsPage() {
                 )}
               </TableCell>
               <TableCell>{product.categories?.name || "-"}</TableCell>
+              <TableCell>{product.subcategories?.name || "-"}</TableCell>
               <TableCell>
                 <Badge variant={product.is_active ? "secondary" : "outline"}>
                   {product.is_active ? "Disponibile" : "Non Disponibile"}

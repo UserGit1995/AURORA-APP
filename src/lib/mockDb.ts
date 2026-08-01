@@ -13,9 +13,19 @@ export interface Category {
   updated_at: string;
 }
 
+export interface Subcategory {
+  id: string;
+  category_id: string;
+  name: string;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Product {
   id: string;
   category_id: string | null;
+  subcategory_id?: string | null;
   name: string;
   description: string | null;
   price: number;
@@ -59,6 +69,7 @@ export interface Setting {
 // Global server-side state
 class MockDatabase {
   public categories: Category[] = [];
+  public subcategories: Subcategory[] = [];
   public products: Product[] = [];
   public requests: ProductRequest[] = [];
   public settings: Setting[] = [];
