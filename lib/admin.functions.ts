@@ -265,11 +265,19 @@ export const listProducts = createServerFn({ method: "GET" })
     }
     const { data, error } = await context.supabase
       .from("products")
-      .select("*, categories(name), subcategories(name)")
+      .select("*")
       .order("sort_order", { ascending: true })
       .order("name", { ascending: true });
     if (error) throw error;
-    return data ?? [];
+
+    const { data: cats } = await context.supabase.from("categories").select("id, name");
+    const { data: subs } = await context.supabase.from("subcategories").select("id, name");
+
+    return (data ?? []).map((p: any) => ({
+      ...p,
+      categories: cats?.find((c: any) => c.id === p.category_id) ? { name: cats.find((c: any) => c.id === p.category_id)!.name } : null,
+      subcategories: subs?.find((s: any) => s.id === p.subcategory_id) ? { name: subs.find((s: any) => s.id === p.subcategory_id)!.name } : null,
+    }));
   });
 
 export const createProduct = createServerFn({ method: "POST" })
