@@ -15,7 +15,6 @@ const subcategorySchema = z.object({
 
 const productSchema = z.object({
   categoryId: z.string().uuid().nullable(),
-  subcategoryId: z.string().uuid().nullable().optional(),
   name: z.string().min(1).max(200),
   description: z.string().max(2000).nullable(),
   price: z.number().positive(),
@@ -139,7 +138,6 @@ export const deleteCategory = createServerFn({ method: "POST" })
     }
     const { error } = await context.supabase.from("categories").delete().eq("id", data.id);
     if (error) {
-      // Messaggio leggibile invece del codice tecnico grezzo di Postgres
       if (error.code === "23503") {
         throw new Error("Impossibile eliminare: ci sono ancora elementi collegati a questa categoria.");
       }
@@ -254,30 +252,20 @@ export const listProducts = createServerFn({ method: "GET" })
       const { db } = await import("./mockDb");
       const list = db.products.map(p => {
         const cat = db.categories.find(c => c.id === p.category_id);
-        const sub = db.subcategories.find(s => s.id === (p as any).subcategory_id);
         return {
           ...p,
-          categories: cat ? { name: cat.name } : null,
-          subcategories: sub ? { name: sub.name } : null,
+          categories: cat ? { name: cat.name } : null
         };
       });
       return list.sort((a, b) => (a.sort_order - b.sort_order) || a.name.localeCompare(b.name));
     }
     const { data, error } = await context.supabase
       .from("products")
-      .select("*")
+      .select("*, categories(name)")
       .order("sort_order", { ascending: true })
       .order("name", { ascending: true });
     if (error) throw error;
-
-    const { data: cats } = await context.supabase.from("categories").select("id, name");
-    const { data: subs } = await context.supabase.from("subcategories").select("id, name");
-
-    return (data ?? []).map((p: any) => ({
-      ...p,
-      categories: cats?.find((c: any) => c.id === p.category_id) ? { name: cats.find((c: any) => c.id === p.category_id)!.name } : null,
-      subcategories: subs?.find((s: any) => s.id === p.subcategory_id) ? { name: subs.find((s: any) => s.id === p.subcategory_id)!.name } : null,
-    }));
+    return data ?? [];
   });
 
 export const createProduct = createServerFn({ method: "POST" })
@@ -290,7 +278,6 @@ export const createProduct = createServerFn({ method: "POST" })
       const newProd = {
         id: generateUuid(),
         category_id: data.categoryId || null,
-        subcategory_id: data.subcategoryId || null,
         name: data.name,
         description: data.description || null,
         price: data.price,
@@ -309,7 +296,6 @@ export const createProduct = createServerFn({ method: "POST" })
       .from("products")
       .insert({
         category_id: data.categoryId || null,
-        subcategory_id: data.subcategoryId || null,
         name: data.name,
         description: data.description || null,
         price: data.price,
@@ -332,7 +318,6 @@ export const updateProduct = createServerFn({ method: "POST" })
       .object({
         id: z.string().uuid(),
         categoryId: z.string().uuid().nullable(),
-        subcategoryId: z.string().uuid().nullable().optional(),
         name: z.string().min(1).max(200),
         description: z.string().max(2000).nullable(),
         price: z.number().positive(),
@@ -353,7 +338,6 @@ export const updateProduct = createServerFn({ method: "POST" })
         db.products[idx] = {
           ...db.products[idx],
           category_id: data.categoryId || null,
-          subcategory_id: data.subcategoryId || null,
           name: data.name,
           description: data.description || null,
           price: data.price,
@@ -371,7 +355,6 @@ export const updateProduct = createServerFn({ method: "POST" })
       .from("products")
       .update({
         category_id: data.categoryId || null,
-        subcategory_id: data.subcategoryId || null,
         name: data.name,
         description: data.description || null,
         price: data.price,
