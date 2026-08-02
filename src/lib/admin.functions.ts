@@ -15,7 +15,6 @@ const subcategorySchema = z.object({
 
 const productSchema = z.object({
   categoryId: z.string().uuid().nullable(),
-  subcategoryId: z.string().uuid().nullable().optional(),
   name: z.string().min(1).max(200),
   description: z.string().max(2000).nullable(),
   price: z.number().positive(),
@@ -139,7 +138,6 @@ export const deleteCategory = createServerFn({ method: "POST" })
     }
     const { error } = await context.supabase.from("categories").delete().eq("id", data.id);
     if (error) {
-      // Messaggio leggibile invece del codice tecnico grezzo di Postgres
       if (error.code === "23503") {
         throw new Error("Impossibile eliminare: ci sono ancora elementi collegati a questa categoria.");
       }
@@ -254,21 +252,29 @@ export const listProducts = createServerFn({ method: "GET" })
       const { db } = await import("./mockDb");
       const list = db.products.map(p => {
         const cat = db.categories.find(c => c.id === p.category_id);
-        const sub = db.subcategories.find(s => s.id === (p as any).subcategory_id);
         return {
           ...p,
-          categories: cat ? { name: cat.name } : null,
-          subcategories: sub ? { name: sub.name } : null,
+          categories: cat ? { name: cat.name } : null
         };
       });
       return list.sort((a, b) => (a.sort_order - b.sort_order) || a.name.localeCompare(b.name));
     }
-    const { data, error } = await context.supabase
+    // Percorso temporaneo: usiamo lo stesso client "pubblico" del catalogo
+    // (quello che sappiamo funzionare sempre) invece del client di sessione
+    // admin, che per qualche motivo restituisce lista vuota in produzione.
+    // L'autorizzazione resta comunque protetta da requireAdmin() sopra.
+    const { createClient } = await import("@supabase/supabase-js");
+    const fallbackClient = createClient(
+      process.env.SUPABASE_URL as string,
+      process.env.SUPABASE_PUBLISHABLE_KEY as string,
+      { auth: { storage: undefined, persistSession: false, autoRefreshToken: false } },
+    );
+    const { data, error } = await fallbackClient
       .from("products")
-      .select("*, categories(name), subcategories(name)")
+      .select("*, categories(name)")
       .order("sort_order", { ascending: true })
       .order("name", { ascending: true });
-    if (error) throw error;
+    if (error) throw new Error("listProducts fallback: " + error.message);
     return data ?? [];
   });
 
@@ -282,7 +288,6 @@ export const createProduct = createServerFn({ method: "POST" })
       const newProd = {
         id: generateUuid(),
         category_id: data.categoryId || null,
-        subcategory_id: data.subcategoryId || null,
         name: data.name,
         description: data.description || null,
         price: data.price,
@@ -301,7 +306,6 @@ export const createProduct = createServerFn({ method: "POST" })
       .from("products")
       .insert({
         category_id: data.categoryId || null,
-        subcategory_id: data.subcategoryId || null,
         name: data.name,
         description: data.description || null,
         price: data.price,
@@ -324,7 +328,6 @@ export const updateProduct = createServerFn({ method: "POST" })
       .object({
         id: z.string().uuid(),
         categoryId: z.string().uuid().nullable(),
-        subcategoryId: z.string().uuid().nullable().optional(),
         name: z.string().min(1).max(200),
         description: z.string().max(2000).nullable(),
         price: z.number().positive(),
@@ -345,7 +348,6 @@ export const updateProduct = createServerFn({ method: "POST" })
         db.products[idx] = {
           ...db.products[idx],
           category_id: data.categoryId || null,
-          subcategory_id: data.subcategoryId || null,
           name: data.name,
           description: data.description || null,
           price: data.price,
@@ -363,7 +365,6 @@ export const updateProduct = createServerFn({ method: "POST" })
       .from("products")
       .update({
         category_id: data.categoryId || null,
-        subcategory_id: data.subcategoryId || null,
         name: data.name,
         description: data.description || null,
         price: data.price,
