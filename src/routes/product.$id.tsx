@@ -12,7 +12,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
 import { Info } from "lucide-react";
 import logoAsset from "@/assets/aurora-logo.png";
-import { getPublicProduct, submitProductRequest } from "@/lib/public.functions";
+import { getPublicProduct, listPublicVariants, submitProductRequest } from "@/lib/public.functions";
 import { useCart } from "@/lib/cart-context";
 import { CartLink } from "@/components/CartLink";
 import { ShoppingCart } from "lucide-react";
@@ -33,10 +33,17 @@ const productQO = (id: string) =>
     queryKey: ["public", "product", id],
     queryFn: () => getPublicProduct({ data: { id } }),
   });
+const variantsQO = queryOptions({
+  queryKey: ["public", "variants"],
+  queryFn: () => listPublicVariants(),
+});
 
 export const Route = createFileRoute("/product/$id")({
   loader: async ({ context, params }) => {
-    const product = await context.queryClient.ensureQueryData(productQO(params.id));
+    const [product] = await Promise.all([
+      context.queryClient.ensureQueryData(productQO(params.id)),
+      context.queryClient.ensureQueryData(variantsQO),
+    ]);
     return { product };
   },
   component: ProductPage,
@@ -48,6 +55,12 @@ function ProductPage() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
   const { data: product } = useSuspenseQuery(productQO(id));
+  const { data: allVariants } = useSuspenseQuery(variantsQO);
+  const variants = allVariants.filter((v) => v.product_id === id)
+    .sort((a, b) => (a.sort_order - b.sort_order) || a.label.localeCompare(b.label));
+  const hasVariants = variants.length > 0;
+  const [variantId, setVariantId] = useState<string>("");
+  const selectedVariant = variants.find((v) => v.id === variantId);
   const { addItem } = useCart();
   const submit = useServerFn(submitProductRequest);
   const [submitting, setSubmitting] = useState(false);
@@ -71,8 +84,10 @@ function ProductPage() {
     );
   }
 
-  const isOffer = product.is_offer && product.offer_price !== null;
-  const activePrice = isOffer ? Number(product.offer_price) : Number(product.price);
+  const isOffer = product.is_offer && product.offer_price !== null && !selectedVariant;
+  const activePrice = selectedVariant?.price !== null && selectedVariant?.price !== undefined
+    ? Number(selectedVariant.price)
+    : isOffer ? Number(product.offer_price) : Number(product.price);
 
   const shipping = shippingFor(form.customerRegion);
   const subtotal = activePrice * form.quantity;
@@ -84,9 +99,13 @@ function ProductPage() {
       toast.error("Seleziona la regione");
       return;
     }
+    if (hasVariants && !variantId) {
+      toast.error("Scegli una variante prima di inviare la richiesta");
+      return;
+    }
     setSubmitting(true);
     try {
-      await submit({ data: { productId: product!.id, ...form } });
+      await submit({ data: { productId: product!.id, variantId: variantId || undefined, ...form } });
       navigate({ to: "/thanks" });
     } catch (err: any) {
       toast.error(err?.message ?? "Errore durante l'invio");
@@ -124,7 +143,25 @@ function ProductPage() {
               <span className="text-xs font-bold uppercase tracking-wider text-red-500 bg-red-500/10 px-2 py-0.5 rounded">Offerta Speciale</span>
             </div>
           ) : (
-            <p className="mt-2 text-2xl text-primary">€ {Number(product.price).toFixed(2)}</p>
+            <p className="mt-2 text-2xl text-primary">
+              € {activePrice.toFixed(2)}
+              {selectedVariant && <span className="ml-2 text-sm font-normal text-muted-foreground">({selectedVariant.label})</span>}
+            </p>
+          )}
+          {hasVariants && (
+            <div className="mt-4 max-w-xs">
+              <Label className="mb-1 block">Scegli variante</Label>
+              <Select value={variantId} onValueChange={setVariantId}>
+                <SelectTrigger><SelectValue placeholder="Seleziona..." /></SelectTrigger>
+                <SelectContent>
+                  {variants.map((v) => (
+                    <SelectItem key={v.id} value={v.id}>
+                      {v.label}{v.price !== null ? ` — € ${Number(v.price).toFixed(2)}` : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           )}
           {product.description && (
             <p className="mt-4 whitespace-pre-line text-muted-foreground">{product.description}</p>
@@ -152,19 +189,22 @@ function ProductPage() {
               <Button
                 type="button"
                 className="w-full"
+                disabled={hasVariants && !variantId}
                 onClick={() => {
                   addItem({
                     productId: product!.id,
+                    variantId: selectedVariant?.id ?? null,
+                    variantLabel: selectedVariant?.label ?? null,
                     name: product!.name,
                     price: activePrice,
                     imageUrl: product!.image_url,
                     minOrderQty: product!.min_order_qty ?? 1,
                     unitLabel: product!.unit_label ?? null,
                   }, form.quantity);
-                  toast.success(`${product!.name} aggiunto al carrello`);
+                  toast.success(`${product!.name}${selectedVariant ? ` (${selectedVariant.label})` : ""} aggiunto al carrello`);
                 }}
               >
-                <ShoppingCart className="h-4 w-4" /> Aggiungi al carrello
+                <ShoppingCart className="h-4 w-4" /> {hasVariants && !variantId ? "Scegli una variante" : "Aggiungi al carrello"}
               </Button>
             </CardContent>
           </Card>
@@ -228,8 +268,8 @@ function ProductPage() {
                 <div className="flex justify-between"><span>Spedizione {form.customerRegion || "(scegli regione)"}</span><span>€ {shipping.toFixed(2)}</span></div>
                 <div className="mt-2 flex justify-between border-t border-border/50 pt-2 font-semibold"><span>Totale</span><span>€ {total.toFixed(2)}</span></div>
               </div>
-              <Button type="submit" className="w-full" disabled={submitting}>
-                {submitting ? "Invio..." : "Invia richiesta"}
+              <Button type="submit" className="w-full" disabled={submitting || (hasVariants && !variantId)}>
+                {submitting ? "Invio..." : hasVariants && !variantId ? "Scegli una variante" : "Invia richiesta"}
               </Button>
             </form>
           </CardContent>

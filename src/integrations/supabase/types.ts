@@ -36,6 +36,44 @@ export type Database = {
         }
         Relationships: []
       }
+      product_variants: {
+        Row: {
+          id: string
+          product_id: string
+          label: string
+          price: number | null
+          sort_order: number | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          product_id: string
+          label: string
+          price?: number | null
+          sort_order?: number | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          product_id?: string
+          label?: string
+          price?: number | null
+          sort_order?: number | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_variants_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subcategories: {
         Row: {
           category_id: string
@@ -173,6 +211,7 @@ export type Database = {
           image_url: string | null
           is_active: boolean | null
           name: string
+          product_code: string | null
           price: number
           sort_order: number | null
           updated_at: string | null
@@ -190,6 +229,7 @@ export type Database = {
           image_url?: string | null
           is_active?: boolean | null
           name: string
+          product_code?: string | null
           price: number
           sort_order?: number | null
           updated_at?: string | null
@@ -207,6 +247,7 @@ export type Database = {
           image_url?: string | null
           is_active?: boolean | null
           name?: string
+          product_code?: string | null
           price?: number
           sort_order?: number | null
           updated_at?: string | null

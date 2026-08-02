@@ -3,7 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { listProducts, listCategories, listSubcategories, createProduct, updateProduct, deleteProduct } from "@/lib/admin.functions";
+import { listProducts, listCategories, listSubcategories, createProduct, updateProduct, deleteProduct, listVariants, createVariant, updateVariant, deleteVariant } from "@/lib/admin.functions";
+import { scanProductPhoto } from "@/lib/vision.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Upload, ImageIcon, Loader2 } from "lucide-react";
+import { Upload, ImageIcon, Loader2, Camera } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/admin/products")({
@@ -42,10 +43,13 @@ function ProductsPage() {
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [scanning, setScanning] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const scanInputRef = useRef<HTMLInputElement>(null);
 
   const [form, setForm] = useState({
     name: "",
+    productCode: "",
     description: "",
     price: "",
     imageUrl: "",
@@ -67,6 +71,7 @@ function ProductsPage() {
     setEditingId(null);
     setForm({
       name: "",
+      productCode: "",
       description: "",
       price: "",
       imageUrl: "",
@@ -88,6 +93,7 @@ function ProductsPage() {
     setEditingId(product.id);
     setForm({
       name: product.name,
+      productCode: product.product_code || "",
       description: product.description || "",
       price: String(product.price),
       imageUrl: product.image_url || "",
@@ -144,10 +150,55 @@ function ProductsPage() {
     }
   }
 
+  const scanFn = useServerFn(scanProductPhoto);
+
+  // Legge una foto (etichetta/confezione) tramite AI e prova a compilare
+  // nome, codice articolo e descrizione. Prezzo e immagine restano sempre
+  // a compilazione manuale.
+  async function handleScanPhoto(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setScanning(true);
+    try {
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = reader.result as string;
+          // rimuove il prefisso "data:image/...;base64," lasciando solo i byte
+          resolve(result.split(",")[1] ?? "");
+        };
+        reader.onerror = () => reject(new Error("Impossibile leggere il file"));
+        reader.readAsDataURL(file);
+      });
+
+      const result = await scanFn({ data: { imageBase64: base64, mimeType: file.type || "image/jpeg" } });
+
+      setForm((prev) => ({
+        ...prev,
+        name: result.name || prev.name,
+        productCode: result.productCode || prev.productCode,
+        description: result.description || prev.description,
+      }));
+
+      if (!result.name && !result.productCode && !result.description) {
+        toast.warning("La scansione non ha trovato nulla di leggibile in questa foto. Prova con un'inquadratura più vicina e nitida.");
+      } else {
+        toast.success("Campi compilati dalla scansione — controllali prima di salvare.");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Errore durante la scansione");
+    } finally {
+      setScanning(false);
+      if (scanInputRef.current) scanInputRef.current.value = "";
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const payload = {
       name: form.name,
+      productCode: form.productCode.trim() || null,
       description: form.description || null,
       price: parseFloat(form.price),
       imageUrl: form.imageUrl || null,
@@ -193,10 +244,40 @@ function ProductsPage() {
   return (
     <div className="space-y-6">
       <h2 className="text-xl font-semibold">Prodotti</h2>
+
+      <div className="mb-4 flex items-center gap-3 rounded-lg border border-dashed border-primary/40 bg-primary/5 p-4">
+        <input
+          ref={scanInputRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          className="hidden"
+          onChange={handleScanPhoto}
+        />
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={scanning}
+          onClick={() => scanInputRef.current?.click()}
+        >
+          {scanning ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
+          {scanning ? "Sto leggendo la foto..." : "Scansiona prodotto"}
+        </Button>
+        <p className="text-xs text-muted-foreground">
+          Scatta o carica una foto dell'etichetta: prova a compilare da sola nome, codice
+          articolo e descrizione qui sotto. Prezzo e immagine restano sempre a te.
+        </p>
+      </div>
+
       <form onSubmit={handleSubmit} className="mb-8 grid gap-4 sm:grid-cols-2 p-6 rounded-lg border border-border bg-card/50">
         <div className="space-y-2">
           <Label htmlFor="name">Nome Prodotto</Label>
           <Input id="name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="productCode">Codice Articolo (opzionale)</Label>
+          <Input id="productCode" value={form.productCode} onChange={(e) => setForm({ ...form, productCode: e.target.value })} />
         </div>
         <div className="space-y-2">
           <Label htmlFor="price">Prezzo Listino (€)</Label>
@@ -336,6 +417,8 @@ function ProductsPage() {
         </div>
       </form>
 
+      {editingId && <VariantsManager productId={editingId} />}
+
       {/* Products Table list */}
       {productsIsError && (
         <div className="rounded-md border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive">
@@ -365,7 +448,12 @@ function ProductsPage() {
                   ) : (
                     <div className="h-10 w-14 rounded border bg-muted flex items-center justify-center text-muted-foreground"><ImageIcon className="h-4 w-4" /></div>
                   )}
-                  <span>{product.name}</span>
+                  <div>
+                    <span>{product.name}</span>
+                    {product.product_code && (
+                      <p className="text-xs text-muted-foreground">Cod. {product.product_code}</p>
+                    )}
+                  </div>
                 </div>
               </TableCell>
               <TableCell>{formatCurrency(product.price)}</TableCell>
@@ -394,6 +482,133 @@ function ProductsPage() {
           ))}
         </TableBody>
       </Table>
+    </div>
+  );
+}
+
+function VariantsManager({ productId }: { productId: string }) {
+  const fetchVariants = useServerFn(listVariants);
+  const createVariantFn = useServerFn(createVariant);
+  const updateVariantFn = useServerFn(updateVariant);
+  const deleteVariantFn = useServerFn(deleteVariant);
+
+  const { data: allVariants = [], refetch, error, isError } = useQuery({
+    queryKey: ["variants"],
+    queryFn: () => fetchVariants({ data: undefined }),
+  });
+  const variants = allVariants
+    .filter((v: any) => v.product_id === productId)
+    .sort((a: any, b: any) => (a.sort_order - b.sort_order) || a.label.localeCompare(b.label));
+
+  const [label, setLabel] = useState("");
+  const [price, setPrice] = useState("");
+  const [sortOrder, setSortOrder] = useState(0);
+  const [editingVariantId, setEditingVariantId] = useState<string | null>(null);
+
+  function resetVariantForm() {
+    setLabel("");
+    setPrice("");
+    setSortOrder(0);
+    setEditingVariantId(null);
+  }
+
+  async function handleVariantSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!label.trim()) return;
+    const priceValue = price.trim() ? parseFloat(price) : null;
+    try {
+      if (editingVariantId) {
+        await updateVariantFn({ data: { id: editingVariantId, label, price: priceValue, sortOrder } });
+        toast.success("Variante aggiornata");
+      } else {
+        await createVariantFn({ data: { productId, label, price: priceValue, sortOrder } });
+        toast.success("Variante aggiunta");
+      }
+      resetVariantForm();
+      refetch();
+    } catch (err: any) {
+      toast.error(err.message || "Errore");
+    }
+  }
+
+  function startEditVariant(v: any) {
+    setEditingVariantId(v.id);
+    setLabel(v.label);
+    setPrice(v.price !== null ? String(v.price) : "");
+    setSortOrder(v.sort_order ?? 0);
+  }
+
+  async function handleDeleteVariant(id: string) {
+    if (!confirm("Eliminare questa variante?")) return;
+    try {
+      await deleteVariantFn({ data: { id } });
+      toast.success("Variante eliminata");
+      refetch();
+    } catch (err: any) {
+      toast.error(err.message || "Errore");
+    }
+  }
+
+  return (
+    <div className="mb-8 rounded-lg border border-border bg-card/50 p-6">
+      <h3 className="mb-1 text-base font-semibold">Varianti del prodotto</h3>
+      <p className="mb-4 text-sm text-muted-foreground">
+        Es. taglie (S, M, L, XL) o modelli diversi dello stesso articolo. Se il prezzo di una
+        variante resta vuoto, si usa il prezzo del prodotto principale.
+      </p>
+
+      {isError && (
+        <div className="mb-4 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+          {(error as any)?.message || "Errore nel caricamento delle varianti"}
+        </div>
+      )}
+
+      <form onSubmit={handleVariantSubmit} className="mb-4 grid gap-3 sm:grid-cols-4">
+        <div className="space-y-1 sm:col-span-2">
+          <Label htmlFor="variantLabel">Nome variante</Label>
+          <Input id="variantLabel" placeholder="es. Taglia L" value={label} onChange={(e) => setLabel(e.target.value)} required />
+        </div>
+        <div className="space-y-1">
+          <Label htmlFor="variantPrice">Prezzo (opzionale)</Label>
+          <Input id="variantPrice" type="number" step="0.01" placeholder="uguale al prodotto" value={price} onChange={(e) => setPrice(e.target.value)} />
+        </div>
+        <div className="space-y-1">
+          <Label htmlFor="variantSort">Ordine</Label>
+          <Input id="variantSort" type="number" value={sortOrder} onChange={(e) => setSortOrder(parseInt(e.target.value, 10) || 0)} />
+        </div>
+        <div className="sm:col-span-4">
+          <Button type="submit" size="sm">{editingVariantId ? "Salva modifiche" : "Aggiungi variante"}</Button>
+          {editingVariantId && (
+            <Button type="button" size="sm" variant="ghost" className="ml-2" onClick={resetVariantForm}>Annulla</Button>
+          )}
+        </div>
+      </form>
+
+      {variants.length === 0 ? (
+        <p className="text-sm text-muted-foreground">Nessuna variante per questo prodotto — il cliente vede il prodotto singolo, senza scelta.</p>
+      ) : (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Nome</TableHead>
+              <TableHead>Prezzo</TableHead>
+              <TableHead className="text-right">Azioni</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {variants.map((v: any) => (
+              <TableRow key={v.id}>
+                <TableCell>{v.label}</TableCell>
+                <TableCell>{v.price !== null ? `€ ${Number(v.price).toFixed(2)}` : "come prodotto principale"}</TableCell>
+                <TableCell className="text-right">
+                  <Button size="sm" variant="ghost" onClick={() => startEditVariant(v)}>Modifica</Button>
+                  <Button size="sm" variant="ghost" className="text-destructive" onClick={() => handleDeleteVariant(v.id)}>Elimina</Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      )}
     </div>
   );
 }

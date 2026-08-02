@@ -5,6 +5,16 @@ export function generateUuid(): string {
   return "f0000000-0000-4000-8000-" + Math.floor(Math.random() * 1e12).toString(16).padStart(12, "0");
 }
 
+export interface ProductVariant {
+  id: string;
+  product_id: string;
+  label: string;
+  price: number | null;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Category {
   id: string;
   name: string;
@@ -27,6 +37,7 @@ export interface Product {
   category_id: string | null;
   subcategory_id?: string | null;
   name: string;
+  product_code?: string | null;
   description: string | null;
   price: number;
   image_url: string | null;
@@ -72,6 +83,7 @@ export interface Setting {
 class MockDatabase {
   public categories: Category[] = [];
   public subcategories: Subcategory[] = [];
+  public productVariants: ProductVariant[] = [];
   public products: Product[] = [];
   public requests: ProductRequest[] = [];
   public settings: Setting[] = [];

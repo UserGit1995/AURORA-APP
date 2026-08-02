@@ -42,6 +42,26 @@ export const listPublicSubcategories = createServerFn({ method: "GET" }).handler
   if (error) throw error;
   return data ?? [];
 });
+
+export const listPublicVariants = createServerFn({ method: "GET" }).handler(async () => {
+  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_PUBLISHABLE_KEY) {
+    const { db } = await import("./mockDb");
+    return (db.productVariants ?? []).map((v) => ({
+      id: v.id, product_id: v.product_id, label: v.label, price: v.price, sort_order: v.sort_order,
+    }));
+  }
+
+  const supabase = publicClient();
+  const { data, error } = await supabase
+    .from("product_variants")
+    .select("id, product_id, label, price, sort_order")
+    .order("sort_order", { ascending: true })
+    .order("label", { ascending: true });
+  if (error) throw error;
+  return data ?? [];
+});
+
+export const listPublicProducts = createServerFn({ method: "GET" })
   .inputValidator((data: { categoryId?: string | null } | undefined) =>
     z
       .object({ categoryId: z.string().uuid().nullable().optional() })
@@ -93,6 +113,7 @@ export const getPublicProduct = createServerFn({ method: "GET" })
 
 const requestSchema = z.object({
   productId: z.string().uuid(),
+  variantId: z.string().uuid().optional(),
   quantity: z.number().int().positive().max(999),
   customerName: z.string().trim().min(1).max(200),
   customerEmail: z.string().trim().email().max(255),
@@ -116,10 +137,21 @@ export const submitProductRequest = createServerFn({ method: "POST" })
       const product = db.products.find((p) => p.id === data.productId);
       if (!product || !product.is_active) throw new Error("Prodotto non disponibile");
 
-      const finalPrice = (product.is_offer && product.offer_price !== null) ? Number(product.offer_price) : Number(product.price);
+      let variant: { label: string; price: number | null } | undefined;
+      if (data.variantId) {
+        const found = (db.productVariants ?? []).find((v) => v.id === data.variantId);
+        if (!found || found.product_id !== product.id) throw new Error("Variante non valida");
+        variant = found;
+      }
+
+      const finalPrice =
+        variant?.price !== undefined && variant?.price !== null
+          ? Number(variant.price)
+          : (product.is_offer && product.offer_price !== null) ? Number(product.offer_price) : Number(product.price);
       const shipping = shippingFor(data.customerRegion);
       const subtotal = finalPrice * data.quantity;
       const total = subtotal + shipping;
+      const productName = variant ? `${product.name} — ${variant.label}` : product.name;
 
       const newRequest = {
         id: generateUuid(),
@@ -131,7 +163,7 @@ export const submitProductRequest = createServerFn({ method: "POST" })
         customer_region: data.customerRegion,
         customer_notes: data.customerNotes || null,
         product_id: product.id,
-        product_name: product.name,
+        product_name: productName,
         product_price: finalPrice,
         quantity: data.quantity,
         shipping_cost: shipping,
@@ -156,10 +188,26 @@ export const submitProductRequest = createServerFn({ method: "POST" })
     if (prodErr) throw prodErr;
     if (!product || !product.is_active) throw new Error("Prodotto non disponibile");
 
-    const finalPrice = (product.is_offer && product.offer_price !== null) ? Number(product.offer_price) : Number(product.price);
+    let variant: { label: string; price: number | null } | undefined;
+    if (data.variantId) {
+      const { data: variantRow, error: varErr } = await supabase
+        .from("product_variants")
+        .select("id, product_id, label, price")
+        .eq("id", data.variantId)
+        .maybeSingle();
+      if (varErr) throw varErr;
+      if (!variantRow || variantRow.product_id !== product.id) throw new Error("Variante non valida");
+      variant = variantRow;
+    }
+
+    const finalPrice =
+      variant?.price !== undefined && variant?.price !== null
+        ? Number(variant.price)
+        : (product.is_offer && product.offer_price !== null) ? Number(product.offer_price) : Number(product.price);
     const shipping = shippingFor(data.customerRegion);
     const subtotal = finalPrice * data.quantity;
     const total = subtotal + shipping;
+    const productName = variant ? `${product.name} — ${variant.label}` : product.name;
 
     const { data: inserted, error } = await supabase
       .from("product_requests")
@@ -172,7 +220,7 @@ export const submitProductRequest = createServerFn({ method: "POST" })
         customer_region: data.customerRegion,
         customer_notes: data.customerNotes || null,
         product_id: product.id,
-        product_name: product.name,
+        product_name: productName,
         product_price: finalPrice,
         quantity: data.quantity,
         shipping_cost: shipping,

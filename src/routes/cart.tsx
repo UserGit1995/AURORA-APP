@@ -63,7 +63,7 @@ function CartPage() {
     try {
       await submit({
         data: {
-          items: items.map((i) => ({ productId: i.productId, quantity: i.quantity })),
+          items: items.map((i) => ({ productId: i.productId, variantId: i.variantId || undefined, quantity: i.quantity })),
           ...form,
         },
       });
@@ -99,7 +99,7 @@ function CartPage() {
           <div className="grid gap-8 lg:grid-cols-2">
             <div className="space-y-3">
               {items.map((item) => (
-                <Card key={item.productId}>
+                <Card key={`${item.productId}::${item.variantId ?? ""}`}>
                   <CardContent className="flex items-center gap-3 p-4">
                     {item.imageUrl ? (
                       <img src={item.imageUrl} alt={item.name} className="h-16 w-16 rounded object-cover" />
@@ -107,7 +107,10 @@ function CartPage() {
                       <div className="h-16 w-16 shrink-0 rounded bg-muted" />
                     )}
                     <div className="min-w-0 flex-1">
-                      <p className="truncate font-medium">{item.name}</p>
+                      <p className="truncate font-medium">
+                        {item.name}
+                        {item.variantLabel && <span className="text-muted-foreground"> — {item.variantLabel}</span>}
+                      </p>
                       <p className="text-sm text-muted-foreground">
                         € {item.price.toFixed(2)} {item.unitLabel ? `/ ${item.unitLabel}` : "cad."}
                         {item.minOrderQty && item.minOrderQty > 1 && (
@@ -118,17 +121,17 @@ function CartPage() {
                     <div className="flex items-center gap-2">
                       <Button type="button" variant="outline" size="icon" className="h-7 w-7"
                         disabled={item.quantity <= (item.minOrderQty ?? 1)}
-                        onClick={() => updateQuantity(item.productId, item.quantity - 1)}>
+                        onClick={() => updateQuantity(item.productId, item.quantity - 1, item.variantId)}>
                         <Minus className="h-3 w-3" />
                       </Button>
                       <span className="w-6 text-center text-sm">{item.quantity}</span>
                       <Button type="button" variant="outline" size="icon" className="h-7 w-7"
-                        onClick={() => updateQuantity(item.productId, item.quantity + 1)}>
+                        onClick={() => updateQuantity(item.productId, item.quantity + 1, item.variantId)}>
                         <Plus className="h-3 w-3" />
                       </Button>
                     </div>
                     <Button type="button" variant="ghost" size="icon" className="text-muted-foreground"
-                      onClick={() => removeItem(item.productId)}>
+                      onClick={() => removeItem(item.productId, item.variantId)}>
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </CardContent>

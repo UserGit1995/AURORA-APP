@@ -7,7 +7,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import logoAsset from "@/assets/aurora-logo.png";
-import { listPublicCategories, listPublicSubcategories, listPublicProducts } from "@/lib/public.functions";
+import { listPublicCategories, listPublicSubcategories, listPublicVariants, listPublicProducts } from "@/lib/public.functions";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CartLink } from "@/components/CartLink";
 import { useCart } from "@/lib/cart-context";
 import { Plus } from "lucide-react";
@@ -26,6 +27,10 @@ const subcategoriesQO = queryOptions({
   queryKey: ["public", "subcategories"],
   queryFn: () => listPublicSubcategories(),
 });
+const variantsQO = queryOptions({
+  queryKey: ["public", "variants"],
+  queryFn: () => listPublicVariants(),
+});
 const productsQO = (categoryId?: string) =>
   queryOptions({
     queryKey: ["public", "products", categoryId ?? "all"],
@@ -39,6 +44,7 @@ export const Route = createFileRoute("/catalog")({
     await Promise.all([
       context.queryClient.ensureQueryData(categoriesQO),
       context.queryClient.ensureQueryData(subcategoriesQO),
+      context.queryClient.ensureQueryData(variantsQO),
       context.queryClient.ensureQueryData(productsQO(deps.category)),
     ]);
   },
@@ -57,6 +63,7 @@ function Catalog() {
   const { category, subcategory } = Route.useSearch();
   const { data: categories } = useSuspenseQuery(categoriesQO);
   const { data: allSubcategories } = useSuspenseQuery(subcategoriesQO);
+  const { data: allVariants } = useSuspenseQuery(variantsQO);
   const { data: allProducts } = useSuspenseQuery(productsQO(category));
   const [search, setSearch] = useState("");
 
@@ -136,7 +143,7 @@ function Catalog() {
           </p>
         ) : category ? (
           subcategory || subcategoriesForCategory.length === 0 ? (
-            <ProductGrid products={products} />
+            <ProductGrid products={products} variants={allVariants} />
           ) : (
             <div className="space-y-10">
               {subcategoriesForCategory.map((s) => {
@@ -145,7 +152,7 @@ function Catalog() {
                 return (
                   <section key={s.id}>
                     <h2 className="mb-4 text-lg font-semibold">{s.name}</h2>
-                    <ProductGrid products={inSub} />
+                    <ProductGrid products={inSub} variants={allVariants} />
                   </section>
                 );
               })}
@@ -157,7 +164,7 @@ function Catalog() {
                 return (
                   <section>
                     <h2 className="mb-4 text-lg font-semibold">Altri prodotti</h2>
-                    <ProductGrid products={withoutSub} />
+                    <ProductGrid products={withoutSub} variants={allVariants} />
                   </section>
                 );
               })()}
@@ -171,7 +178,7 @@ function Catalog() {
               return (
                 <section key={c.id}>
                   <h2 className="mb-4 text-xl font-semibold">{c.name}</h2>
-                  <ProductGrid products={productsInCategory} />
+                  <ProductGrid products={productsInCategory} variants={allVariants} />
                 </section>
               );
             })}
@@ -183,7 +190,7 @@ function Catalog() {
               return (
                 <section>
                   <h2 className="mb-4 text-xl font-semibold">Altri prodotti</h2>
-                  <ProductGrid products={uncategorized} />
+                  <ProductGrid products={uncategorized} variants={allVariants} />
                 </section>
               );
             })()}
@@ -194,67 +201,101 @@ function Catalog() {
   );
 }
 
-function ProductGrid({ products }: { products: Awaited<ReturnType<typeof listPublicProducts>> }) {
-  const { addItem } = useCart();
+type PublicProduct = Awaited<ReturnType<typeof listPublicProducts>>[number];
+type PublicVariant = Awaited<ReturnType<typeof listPublicVariants>>[number];
 
+function ProductGrid({ products, variants }: { products: PublicProduct[]; variants: PublicVariant[] }) {
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {products.map((p) => {
-        const activePrice = p.is_offer && p.offer_price !== null ? Number(p.offer_price) : Number(p.price);
-        return (
-          <Card key={p.id} className="overflow-hidden transition hover:border-primary">
-            <Link to="/product/$id" params={{ id: p.id }}>
-              {p.image_url && (
-                <div className="aspect-video w-full overflow-hidden bg-muted">
-                  <img src={p.image_url} alt={p.name} className="h-full w-full object-cover" loading="lazy" />
-                </div>
-              )}
-              <CardContent className="p-4 pb-2">
-                <h3 className="font-semibold">{p.name}</h3>
-                {p.description && (
-                  <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{p.description}</p>
-                )}
-                {p.is_offer && p.offer_price !== null ? (
-                  <div className="mt-2 flex items-center gap-2">
-                    <span className="text-primary font-semibold">€ {Number(p.offer_price).toFixed(2)}</span>
-                    <span className="text-xs text-muted-foreground line-through">€ {Number(p.price).toFixed(2)}</span>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-red-500 bg-red-500/10 px-1 rounded">Offerta</span>
-                  </div>
-                ) : (
-                  <p className="mt-2 text-primary font-semibold">
-                    € {Number(p.price).toFixed(2)}
-                    {p.unit_label && <span className="ml-1 text-xs font-normal text-muted-foreground">/ {p.unit_label}</span>}
-                  </p>
-                )}
-                {p.min_order_qty && p.min_order_qty > 1 && (
-                  <p className="mt-1 text-xs text-muted-foreground">Quantità minima: {p.min_order_qty}</p>
-                )}
-              </CardContent>
-            </Link>
-            <CardContent className="px-4 pb-4 pt-0">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="w-full"
-                onClick={() => {
-                  addItem({
-                    productId: p.id,
-                    name: p.name,
-                    price: activePrice,
-                    imageUrl: p.image_url,
-                    minOrderQty: p.min_order_qty ?? 1,
-                    unitLabel: p.unit_label ?? null,
-                  });
-                  toast.success(`${p.name} aggiunto al carrello`);
-                }}
-              >
-                <Plus className="h-4 w-4" /> Aggiungi al carrello
-              </Button>
-            </CardContent>
-          </Card>
-        );
+        const variantsForProduct = variants
+          .filter((v) => v.product_id === p.id)
+          .sort((a, b) => (a.sort_order - b.sort_order) || a.label.localeCompare(b.label));
+        return <ProductCard key={p.id} product={p} variants={variantsForProduct} />;
       })}
     </div>
+  );
+}
+
+function ProductCard({ product: p, variants }: { product: PublicProduct; variants: PublicVariant[] }) {
+  const { addItem } = useCart();
+  const hasVariants = variants.length > 0;
+  const [variantId, setVariantId] = useState<string>("");
+
+  const selectedVariant = variants.find((v) => v.id === variantId);
+  const basePrice = p.is_offer && p.offer_price !== null ? Number(p.offer_price) : Number(p.price);
+  const activePrice = selectedVariant?.price !== null && selectedVariant?.price !== undefined
+    ? Number(selectedVariant.price)
+    : basePrice;
+
+  return (
+    <Card className="overflow-hidden transition hover:border-primary">
+      <Link to="/product/$id" params={{ id: p.id }}>
+        {p.image_url && (
+          <div className="aspect-video w-full overflow-hidden bg-muted">
+            <img src={p.image_url} alt={p.name} className="h-full w-full object-cover" loading="lazy" />
+          </div>
+        )}
+        <CardContent className="p-4 pb-2">
+          <h3 className="font-semibold">{p.name}</h3>
+          {p.description && (
+            <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{p.description}</p>
+          )}
+          {p.is_offer && p.offer_price !== null && !selectedVariant ? (
+            <div className="mt-2 flex items-center gap-2">
+              <span className="text-primary font-semibold">€ {Number(p.offer_price).toFixed(2)}</span>
+              <span className="text-xs text-muted-foreground line-through">€ {Number(p.price).toFixed(2)}</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-red-500 bg-red-500/10 px-1 rounded">Offerta</span>
+            </div>
+          ) : (
+            <p className="mt-2 text-primary font-semibold">
+              € {activePrice.toFixed(2)}
+              {p.unit_label && <span className="ml-1 text-xs font-normal text-muted-foreground">/ {p.unit_label}</span>}
+            </p>
+          )}
+          {p.min_order_qty && p.min_order_qty > 1 && (
+            <p className="mt-1 text-xs text-muted-foreground">Quantità minima: {p.min_order_qty}</p>
+          )}
+        </CardContent>
+      </Link>
+      <CardContent className="px-4 pb-4 pt-0 space-y-2">
+        {hasVariants && (
+          <Select value={variantId} onValueChange={setVariantId}>
+            <SelectTrigger className="h-9 text-sm">
+              <SelectValue placeholder="Scegli variante..." />
+            </SelectTrigger>
+            <SelectContent>
+              {variants.map((v) => (
+                <SelectItem key={v.id} value={v.id}>
+                  {v.label}{v.price !== null ? ` — € ${Number(v.price).toFixed(2)}` : ""}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="w-full"
+          disabled={hasVariants && !variantId}
+          onClick={() => {
+            addItem({
+              productId: p.id,
+              variantId: selectedVariant?.id ?? null,
+              variantLabel: selectedVariant?.label ?? null,
+              name: p.name,
+              price: activePrice,
+              imageUrl: p.image_url,
+              minOrderQty: p.min_order_qty ?? 1,
+              unitLabel: p.unit_label ?? null,
+            });
+            toast.success(`${p.name}${selectedVariant ? ` (${selectedVariant.label})` : ""} aggiunto al carrello`);
+          }}
+        >
+          <Plus className="h-4 w-4" /> {hasVariants && !variantId ? "Scegli una variante" : "Aggiungi al carrello"}
+        </Button>
+      </CardContent>
+    </Card>
   );
 }

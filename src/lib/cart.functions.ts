@@ -22,6 +22,7 @@ const cartRequestSchema = z.object({
     .array(
       z.object({
         productId: z.string().uuid(),
+        variantId: z.string().uuid().optional(),
         quantity: z.number().int().positive().max(999),
       }),
     )
@@ -54,11 +55,24 @@ export const submitCartRequest = createServerFn({ method: "POST" })
         if (item.quantity < minQty) {
           throw new Error(`"${product.name}" ha una quantità minima ordinabile di ${minQty}`);
         }
+
+        let variant: { label: string; price: number | null } | undefined;
+        if (item.variantId) {
+          const found = (db.productVariants ?? []).find((v) => v.id === item.variantId);
+          if (!found || found.product_id !== product.id) {
+            throw new Error(`Variante non valida per "${product.name}"`);
+          }
+          variant = found;
+        }
+
         const finalPrice =
-          product.is_offer && product.offer_price !== null
-            ? Number(product.offer_price)
-            : Number(product.price);
+          variant?.price !== undefined && variant?.price !== null
+            ? Number(variant.price)
+            : product.is_offer && product.offer_price !== null
+              ? Number(product.offer_price)
+              : Number(product.price);
         const itemSubtotal = finalPrice * item.quantity;
+        const productName = variant ? `${product.name} — ${variant.label}` : product.name;
 
         return {
           id: generateUuid(),
@@ -71,7 +85,7 @@ export const submitCartRequest = createServerFn({ method: "POST" })
           customer_region: data.customerRegion,
           customer_notes: data.customerNotes || null,
           product_id: product.id,
-          product_name: product.name,
+          product_name: productName,
           product_price: finalPrice,
           quantity: item.quantity,
           // La spedizione viene addebitata una sola volta per ordine:
@@ -96,11 +110,23 @@ export const submitCartRequest = createServerFn({ method: "POST" })
     const orderGroupId = crypto.randomUUID();
 
     const productIds = data.items.map((i) => i.productId);
+    const variantIds = data.items.map((i) => i.variantId).filter((v): v is string => !!v);
+
     const { data: products, error: prodErr } = await supabase
       .from("products")
       .select("id, name, price, is_active, is_offer, offer_price, min_order_qty")
       .in("id", productIds);
     if (prodErr) throw prodErr;
+
+    let variants: { id: string; product_id: string; label: string; price: number | null }[] = [];
+    if (variantIds.length > 0) {
+      const { data: variantRows, error: varErr } = await supabase
+        .from("product_variants")
+        .select("id, product_id, label, price")
+        .in("id", variantIds);
+      if (varErr) throw varErr;
+      variants = variantRows ?? [];
+    }
 
     const rows = data.items.map((item, index) => {
       const product = products?.find((p) => p.id === item.productId);
@@ -111,11 +137,24 @@ export const submitCartRequest = createServerFn({ method: "POST" })
       if (item.quantity < minQty) {
         throw new Error(`"${product.name}" ha una quantità minima ordinabile di ${minQty}`);
       }
+
+      let variant: { label: string; price: number | null } | undefined;
+      if (item.variantId) {
+        const found = variants.find((v) => v.id === item.variantId);
+        if (!found || found.product_id !== product.id) {
+          throw new Error(`Variante non valida per "${product.name}"`);
+        }
+        variant = found;
+      }
+
       const finalPrice =
-        product.is_offer && product.offer_price !== null
-          ? Number(product.offer_price)
-          : Number(product.price);
+        variant?.price !== undefined && variant?.price !== null
+          ? Number(variant.price)
+          : product.is_offer && product.offer_price !== null
+            ? Number(product.offer_price)
+            : Number(product.price);
       const itemSubtotal = finalPrice * item.quantity;
+      const productName = variant ? `${product.name} — ${variant.label}` : product.name;
 
       return {
         order_group_id: orderGroupId,
@@ -127,7 +166,7 @@ export const submitCartRequest = createServerFn({ method: "POST" })
         customer_region: data.customerRegion,
         customer_notes: data.customerNotes || null,
         product_id: product.id,
-        product_name: product.name,
+        product_name: productName,
         product_price: finalPrice,
         quantity: item.quantity,
         shipping_cost: index === 0 ? shipping : 0,

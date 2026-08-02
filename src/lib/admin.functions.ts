@@ -17,6 +17,7 @@ const productSchema = z.object({
   categoryId: z.string().uuid().nullable(),
   subcategoryId: z.string().uuid().nullable().optional(),
   name: z.string().min(1).max(200),
+  productCode: z.string().max(100).nullable().optional(),
   description: z.string().max(2000).nullable(),
   price: z.number().positive(),
   imageUrl: z.string().url().max(1000).nullable().or(z.literal("")),
@@ -247,6 +248,119 @@ export const deleteSubcategory = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+const variantSchema = z.object({
+  productId: z.string().uuid(),
+  label: z.string().min(1).max(100),
+  price: z.number().nonnegative().nullable().optional(),
+  sortOrder: z.number().int().default(0),
+});
+
+export const listVariants = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await requireAdmin(context);
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_PUBLISHABLE_KEY) {
+      const { db } = await import("./mockDb");
+      return [...(db.productVariants ?? [])].sort((a, b) => (a.sort_order - b.sort_order) || a.label.localeCompare(b.label));
+    }
+    // Stesso client "pubblico" già usato per prodotti/richieste: evita il
+    // problema di liste vuote in produzione visto con il client di sessione.
+    const { createClient } = await import("@supabase/supabase-js");
+    const fallbackClient = createClient(
+      process.env.SUPABASE_URL as string,
+      process.env.SUPABASE_PUBLISHABLE_KEY as string,
+      { auth: { storage: undefined, persistSession: false, autoRefreshToken: false } },
+    );
+    const { data, error } = await fallbackClient
+      .from("product_variants")
+      .select("*")
+      .order("sort_order", { ascending: true })
+      .order("label", { ascending: true });
+    if (error) throw new Error("listVariants fallback: " + error.message);
+    return data ?? [];
+  });
+
+export const createVariant = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => variantSchema.parse(data))
+  .handler(async ({ data, context }) => {
+    await requireAdmin(context);
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_PUBLISHABLE_KEY) {
+      const { db, generateUuid } = await import("./mockDb");
+      db.productVariants = db.productVariants ?? [];
+      const newVariant = {
+        id: generateUuid(),
+        product_id: data.productId,
+        label: data.label,
+        price: data.price ?? null,
+        sort_order: data.sortOrder,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+      db.productVariants.push(newVariant);
+      return newVariant;
+    }
+    const { data: variant, error } = await context.supabase
+      .from("product_variants")
+      .insert({ product_id: data.productId, label: data.label, price: data.price ?? null, sort_order: data.sortOrder })
+      .select()
+      .single();
+    if (error) throw new Error(error.message);
+    return variant;
+  });
+
+export const updateVariant = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { id: string; label: string; price?: number | null; sortOrder: number }) =>
+    z
+      .object({
+        id: z.string().uuid(),
+        label: z.string().min(1).max(100),
+        price: z.number().nonnegative().nullable().optional(),
+        sortOrder: z.number().int(),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    await requireAdmin(context);
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_PUBLISHABLE_KEY) {
+      const { db } = await import("./mockDb");
+      db.productVariants = db.productVariants ?? [];
+      const idx = db.productVariants.findIndex(v => v.id === data.id);
+      if (idx !== -1) {
+        db.productVariants[idx] = {
+          ...db.productVariants[idx],
+          label: data.label,
+          price: data.price ?? null,
+          sort_order: data.sortOrder,
+          updated_at: new Date().toISOString(),
+        };
+      }
+      return { ok: true };
+    }
+    const { error } = await context.supabase
+      .from("product_variants")
+      .update({ label: data.label, price: data.price ?? null, sort_order: data.sortOrder })
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const deleteVariant = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { id: string }) => z.object({ id: z.string().uuid() }).parse(data))
+  .handler(async ({ data, context }) => {
+    await requireAdmin(context);
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_PUBLISHABLE_KEY) {
+      const { db } = await import("./mockDb");
+      db.productVariants = (db.productVariants ?? []).filter(v => v.id !== data.id);
+      return { ok: true };
+    }
+    const { error } = await context.supabase.from("product_variants").delete().eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
 export const listProducts = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
@@ -293,6 +407,7 @@ export const createProduct = createServerFn({ method: "POST" })
         category_id: data.categoryId || null,
         subcategory_id: data.subcategoryId || null,
         name: data.name,
+        product_code: data.productCode || null,
         description: data.description || null,
         price: data.price,
         image_url: data.imageUrl || null,
@@ -314,6 +429,7 @@ export const createProduct = createServerFn({ method: "POST" })
         category_id: data.categoryId || null,
         subcategory_id: data.subcategoryId || null,
         name: data.name,
+        product_code: data.productCode || null,
         description: data.description || null,
         price: data.price,
         image_url: data.imageUrl || null,
@@ -339,6 +455,7 @@ export const updateProduct = createServerFn({ method: "POST" })
         categoryId: z.string().uuid().nullable(),
         subcategoryId: z.string().uuid().nullable().optional(),
         name: z.string().min(1).max(200),
+        productCode: z.string().max(100).nullable().optional(),
         description: z.string().max(2000).nullable(),
         price: z.number().positive(),
         imageUrl: z.string().url().max(1000).nullable().or(z.literal("")),
@@ -362,6 +479,7 @@ export const updateProduct = createServerFn({ method: "POST" })
           category_id: data.categoryId || null,
           subcategory_id: data.subcategoryId || null,
           name: data.name,
+          product_code: data.productCode || null,
           description: data.description || null,
           price: data.price,
           image_url: data.imageUrl || null,
@@ -382,6 +500,7 @@ export const updateProduct = createServerFn({ method: "POST" })
         category_id: data.categoryId || null,
         subcategory_id: data.subcategoryId || null,
         name: data.name,
+        product_code: data.productCode || null,
         description: data.description || null,
         price: data.price,
         image_url: data.imageUrl || null,

@@ -2,6 +2,8 @@ import { createContext, useContext, useEffect, useMemo, useState, type ReactNode
 
 export interface CartItem {
   productId: string;
+  variantId?: string | null;
+  variantLabel?: string | null;
   name: string;
   price: number; // prezzo unitario mostrato nel carrello (indicativo: il prezzo
                  // definitivo viene sempre ricalcolato dal server all'invio)
@@ -15,14 +17,21 @@ interface CartContextValue {
   items: CartItem[];
   itemCount: number;
   addItem: (item: Omit<CartItem, "quantity">, quantity?: number) => void;
-  removeItem: (productId: string) => void;
-  updateQuantity: (productId: string, quantity: number) => void;
+  removeItem: (productId: string, variantId?: string | null) => void;
+  updateQuantity: (productId: string, quantity: number, variantId?: string | null) => void;
   clear: () => void;
 }
 
 const STORAGE_KEY = "aurora_cart_v1";
 
 const CartContext = createContext<CartContextValue | null>(null);
+
+// Due righe del carrello sono la "stessa riga" solo se hanno lo stesso
+// prodotto E la stessa variante (una taglia S e una taglia M dello stesso
+// articolo restano righe separate).
+function sameLine(a: { productId: string; variantId?: string | null }, b: { productId: string; variantId?: string | null }) {
+  return a.productId === b.productId && (a.variantId ?? null) === (b.variantId ?? null);
+}
 
 function loadFromStorage(): CartItem[] {
   if (typeof window === "undefined") return [];
@@ -55,26 +64,24 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const addItem: CartContextValue["addItem"] = (item, quantity) => {
     const step = quantity ?? item.minOrderQty ?? 1;
     setItems((prev) => {
-      const existing = prev.find((i) => i.productId === item.productId);
+      const existing = prev.find((i) => sameLine(i, item));
       if (existing) {
-        return prev.map((i) =>
-          i.productId === item.productId ? { ...i, quantity: i.quantity + step } : i,
-        );
+        return prev.map((i) => (sameLine(i, item) ? { ...i, quantity: i.quantity + step } : i));
       }
       return [...prev, { ...item, quantity: step }];
     });
   };
 
-  const removeItem: CartContextValue["removeItem"] = (productId) => {
-    setItems((prev) => prev.filter((i) => i.productId !== productId));
+  const removeItem: CartContextValue["removeItem"] = (productId, variantId = null) => {
+    setItems((prev) => prev.filter((i) => !sameLine(i, { productId, variantId })));
   };
 
-  const updateQuantity: CartContextValue["updateQuantity"] = (productId, quantity) => {
+  const updateQuantity: CartContextValue["updateQuantity"] = (productId, quantity, variantId = null) => {
     setItems((prev) =>
       quantity <= 0
-        ? prev.filter((i) => i.productId !== productId)
+        ? prev.filter((i) => !sameLine(i, { productId, variantId }))
         : prev.map((i) => {
-            if (i.productId !== productId) return i;
+            if (!sameLine(i, { productId, variantId })) return i;
             const min = i.minOrderQty ?? 1;
             return { ...i, quantity: Math.max(quantity, min) };
           }),
