@@ -34,6 +34,8 @@ export interface Product {
   sort_order: number;
   is_offer: boolean;
   offer_price: number | null;
+  min_order_qty?: number;
+  unit_label?: string | null;
   created_at: string;
   updated_at: string;
 }

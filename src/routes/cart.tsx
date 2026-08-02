@@ -108,10 +108,16 @@ function CartPage() {
                     )}
                     <div className="min-w-0 flex-1">
                       <p className="truncate font-medium">{item.name}</p>
-                      <p className="text-sm text-muted-foreground">€ {item.price.toFixed(2)} cad.</p>
+                      <p className="text-sm text-muted-foreground">
+                        € {item.price.toFixed(2)} {item.unitLabel ? `/ ${item.unitLabel}` : "cad."}
+                        {item.minOrderQty && item.minOrderQty > 1 && (
+                          <span className="ml-1 text-xs">(minimo {item.minOrderQty})</span>
+                        )}
+                      </p>
                     </div>
                     <div className="flex items-center gap-2">
                       <Button type="button" variant="outline" size="icon" className="h-7 w-7"
+                        disabled={item.quantity <= (item.minOrderQty ?? 1)}
                         onClick={() => updateQuantity(item.productId, item.quantity - 1)}>
                         <Minus className="h-3 w-3" />
                       </Button>
@@ -146,8 +152,8 @@ function CartPage() {
                     <Input type="email" value={form.customerEmail} onChange={(e) => setForm({ ...form, customerEmail: e.target.value })} required maxLength={255} />
                   </div>
                   <div>
-                    <Label>Telefono (opzionale)</Label>
-                    <Input value={form.customerPhone} onChange={(e) => setForm({ ...form, customerPhone: e.target.value })} maxLength={50} />
+                    <Label>Telefono</Label>
+                    <Input value={form.customerPhone} onChange={(e) => setForm({ ...form, customerPhone: e.target.value })} required maxLength={50} />
                   </div>
                   <div>
                     <Label>Indirizzo</Label>

@@ -178,6 +178,8 @@ export type Database = {
           updated_at: string | null
           is_offer: boolean | null
           offer_price: number | null
+          min_order_qty: number | null
+          unit_label: string | null
         }
         Insert: {
           category_id?: string | null
@@ -193,6 +195,8 @@ export type Database = {
           updated_at?: string | null
           is_offer?: boolean | null
           offer_price?: number | null
+          min_order_qty?: number | null
+          unit_label?: string | null
         }
         Update: {
           category_id?: string | null
@@ -208,6 +212,8 @@ export type Database = {
           updated_at?: string | null
           is_offer?: boolean | null
           offer_price?: number | null
+          min_order_qty?: number | null
+          unit_label?: string | null
         }
         Relationships: [
           {

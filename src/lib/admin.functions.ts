@@ -15,6 +15,7 @@ const subcategorySchema = z.object({
 
 const productSchema = z.object({
   categoryId: z.string().uuid().nullable(),
+  subcategoryId: z.string().uuid().nullable().optional(),
   name: z.string().min(1).max(200),
   description: z.string().max(2000).nullable(),
   price: z.number().positive(),
@@ -23,6 +24,8 @@ const productSchema = z.object({
   sortOrder: z.number().int().default(0),
   isOffer: z.boolean().default(false),
   offerPrice: z.number().nonnegative().nullable().optional(),
+  minOrderQty: z.number().int().min(1).default(1),
+  unitLabel: z.string().max(50).nullable().optional(),
 });
 
 async function requireAdmin(context: { supabase: any; userId: string }) {
@@ -271,7 +274,7 @@ export const listProducts = createServerFn({ method: "GET" })
     );
     const { data, error } = await fallbackClient
       .from("products")
-      .select("*, categories(name)")
+      .select("*, categories(name), subcategories(name)")
       .order("sort_order", { ascending: true })
       .order("name", { ascending: true });
     if (error) throw new Error("listProducts fallback: " + error.message);
@@ -288,6 +291,7 @@ export const createProduct = createServerFn({ method: "POST" })
       const newProd = {
         id: generateUuid(),
         category_id: data.categoryId || null,
+        subcategory_id: data.subcategoryId || null,
         name: data.name,
         description: data.description || null,
         price: data.price,
@@ -296,6 +300,8 @@ export const createProduct = createServerFn({ method: "POST" })
         sort_order: data.sortOrder,
         is_offer: data.isOffer,
         offer_price: data.offerPrice || null,
+        min_order_qty: data.minOrderQty ?? 1,
+        unit_label: data.unitLabel || null,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       };
@@ -306,6 +312,7 @@ export const createProduct = createServerFn({ method: "POST" })
       .from("products")
       .insert({
         category_id: data.categoryId || null,
+        subcategory_id: data.subcategoryId || null,
         name: data.name,
         description: data.description || null,
         price: data.price,
@@ -314,6 +321,8 @@ export const createProduct = createServerFn({ method: "POST" })
         sort_order: data.sortOrder,
         is_offer: data.isOffer,
         offer_price: data.offerPrice || null,
+        min_order_qty: data.minOrderQty ?? 1,
+        unit_label: data.unitLabel || null,
       })
       .select()
       .single();
@@ -328,6 +337,7 @@ export const updateProduct = createServerFn({ method: "POST" })
       .object({
         id: z.string().uuid(),
         categoryId: z.string().uuid().nullable(),
+        subcategoryId: z.string().uuid().nullable().optional(),
         name: z.string().min(1).max(200),
         description: z.string().max(2000).nullable(),
         price: z.number().positive(),
@@ -336,6 +346,8 @@ export const updateProduct = createServerFn({ method: "POST" })
         sortOrder: z.number().int(),
         isOffer: z.boolean(),
         offerPrice: z.number().nonnegative().nullable().optional(),
+        minOrderQty: z.number().int().min(1),
+        unitLabel: z.string().max(50).nullable().optional(),
       })
       .parse(data),
   )
@@ -348,6 +360,7 @@ export const updateProduct = createServerFn({ method: "POST" })
         db.products[idx] = {
           ...db.products[idx],
           category_id: data.categoryId || null,
+          subcategory_id: data.subcategoryId || null,
           name: data.name,
           description: data.description || null,
           price: data.price,
@@ -356,6 +369,8 @@ export const updateProduct = createServerFn({ method: "POST" })
           sort_order: data.sortOrder,
           is_offer: data.isOffer,
           offer_price: data.offerPrice || null,
+          min_order_qty: data.minOrderQty ?? 1,
+          unit_label: data.unitLabel || null,
           updated_at: new Date().toISOString(),
         };
       }
@@ -365,6 +380,7 @@ export const updateProduct = createServerFn({ method: "POST" })
       .from("products")
       .update({
         category_id: data.categoryId || null,
+        subcategory_id: data.subcategoryId || null,
         name: data.name,
         description: data.description || null,
         price: data.price,
@@ -373,6 +389,8 @@ export const updateProduct = createServerFn({ method: "POST" })
         sort_order: data.sortOrder,
         is_offer: data.isOffer,
         offer_price: data.offerPrice || null,
+        min_order_qty: data.minOrderQty ?? 1,
+        unit_label: data.unitLabel || null,
       })
       .eq("id", data.id);
     if (error) throw error;
@@ -402,11 +420,17 @@ export const listRequests = createServerFn({ method: "GET" })
       const { db } = await import("./mockDb");
       return [...db.requests].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
     }
-    const { data, error } = await context.supabase
+    const { createClient } = await import("@supabase/supabase-js");
+    const fallbackClient = createClient(
+      process.env.SUPABASE_URL as string,
+      process.env.SUPABASE_PUBLISHABLE_KEY as string,
+      { auth: { storage: undefined, persistSession: false, autoRefreshToken: false } },
+    );
+    const { data, error } = await fallbackClient
       .from("product_requests")
       .select("*")
       .order("created_at", { ascending: false });
-    if (error) throw error;
+    if (error) throw new Error("listRequests fallback: " + error.message);
     return data ?? [];
   });
 

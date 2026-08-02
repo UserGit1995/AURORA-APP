@@ -34,11 +34,11 @@ function CategoriesPage() {
   const updateSubcategoryFn = useServerFn(updateSubcategory);
   const deleteSubcategoryFn = useServerFn(deleteSubcategory);
 
-  const { data: categories = [], refetch } = useQuery({
+  const { data: categories = [], refetch, error: catError, isError: catIsError } = useQuery({
     queryKey: ["categories"],
     queryFn: () => fetchCategories({ data: undefined }),
   });
-  const { data: subcategories = [], refetch: refetchSub } = useQuery({
+  const { data: subcategories = [], refetch: refetchSub, error: subError, isError: subIsError } = useQuery({
     queryKey: ["subcategories"],
     queryFn: () => fetchSubcategories({ data: undefined }),
   });
@@ -147,6 +147,12 @@ function CategoriesPage() {
       {/* ---------- CATEGORIE ---------- */}
       <div>
         <h2 className="mb-6 text-xl font-semibold">Categorie</h2>
+        {catIsError && (
+          <div className="mb-4 rounded-md border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive">
+            <p className="font-semibold">Errore nel caricamento delle categorie</p>
+            <p className="mt-1">{(catError as any)?.message || "Errore sconosciuto"}</p>
+          </div>
+        )}
         <form onSubmit={handleSubmit} className="mb-8 grid gap-4 sm:grid-cols-3">
           <div className="space-y-2 sm:col-span-2">
             <Label htmlFor="name">Nome categoria</Label>
@@ -194,6 +200,12 @@ function CategoriesPage() {
         <p className="mb-6 text-sm text-muted-foreground">
           Organizza una categoria ampia (es. Monouso) in sezioni più specifiche (es. Posate, Bicchieri, Sacchetti Craft).
         </p>
+        {subIsError && (
+          <div className="mb-4 rounded-md border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive">
+            <p className="font-semibold">Errore nel caricamento delle sottocategorie</p>
+            <p className="mt-1">{(subError as any)?.message || "Errore sconosciuto"}</p>
+          </div>
+        )}
         <form onSubmit={handleSubSubmit} className="mb-8 grid gap-4 sm:grid-cols-4">
           <div className="space-y-2">
             <Label>Categoria principale</Label>

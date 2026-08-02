@@ -7,6 +7,8 @@ export interface CartItem {
                  // definitivo viene sempre ricalcolato dal server all'invio)
   imageUrl: string | null;
   quantity: number;
+  minOrderQty?: number;
+  unitLabel?: string | null;
 }
 
 interface CartContextValue {
@@ -50,15 +52,16 @@ export function CartProvider({ children }: { children: ReactNode }) {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
   }, [items, hydrated]);
 
-  const addItem: CartContextValue["addItem"] = (item, quantity = 1) => {
+  const addItem: CartContextValue["addItem"] = (item, quantity) => {
+    const step = quantity ?? item.minOrderQty ?? 1;
     setItems((prev) => {
       const existing = prev.find((i) => i.productId === item.productId);
       if (existing) {
         return prev.map((i) =>
-          i.productId === item.productId ? { ...i, quantity: i.quantity + quantity } : i,
+          i.productId === item.productId ? { ...i, quantity: i.quantity + step } : i,
         );
       }
-      return [...prev, { ...item, quantity }];
+      return [...prev, { ...item, quantity: step }];
     });
   };
 
@@ -70,7 +73,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setItems((prev) =>
       quantity <= 0
         ? prev.filter((i) => i.productId !== productId)
-        : prev.map((i) => (i.productId === productId ? { ...i, quantity } : i)),
+        : prev.map((i) => {
+            if (i.productId !== productId) return i;
+            const min = i.minOrderQty ?? 1;
+            return { ...i, quantity: Math.max(quantity, min) };
+          }),
     );
   };
 

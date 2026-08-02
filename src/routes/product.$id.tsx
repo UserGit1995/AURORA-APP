@@ -52,7 +52,7 @@ function ProductPage() {
   const submit = useServerFn(submitProductRequest);
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState({
-    quantity: 1,
+    quantity: product?.min_order_qty ?? 1,
     customerName: "",
     customerEmail: "",
     customerPhone: "",
@@ -158,6 +158,8 @@ function ProductPage() {
                     name: product!.name,
                     price: activePrice,
                     imageUrl: product!.image_url,
+                    minOrderQty: product!.min_order_qty ?? 1,
+                    unitLabel: product!.unit_label ?? null,
                   }, form.quantity);
                   toast.success(`${product!.name} aggiunto al carrello`);
                 }}
@@ -175,9 +177,16 @@ function ProductPage() {
             </Alert>
             <form onSubmit={handleSubmit} className="space-y-3">
               <div>
-                <Label>Quantità</Label>
-                <Input type="number" min={1} max={999} value={form.quantity}
-                  onChange={(e) => setForm({ ...form, quantity: Math.max(1, parseInt(e.target.value || "1", 10)) })} />
+                <Label>
+                  Quantità
+                  {product && product.min_order_qty && product.min_order_qty > 1 && (
+                    <span className="ml-1 text-xs font-normal text-muted-foreground">
+                      (minimo {product.min_order_qty}{product.unit_label ? ` ${product.unit_label}` : ""})
+                    </span>
+                  )}
+                </Label>
+                <Input type="number" min={product?.min_order_qty ?? 1} max={999} value={form.quantity}
+                  onChange={(e) => setForm({ ...form, quantity: Math.max(product?.min_order_qty ?? 1, parseInt(e.target.value || "1", 10)) })} />
               </div>
               <div>
                 <Label>Nome e cognome</Label>

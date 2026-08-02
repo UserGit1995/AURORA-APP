@@ -27,7 +27,21 @@ export const listPublicCategories = createServerFn({ method: "GET" }).handler(as
   return data ?? [];
 });
 
-export const listPublicProducts = createServerFn({ method: "GET" })
+export const listPublicSubcategories = createServerFn({ method: "GET" }).handler(async () => {
+  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_PUBLISHABLE_KEY) {
+    const { db } = await import("./mockDb");
+    return db.subcategories.map((s) => ({ id: s.id, category_id: s.category_id, name: s.name, sort_order: s.sort_order }));
+  }
+
+  const supabase = publicClient();
+  const { data, error } = await supabase
+    .from("subcategories")
+    .select("id, category_id, name, sort_order")
+    .order("sort_order", { ascending: true })
+    .order("name", { ascending: true });
+  if (error) throw error;
+  return data ?? [];
+});
   .inputValidator((data: { categoryId?: string | null } | undefined) =>
     z
       .object({ categoryId: z.string().uuid().nullable().optional() })
@@ -46,7 +60,7 @@ export const listPublicProducts = createServerFn({ method: "GET" })
     const supabase = publicClient();
     let query = supabase
       .from("products")
-      .select("id, name, description, price, image_url, category_id, sort_order, is_offer, offer_price")
+      .select("id, name, description, price, image_url, category_id, subcategory_id, sort_order, is_offer, offer_price, min_order_qty, unit_label")
       .eq("is_active", true)
       .order("sort_order", { ascending: true })
       .order("name", { ascending: true });
@@ -69,7 +83,7 @@ export const getPublicProduct = createServerFn({ method: "GET" })
     const supabase = publicClient();
     const { data: row, error } = await supabase
       .from("products")
-      .select("id, name, description, price, image_url, category_id, is_active, is_offer, offer_price")
+      .select("id, name, description, price, image_url, category_id, subcategory_id, is_active, is_offer, offer_price, min_order_qty, unit_label")
       .eq("id", data.id)
       .maybeSingle();
     if (error) throw error;

@@ -28,7 +28,7 @@ const cartRequestSchema = z.object({
     .min(1, "Il carrello è vuoto"),
   customerName: z.string().trim().min(1).max(200),
   customerEmail: z.string().trim().email().max(255),
-  customerPhone: z.string().trim().max(50).optional().or(z.literal("")),
+  customerPhone: z.string().trim().min(1, "Telefono obbligatorio").max(50),
   customerAddress: z.string().trim().min(1).max(500),
   customerCity: z.string().trim().min(1).max(100),
   customerRegion: z.string().trim().min(1).max(100),
@@ -49,6 +49,10 @@ export const submitCartRequest = createServerFn({ method: "POST" })
         const product = db.products.find((p) => p.id === item.productId);
         if (!product || !product.is_active) {
           throw new Error(`Prodotto non disponibile (id ${item.productId})`);
+        }
+        const minQty = product.min_order_qty ?? 1;
+        if (item.quantity < minQty) {
+          throw new Error(`"${product.name}" ha una quantità minima ordinabile di ${minQty}`);
         }
         const finalPrice =
           product.is_offer && product.offer_price !== null
@@ -94,7 +98,7 @@ export const submitCartRequest = createServerFn({ method: "POST" })
     const productIds = data.items.map((i) => i.productId);
     const { data: products, error: prodErr } = await supabase
       .from("products")
-      .select("id, name, price, is_active, is_offer, offer_price")
+      .select("id, name, price, is_active, is_offer, offer_price, min_order_qty")
       .in("id", productIds);
     if (prodErr) throw prodErr;
 
@@ -102,6 +106,10 @@ export const submitCartRequest = createServerFn({ method: "POST" })
       const product = products?.find((p) => p.id === item.productId);
       if (!product || !product.is_active) {
         throw new Error(`Prodotto non disponibile (id ${item.productId})`);
+      }
+      const minQty = product.min_order_qty ?? 1;
+      if (item.quantity < minQty) {
+        throw new Error(`"${product.name}" ha una quantità minima ordinabile di ${minQty}`);
       }
       const finalPrice =
         product.is_offer && product.offer_price !== null

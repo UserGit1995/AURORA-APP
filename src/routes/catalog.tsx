@@ -1,20 +1,30 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSuspenseQuery, queryOptions } from "@tanstack/react-query";
+import { useState } from "react";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Search } from "lucide-react";
 import logoAsset from "@/assets/aurora-logo.png";
-import { listPublicCategories, listPublicProducts } from "@/lib/public.functions";
+import { listPublicCategories, listPublicSubcategories, listPublicProducts } from "@/lib/public.functions";
 import { CartLink } from "@/components/CartLink";
 import { useCart } from "@/lib/cart-context";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
 
-const searchSchema = z.object({ category: z.string().uuid().optional() });
+const searchSchema = z.object({
+  category: z.string().uuid().optional(),
+  subcategory: z.string().uuid().optional(),
+});
 
 const categoriesQO = queryOptions({
   queryKey: ["public", "categories"],
   queryFn: () => listPublicCategories(),
+});
+const subcategoriesQO = queryOptions({
+  queryKey: ["public", "subcategories"],
+  queryFn: () => listPublicSubcategories(),
 });
 const productsQO = (categoryId?: string) =>
   queryOptions({
@@ -28,6 +38,7 @@ export const Route = createFileRoute("/catalog")({
   loader: async ({ context, deps }) => {
     await Promise.all([
       context.queryClient.ensureQueryData(categoriesQO),
+      context.queryClient.ensureQueryData(subcategoriesQO),
       context.queryClient.ensureQueryData(productsQO(deps.category)),
     ]);
   },
@@ -43,9 +54,28 @@ export const Route = createFileRoute("/catalog")({
 });
 
 function Catalog() {
-  const { category } = Route.useSearch();
+  const { category, subcategory } = Route.useSearch();
   const { data: categories } = useSuspenseQuery(categoriesQO);
-  const { data: products } = useSuspenseQuery(productsQO(category));
+  const { data: allSubcategories } = useSuspenseQuery(subcategoriesQO);
+  const { data: allProducts } = useSuspenseQuery(productsQO(category));
+  const [search, setSearch] = useState("");
+
+  const term = search.trim().toLowerCase();
+  const textFiltered = term
+    ? allProducts.filter(
+        (p) =>
+          p.name.toLowerCase().includes(term) ||
+          (p.description ?? "").toLowerCase().includes(term)
+      )
+    : allProducts;
+
+  const products = subcategory
+    ? textFiltered.filter((p) => p.subcategory_id === subcategory)
+    : textFiltered;
+
+  const subcategoriesForCategory = category
+    ? allSubcategories.filter((s) => s.category_id === category)
+    : [];
 
   return (
     <div className="min-h-screen bg-background">
@@ -66,7 +96,17 @@ function Catalog() {
       <div className="mx-auto max-w-6xl px-4 py-8">
         <h1 className="mb-6 text-2xl font-bold tracking-tight">Catalogo</h1>
 
-        <div className="mb-8 flex flex-wrap gap-2">
+        <div className="mb-6 relative max-w-sm">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Cerca un prodotto..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+
+        <div className="mb-4 flex flex-wrap gap-2">
           <Button asChild variant={!category ? "default" : "outline"} size="sm">
             <Link to="/catalog">Tutti</Link>
           </Button>
@@ -77,10 +117,52 @@ function Catalog() {
           ))}
         </div>
 
+        {category && subcategoriesForCategory.length > 0 && (
+          <div className="mb-8 flex flex-wrap gap-2 border-l-2 border-border pl-3">
+            <Button asChild variant={!subcategory ? "secondary" : "ghost"} size="sm">
+              <Link to="/catalog" search={{ category }}>Tutte le sottocategorie</Link>
+            </Button>
+            {subcategoriesForCategory.map((s) => (
+              <Button asChild key={s.id} variant={subcategory === s.id ? "secondary" : "ghost"} size="sm">
+                <Link to="/catalog" search={{ category, subcategory: s.id }}>{s.name}</Link>
+              </Button>
+            ))}
+          </div>
+        )}
+
         {products.length === 0 ? (
-          <p className="text-muted-foreground">Nessun prodotto disponibile in questa categoria.</p>
+          <p className="text-muted-foreground">
+            {term ? `Nessun prodotto trovato per "${search}".` : "Nessun prodotto disponibile in questa categoria."}
+          </p>
         ) : category ? (
-          <ProductGrid products={products} />
+          subcategory || subcategoriesForCategory.length === 0 ? (
+            <ProductGrid products={products} />
+          ) : (
+            <div className="space-y-10">
+              {subcategoriesForCategory.map((s) => {
+                const inSub = products.filter((p) => p.subcategory_id === s.id);
+                if (inSub.length === 0) return null;
+                return (
+                  <section key={s.id}>
+                    <h2 className="mb-4 text-lg font-semibold">{s.name}</h2>
+                    <ProductGrid products={inSub} />
+                  </section>
+                );
+              })}
+              {(() => {
+                const withoutSub = products.filter(
+                  (p) => !p.subcategory_id || !subcategoriesForCategory.some((s) => s.id === p.subcategory_id)
+                );
+                if (withoutSub.length === 0) return null;
+                return (
+                  <section>
+                    <h2 className="mb-4 text-lg font-semibold">Altri prodotti</h2>
+                    <ProductGrid products={withoutSub} />
+                  </section>
+                );
+              })()}
+            </div>
+          )
         ) : (
           <div className="space-y-12">
             {categories.map((c) => {
@@ -139,7 +221,13 @@ function ProductGrid({ products }: { products: Awaited<ReturnType<typeof listPub
                     <span className="text-[10px] font-bold uppercase tracking-wider text-red-500 bg-red-500/10 px-1 rounded">Offerta</span>
                   </div>
                 ) : (
-                  <p className="mt-2 text-primary font-semibold">€ {Number(p.price).toFixed(2)}</p>
+                  <p className="mt-2 text-primary font-semibold">
+                    € {Number(p.price).toFixed(2)}
+                    {p.unit_label && <span className="ml-1 text-xs font-normal text-muted-foreground">/ {p.unit_label}</span>}
+                  </p>
+                )}
+                {p.min_order_qty && p.min_order_qty > 1 && (
+                  <p className="mt-1 text-xs text-muted-foreground">Quantità minima: {p.min_order_qty}</p>
                 )}
               </CardContent>
             </Link>
@@ -155,6 +243,8 @@ function ProductGrid({ products }: { products: Awaited<ReturnType<typeof listPub
                     name: p.name,
                     price: activePrice,
                     imageUrl: p.image_url,
+                    minOrderQty: p.min_order_qty ?? 1,
+                    unitLabel: p.unit_label ?? null,
                   });
                   toast.success(`${p.name} aggiunto al carrello`);
                 }}
