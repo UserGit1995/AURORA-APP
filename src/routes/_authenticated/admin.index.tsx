@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Mail, Settings } from "lucide-react";
+import { Mail, Settings, ClipboardList, Package, Tags, Clock, CalendarDays } from "lucide-react";
 import { toast } from "sonner";
 import { listRequests, getOrderDestinationEmail, updateOrderDestinationEmail } from "@/lib/admin.functions";
 
@@ -54,17 +54,52 @@ function Dashboard() {
     }
   }
 
+  const [now, setNow] = useState(new Date());
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const timeString = now.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  const dateString = now.toLocaleDateString("it-IT", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+
   const newCount = requests.filter((r: any) => r.status === "new").length;
   const processingCount = requests.filter((r: any) => r.status === "processing").length;
 
   return (
     <div className="space-y-6">
+      <Card className="border border-primary/20">
+        <CardContent className="flex flex-wrap items-center justify-between gap-4 py-6">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-primary/10 text-primary">
+              <Clock className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-2xl font-semibold tabular-nums tracking-tight">{timeString}</p>
+              <p className="text-xs text-muted-foreground">Ora attuale</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-primary/10 text-primary">
+              <CalendarDays className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-sm font-medium capitalize">{dateString}</p>
+              <p className="text-xs text-muted-foreground">Data odierna</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       <div className="grid gap-4 sm:grid-cols-3">
         <Link to="/admin/requests">
           <Card className="transition hover:border-primary">
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
-                Richieste
+                <span className="flex items-center gap-2">
+                  <ClipboardList className="h-4 w-4 text-primary" />
+                  Richieste
+                </span>
                 {newCount > 0 && <Badge>{newCount} nuove</Badge>}
               </CardTitle>
               <CardDescription>{requests.length} totali · {processingCount} in lavorazione</CardDescription>
@@ -75,7 +110,10 @@ function Dashboard() {
         <Link to="/admin/products">
           <Card className="transition hover:border-primary">
             <CardHeader>
-              <CardTitle>Prodotti</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <Package className="h-4 w-4 text-primary" />
+                Prodotti
+              </CardTitle>
               <CardDescription>Aggiungi foto, prezzi e categoria.</CardDescription>
             </CardHeader>
             <CardContent className="text-sm text-primary">Gestisci →</CardContent>
@@ -84,7 +122,10 @@ function Dashboard() {
         <Link to="/admin/categories">
           <Card className="transition hover:border-primary">
             <CardHeader>
-              <CardTitle>Categorie</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <Tags className="h-4 w-4 text-primary" />
+                Categorie
+              </CardTitle>
               <CardDescription>Organizza il catalogo per categorie.</CardDescription>
             </CardHeader>
             <CardContent className="text-sm text-primary">Gestisci →</CardContent>
