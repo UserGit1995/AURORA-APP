@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useSuspenseQuery, queryOptions } from "@tanstack/react-query";
+import { useSuspenseQuery, useQuery, queryOptions } from "@tanstack/react-query";
 import { useState } from "react";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
@@ -41,11 +41,18 @@ export const Route = createFileRoute("/catalog")({
   validateSearch: searchSchema,
   loaderDeps: ({ search }) => ({ category: search.category }),
   loader: async ({ context, deps }) => {
+    // Categorie e prodotti sono essenziali: se falliscono, la pagina deve
+    // davvero segnalare un problema. Sottocategorie e varianti sono
+    // un arricchimento: se le loro tabelle non esistono ancora (es. script
+    // SQL non ancora eseguito), il catalogo deve comunque aprirsi, solo
+    // senza quelle funzionalità aggiuntive.
     await Promise.all([
       context.queryClient.ensureQueryData(categoriesQO),
+      context.queryClient.ensureQueryData(productsQO(deps.category)),
+    ]);
+    await Promise.allSettled([
       context.queryClient.ensureQueryData(subcategoriesQO),
       context.queryClient.ensureQueryData(variantsQO),
-      context.queryClient.ensureQueryData(productsQO(deps.category)),
     ]);
   },
   head: () => ({
@@ -55,15 +62,24 @@ export const Route = createFileRoute("/catalog")({
     ],
   }),
   component: Catalog,
-  errorComponent: () => <div className="p-8 text-center">Errore.</div>,
+  errorComponent: ({ error }: { error: any }) => (
+    <div className="p-8 text-center">
+      <p className="mb-2 font-semibold text-destructive">Errore nel caricamento del catalogo</p>
+      <p className="text-sm text-muted-foreground">{error?.message || String(error)}</p>
+    </div>
+  ),
   notFoundComponent: () => <div className="p-8 text-center">Non trovato.</div>,
 });
 
 function Catalog() {
   const { category, subcategory } = Route.useSearch();
   const { data: categories } = useSuspenseQuery(categoriesQO);
-  const { data: allSubcategories } = useSuspenseQuery(subcategoriesQO);
-  const { data: allVariants } = useSuspenseQuery(variantsQO);
+  // useQuery normale (non "suspense"): se la tabella sottocategorie/varianti
+  // non esiste ancora nel database, qui arriva semplicemente un errore
+  // silenzioso e usiamo un elenco vuoto, invece di far crashare l'intera
+  // pagina Catalogo che dipende anche da categorie e prodotti.
+  const { data: allSubcategories = [] } = useQuery({ ...subcategoriesQO, retry: false });
+  const { data: allVariants = [] } = useQuery({ ...variantsQO, retry: false });
   const { data: allProducts } = useSuspenseQuery(productsQO(category));
   const [search, setSearch] = useState("");
 

@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useSuspenseQuery, queryOptions } from "@tanstack/react-query";
+import { useSuspenseQuery, useQuery, queryOptions } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -42,12 +42,17 @@ export const Route = createFileRoute("/product/$id")({
   loader: async ({ context, params }) => {
     const [product] = await Promise.all([
       context.queryClient.ensureQueryData(productQO(params.id)),
-      context.queryClient.ensureQueryData(variantsQO),
     ]);
+    await context.queryClient.ensureQueryData(variantsQO).catch(() => {});
     return { product };
   },
   component: ProductPage,
-  errorComponent: () => <div className="p-8 text-center">Errore.</div>,
+  errorComponent: ({ error }: { error: any }) => (
+    <div className="p-8 text-center">
+      <p className="mb-2 font-semibold text-destructive">Errore nel caricamento del prodotto</p>
+      <p className="text-sm text-muted-foreground">{error?.message || String(error)}</p>
+    </div>
+  ),
   notFoundComponent: () => <div className="p-8 text-center">Prodotto non trovato.</div>,
 });
 
@@ -55,7 +60,7 @@ function ProductPage() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
   const { data: product } = useSuspenseQuery(productQO(id));
-  const { data: allVariants } = useSuspenseQuery(variantsQO);
+  const { data: allVariants = [] } = useQuery({ ...variantsQO, retry: false });
   const variants = allVariants.filter((v) => v.product_id === id)
     .sort((a, b) => (a.sort_order - b.sort_order) || a.label.localeCompare(b.label));
   const hasVariants = variants.length > 0;

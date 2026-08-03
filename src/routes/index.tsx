@@ -23,7 +23,12 @@ export const Route = createFileRoute("/")({
     ]);
   },
   component: Home,
-  errorComponent: () => <div className="p-8 text-center text-muted-foreground">Errore nel caricamento.</div>,
+  errorComponent: ({ error }: { error: any }) => (
+    <div className="p-8 text-center text-muted-foreground">
+      <p className="mb-2 font-semibold text-destructive">Errore nel caricamento.</p>
+      <p className="text-sm">{error?.message || String(error)}</p>
+    </div>
+  ),
   notFoundComponent: () => <div className="p-8 text-center">Non trovato.</div>,
 });
 
