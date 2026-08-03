@@ -386,13 +386,26 @@ export const listProducts = createServerFn({ method: "GET" })
       process.env.SUPABASE_PUBLISHABLE_KEY as string,
       { auth: { storage: undefined, persistSession: false, autoRefreshToken: false } },
     );
+    // MAI PIÙ unioni dirette tra tabelle (categories(...)/subcategories(...))
+    // in questa funzione: è la causa già vista due volte di liste vuote in
+    // produzione. Leggiamo le tre tabelle separatamente e le uniamo a mano.
     const { data, error } = await fallbackClient
       .from("products")
-      .select("*, categories(name), subcategories(name)")
+      .select("*")
       .order("sort_order", { ascending: true })
       .order("name", { ascending: true });
     if (error) throw new Error("listProducts fallback: " + error.message);
-    return data ?? [];
+
+    const { data: cats, error: catsErr } = await fallbackClient.from("categories").select("id, name");
+    if (catsErr) throw new Error("listProducts (categorie) fallback: " + catsErr.message);
+    const { data: subs, error: subsErr } = await fallbackClient.from("subcategories").select("id, name");
+    if (subsErr) throw new Error("listProducts (sottocategorie) fallback: " + subsErr.message);
+
+    return (data ?? []).map((p: any) => ({
+      ...p,
+      categories: cats?.find((c: any) => c.id === p.category_id) ? { name: cats.find((c: any) => c.id === p.category_id)!.name } : null,
+      subcategories: subs?.find((s: any) => s.id === p.subcategory_id) ? { name: subs.find((s: any) => s.id === p.subcategory_id)!.name } : null,
+    }));
   });
 
 export const createProduct = createServerFn({ method: "POST" })

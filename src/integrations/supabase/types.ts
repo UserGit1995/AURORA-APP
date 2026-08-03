@@ -36,6 +36,61 @@ export type Database = {
         }
         Relationships: []
       }
+      customization_requests: {
+        Row: {
+          id: string
+          product_type: string
+          quantity: number
+          print_colors: number
+          logo_url: string
+          notes: string | null
+          customer_name: string
+          customer_company: string | null
+          customer_email: string
+          customer_phone: string
+          status: string
+          admin_notes: string | null
+          privacy_consent: boolean
+          access_token: string
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          product_type: string
+          quantity: number
+          print_colors?: number
+          logo_url: string
+          notes?: string | null
+          customer_name: string
+          customer_company?: string | null
+          customer_email: string
+          customer_phone: string
+          status?: string
+          admin_notes?: string | null
+          privacy_consent?: boolean
+          access_token?: string
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          product_type?: string
+          quantity?: number
+          print_colors?: number
+          logo_url?: string
+          notes?: string | null
+          customer_name?: string
+          customer_company?: string | null
+          customer_email?: string
+          customer_phone?: string
+          status?: string
+          admin_notes?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       product_variants: {
         Row: {
           id: string
@@ -127,6 +182,8 @@ export type Database = {
       product_requests: {
         Row: {
           admin_notes: string | null
+          privacy_consent: boolean
+          access_token: string
           created_at: string
           customer_address: string
           customer_city: string
@@ -149,6 +206,8 @@ export type Database = {
         }
         Insert: {
           admin_notes?: string | null
+          privacy_consent?: boolean
+          access_token?: string
           created_at?: string
           customer_address: string
           customer_city: string
@@ -171,6 +230,8 @@ export type Database = {
         }
         Update: {
           admin_notes?: string | null
+          privacy_consent?: boolean
+          access_token?: string
           created_at?: string
           customer_address?: string
           customer_city?: string

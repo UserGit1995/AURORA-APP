@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Mail, Settings, ClipboardList, Package, Tags, Clock, CalendarDays } from "lucide-react";
+import { Mail, Settings, ClipboardList, Package, Tags, Clock, CalendarDays, Palette } from "lucide-react";
 import { toast } from "sonner";
 import { listRequests, getOrderDestinationEmail, updateOrderDestinationEmail } from "@/lib/admin.functions";
 
@@ -91,7 +91,7 @@ function Dashboard() {
         </CardContent>
       </Card>
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Link to="/admin/requests">
           <Card className="transition hover:border-primary">
             <CardHeader>
@@ -127,6 +127,18 @@ function Dashboard() {
                 Categorie
               </CardTitle>
               <CardDescription>Organizza il catalogo per categorie.</CardDescription>
+            </CardHeader>
+            <CardContent className="text-sm text-primary">Gestisci →</CardContent>
+          </Card>
+        </Link>
+        <Link to="/admin/customizations">
+          <Card className="transition hover:border-primary">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Palette className="h-4 w-4 text-primary" />
+                Personalizzazioni
+              </CardTitle>
+              <CardDescription>Richieste logo su monouso e packaging.</CardDescription>
             </CardHeader>
             <CardContent className="text-sm text-primary">Gestisci →</CardContent>
           </Card>

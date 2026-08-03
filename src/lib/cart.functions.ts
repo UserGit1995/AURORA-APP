@@ -34,6 +34,9 @@ const cartRequestSchema = z.object({
   customerCity: z.string().trim().min(1).max(100),
   customerRegion: z.string().trim().min(1).max(100),
   customerNotes: z.string().trim().max(2000).optional().or(z.literal("")),
+  privacyConsent: z.literal(true, {
+    errorMap: () => ({ message: "Devi accettare l'informativa privacy per procedere" }),
+  }),
 });
 
 export const submitCartRequest = createServerFn({ method: "POST" })
@@ -95,6 +98,8 @@ export const submitCartRequest = createServerFn({ method: "POST" })
           total_amount: index === 0 ? itemSubtotal + shipping : itemSubtotal,
           status: "new",
           admin_notes: null,
+          privacy_consent: true,
+          access_token: generateUuid(),
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         };
@@ -173,6 +178,7 @@ export const submitCartRequest = createServerFn({ method: "POST" })
         subtotal: itemSubtotal,
         total_amount: index === 0 ? itemSubtotal + shipping : itemSubtotal,
         status: "new",
+        privacy_consent: true,
       };
     });
 
@@ -187,26 +193,43 @@ export const submitCartRequest = createServerFn({ method: "POST" })
         .eq("key", "order_destination_email")
         .maybeSingle();
       const destinationEmail = settingData?.value;
+      const total = rows.reduce((sum, r) => sum + r.total_amount, 0);
 
-      if (destinationEmail && process.env.FROM_EMAIL && process.env.LOVABLE_API_KEY) {
+      if (process.env.FROM_EMAIL && process.env.LOVABLE_API_KEY) {
         const { sendTemplateEmail } = await import("./email-templates/send-email");
-        const total = rows.reduce((sum, r) => sum + r.total_amount, 0);
-        await sendTemplateEmail("new_order", destinationEmail, {
+
+        if (destinationEmail) {
+          await sendTemplateEmail("new_order", destinationEmail, {
+            templateData: {
+              customerName: data.customerName,
+              customerEmail: data.customerEmail,
+              customerPhone: data.customerPhone || "",
+              productName: `Ordine con ${rows.length} articoli`,
+              quantity: rows.reduce((sum, r) => sum + (r.quantity || 0), 0),
+              totalAmount: total.toFixed(2),
+              orderUrl: `${process.env.APP_URL || ""}/admin/requests`,
+            },
+          }).catch((err) => {
+            console.error("Errore nell'invio dell'email automatica (admin):", err);
+          });
+        }
+
+        // Email di conferma al cliente, indipendente da quella dell'admin:
+        // parte comunque anche se l'email destinataria admin non è configurata.
+        await sendTemplateEmail("order_confirmation", data.customerEmail, {
           templateData: {
             customerName: data.customerName,
-            customerEmail: data.customerEmail,
-            customerPhone: data.customerPhone || "",
-            productName: `Ordine con ${rows.length} articoli`,
-            quantity: rows.reduce((sum, r) => sum + (r.quantity || 0), 0),
-            totalAmount: total.toFixed(2),
-            orderUrl: `${process.env.APP_URL || ""}/admin/requests`,
+            summaryLines: rows.map((r) => `${r.product_name} × ${r.quantity} — € ${Number(r.subtotal).toFixed(2)}`),
+            totalLabel: `€ ${total.toFixed(2)}`,
+            orderType: "ordine",
+            trackingUrl: `${process.env.APP_URL || ""}/ordine/gruppo/${orderGroupId}`,
           },
         }).catch((err) => {
-          console.error("Errore nell'invio dell'email automatica:", err);
+          console.error("Errore nell'invio dell'email di conferma al cliente:", err);
         });
       }
     } catch (emailErr) {
-      console.error("Non è stato possibile inviare l'email di notifica:", emailErr);
+      console.error("Non è stato possibile inviare le email di notifica:", emailErr);
     }
 
     const total = rows.reduce((sum, r) => sum + r.total_amount, 0);

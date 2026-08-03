@@ -32,6 +32,9 @@ function AuthenticatedLayout() {
             <Link to="/admin/requests" className="text-muted-foreground hover:text-foreground">
               Richieste
             </Link>
+            <Link to="/admin/customizations" className="text-muted-foreground hover:text-foreground">
+              Personalizzazioni
+            </Link>
             <SignOutButton />
           </div>
         </div>

@@ -70,6 +70,8 @@ export interface ProductRequest {
   total_amount: number;
   status: string;
   admin_notes: string | null;
+  privacy_consent?: boolean;
+  access_token?: string;
   created_at: string;
   updated_at: string;
 }
@@ -84,6 +86,7 @@ class MockDatabase {
   public categories: Category[] = [];
   public subcategories: Subcategory[] = [];
   public productVariants: ProductVariant[] = [];
+  public customizationRequests: any[] = [];
   public products: Product[] = [];
   public requests: ProductRequest[] = [];
   public settings: Setting[] = [];

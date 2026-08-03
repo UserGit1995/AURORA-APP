@@ -122,6 +122,9 @@ const requestSchema = z.object({
   customerCity: z.string().trim().min(1).max(100),
   customerRegion: z.string().trim().min(1).max(100),
   customerNotes: z.string().trim().max(2000).optional().or(z.literal("")),
+  privacyConsent: z.literal(true, {
+    errorMap: () => ({ message: "Devi accettare l'informativa privacy per procedere" }),
+  }),
 });
 
 function shippingFor(region: string) {
@@ -171,12 +174,14 @@ export const submitProductRequest = createServerFn({ method: "POST" })
         total_amount: total,
         status: "new",
         admin_notes: null,
+        privacy_consent: true,
+        access_token: generateUuid(),
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       };
 
       db.requests.push(newRequest);
-      return { id: newRequest.id, shipping, subtotal, total };
+      return { id: newRequest.id, shipping, subtotal, total, accessToken: newRequest.access_token };
     }
 
     const supabase = publicClient();
@@ -227,8 +232,9 @@ export const submitProductRequest = createServerFn({ method: "POST" })
         subtotal,
         total_amount: total,
         status: "new",
+        privacy_consent: true,
       })
-      .select("id")
+      .select("id, access_token")
       .single();
     if (error) throw error;
 
@@ -242,29 +248,91 @@ export const submitProductRequest = createServerFn({ method: "POST" })
 
       const destinationEmail = settingData?.value;
 
-      if (destinationEmail) {
-        console.log(`[Order Email] Notificando email di destinazione ordini: ${destinationEmail}`);
-        // Optionally send email using sendTemplateEmail if FROM_EMAIL and LOVABLE_API_KEY are configured
-        if (process.env.FROM_EMAIL && process.env.LOVABLE_API_KEY) {
-          const { sendTemplateEmail } = await import("./email-templates/send-email");
+      if (process.env.FROM_EMAIL && process.env.LOVABLE_API_KEY) {
+        const { sendTemplateEmail } = await import("./email-templates/send-email");
+
+        if (destinationEmail) {
+          console.log(`[Order Email] Notificando email di destinazione ordini: ${destinationEmail}`);
           await sendTemplateEmail("new_order", destinationEmail, {
             templateData: {
               customerName: data.customerName,
               customerEmail: data.customerEmail,
               customerPhone: data.customerPhone || "",
-              productName: product.name,
+              productName: productName,
               quantity: data.quantity,
               totalAmount: total.toFixed(2),
               orderUrl: `${process.env.APP_URL || ""}/admin/requests`
             }
           }).catch((err) => {
-            console.error("Errore nell'invio dell'email automatica:", err);
+            console.error("Errore nell'invio dell'email automatica (admin):", err);
           });
         }
+
+        // Email di conferma al cliente, indipendente da quella dell'admin
+        await sendTemplateEmail("order_confirmation", data.customerEmail, {
+          templateData: {
+            customerName: data.customerName,
+            summaryLines: [`${productName} × ${data.quantity} — € ${subtotal.toFixed(2)}`],
+            totalLabel: `€ ${total.toFixed(2)}`,
+            orderType: "ordine",
+            trackingUrl: `${process.env.APP_URL || ""}/ordine/${inserted.access_token}`,
+          },
+        }).catch((err) => {
+          console.error("Errore nell'invio dell'email di conferma al cliente:", err);
+        });
       }
     } catch (emailErr) {
-      console.error("Non è stato possibile inviare l'email di notifica o recuperare le impostazioni:", emailErr);
+      console.error("Non è stato possibile inviare le email di notifica o recuperare le impostazioni:", emailErr);
     }
 
-    return { id: inserted.id, shipping, subtotal, total };
+    return { id: inserted.id, shipping, subtotal, total, accessToken: inserted.access_token };
+  });
+
+// ------------------------------------------------------------
+// Stato ordine tramite link privato (nessun login, nessuna lista):
+// funzionano solo conoscendo esattamente il token/gruppo ricevuto
+// nell'email di conferma. Vedi migrazione 05 per il dettaglio di
+// sicurezza (funzioni SECURITY DEFINER, nessuna tabella resa
+// pubblicamente leggibile).
+// ------------------------------------------------------------
+
+export const getOrderByToken = createServerFn({ method: "GET" })
+  .inputValidator((data: { token: string }) => z.object({ token: z.string().uuid() }).parse(data))
+  .handler(async ({ data }) => {
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_PUBLISHABLE_KEY) {
+      const { db } = await import("./mockDb");
+      const row = db.requests.find((r: any) => r.access_token === data.token);
+      return row ? [row] : [];
+    }
+    const supabase = publicClient();
+    const { data: rows, error } = await supabase.rpc("get_order_by_token", { p_access_token: data.token });
+    if (error) throw error;
+    return rows ?? [];
+  });
+
+export const getOrderGroupById = createServerFn({ method: "GET" })
+  .inputValidator((data: { groupId: string }) => z.object({ groupId: z.string().uuid() }).parse(data))
+  .handler(async ({ data }) => {
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_PUBLISHABLE_KEY) {
+      const { db } = await import("./mockDb");
+      return db.requests.filter((r: any) => r.order_group_id === data.groupId);
+    }
+    const supabase = publicClient();
+    const { data: rows, error } = await supabase.rpc("get_order_group_by_id", { p_group_id: data.groupId });
+    if (error) throw error;
+    return rows ?? [];
+  });
+
+export const getCustomizationByToken = createServerFn({ method: "GET" })
+  .inputValidator((data: { token: string }) => z.object({ token: z.string().uuid() }).parse(data))
+  .handler(async ({ data }) => {
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_PUBLISHABLE_KEY) {
+      const { db } = await import("./mockDb");
+      const row = (db.customizationRequests ?? []).find((r: any) => r.access_token === data.token);
+      return row ?? null;
+    }
+    const supabase = publicClient();
+    const { data: rows, error } = await supabase.rpc("get_customization_by_token", { p_access_token: data.token });
+    if (error) throw error;
+    return rows?.[0] ?? null;
   });

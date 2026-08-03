@@ -43,6 +43,7 @@ function CartPage() {
     customerCity: "",
     customerRegion: "",
     customerNotes: "",
+    privacyConsent: false,
   });
 
   const subtotal = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
@@ -57,6 +58,10 @@ function CartPage() {
     }
     if (!form.customerRegion) {
       toast.error("Seleziona la regione");
+      return;
+    }
+    if (!form.privacyConsent) {
+      toast.error("Devi accettare l'informativa privacy per procedere");
       return;
     }
     setSubmitting(true);
@@ -186,7 +191,18 @@ function CartPage() {
                     <div className="flex justify-between"><span>Spedizione {form.customerRegion || "(scegli regione)"}</span><span>€ {shipping.toFixed(2)}</span></div>
                     <div className="mt-2 flex justify-between border-t border-border/50 pt-2 font-semibold"><span>Totale</span><span>€ {total.toFixed(2)}</span></div>
                   </div>
-                  <Button type="submit" className="w-full" disabled={submitting}>
+                  <label className="flex items-start gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      className="mt-1 h-4 w-4 rounded border-border"
+                      checked={form.privacyConsent}
+                      onChange={(e) => setForm({ ...form, privacyConsent: e.target.checked })}
+                    />
+                    <span>
+                      Ho letto e accetto l'<Link to="/privacy" target="_blank" className="text-primary underline">informativa privacy</Link> per l'invio di questo ordine.
+                    </span>
+                  </label>
+                  <Button type="submit" className="w-full" disabled={submitting || !form.privacyConsent}>
                     {submitting ? "Invio..." : "Invia ordine"}
                   </Button>
                 </form>

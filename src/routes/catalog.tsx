@@ -92,6 +92,9 @@ function Catalog() {
             <img src={logoAsset} alt="Aurora" className="h-10 w-auto" width={200} height={48} />
           </Link>
           <div className="flex items-center gap-2">
+            <Button asChild variant="outline" size="sm">
+              <Link to="/personalizza">🎨 Personalizza con il tuo logo</Link>
+            </Button>
             <CartLink />
             <Button asChild variant="ghost" size="sm">
               <Link to="/auth">Area riservata</Link>
