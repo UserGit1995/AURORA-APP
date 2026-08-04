@@ -18,6 +18,7 @@ import { PublicHeader } from "@/components/PublicHeader";
 const searchSchema = z.object({
   category: z.string().uuid().optional(),
   subcategory: z.string().uuid().optional(),
+  search: z.string().optional(),
 });
 
 const categoriesQO = queryOptions({
@@ -73,7 +74,7 @@ export const Route = createFileRoute("/catalog")({
 });
 
 function Catalog() {
-  const { category, subcategory } = Route.useSearch();
+  const { category, subcategory, search: searchFromUrl } = Route.useSearch();
   const { data: categories } = useSuspenseQuery(categoriesQO);
   // useQuery normale (non "suspense"): se la tabella sottocategorie/varianti
   // non esiste ancora nel database, qui arriva semplicemente un errore
@@ -82,7 +83,9 @@ function Catalog() {
   const { data: allSubcategories = [] } = useQuery({ ...subcategoriesQO, retry: false });
   const { data: allVariants = [] } = useQuery({ ...variantsQO, retry: false });
   const { data: allProducts } = useSuspenseQuery(productsQO(category));
-  const [search, setSearch] = useState("");
+  // Se si arriva da un'altra pagina con una ricerca già scritta nell'header
+  // (es. dalla Home), la casella qui parte già valorizzata con quel testo.
+  const [search, setSearch] = useState(searchFromUrl ?? "");
 
   const term = search.trim().toLowerCase();
   const textFiltered = term

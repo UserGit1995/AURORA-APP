@@ -1,7 +1,8 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { Menu, Home, Grid3x3, Palette, ShieldCheck, LogIn } from "lucide-react";
+import { Menu, Home, Grid3x3, Palette, ShieldCheck, LogIn, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle, SheetClose } from "@/components/ui/sheet";
 import logoAsset from "@/assets/aurora-logo.png";
 import { CartLink } from "@/components/CartLink";
@@ -14,17 +15,36 @@ const NAV_ITEMS = [
 ] as const;
 
 // Header unico per tutte le pagine pubbliche del sito, con menu ad
-// hamburger. Il carrello resta sempre visibile fuori dal menu, perché
-// è l'azione più usata e conviene trovarla subito.
+// hamburger e barra di ricerca sempre visibile. Cercare da qualsiasi
+// pagina porta al Catalogo già filtrato per quel termine.
 export function PublicHeader() {
   const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const navigate = useNavigate();
+
+  function handleSearchSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    const trimmed = query.trim();
+    navigate({ to: "/catalog", search: trimmed ? { search: trimmed } : {} });
+  }
 
   return (
     <header className="border-b border-border/40">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
-        <Link to="/" className="flex items-center">
+      <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-4">
+        <Link to="/" className="flex shrink-0 items-center">
           <img src={logoAsset} alt="Aurora" className="h-10 w-auto" width={200} height={48} />
         </Link>
+
+        <form onSubmit={handleSearchSubmit} className="relative hidden flex-1 max-w-sm sm:block">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Cerca un prodotto..."
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            className="pl-9"
+          />
+        </form>
+
         <div className="flex items-center gap-2">
           <CartLink />
           <Sheet open={open} onOpenChange={setOpen}>
@@ -37,6 +57,7 @@ export function PublicHeader() {
               <SheetHeader>
                 <SheetTitle>Menu</SheetTitle>
               </SheetHeader>
+
               <div className="mt-6 flex flex-col gap-1">
                 {NAV_ITEMS.map(({ to, label, icon: Icon }) => (
                   <SheetClose asChild key={to}>
@@ -64,6 +85,20 @@ export function PublicHeader() {
             </SheetContent>
           </Sheet>
         </div>
+      </div>
+
+      {/* Su schermi stretti la ricerca in linea è nascosta (sta nel menu):
+          qui sotto una seconda riga dedicata, sempre visibile su mobile. */}
+      <div className="border-t border-border/30 px-4 py-2 sm:hidden">
+        <form onSubmit={handleSearchSubmit} className="relative">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Cerca un prodotto..."
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            className="pl-9"
+          />
+        </form>
       </div>
     </header>
   );
