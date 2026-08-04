@@ -13,6 +13,7 @@ import { Minus, Plus, Trash2 } from "lucide-react";
 import logoAsset from "@/assets/aurora-logo.png";
 import { useCart } from "@/lib/cart-context";
 import { submitCartRequest } from "@/lib/cart.functions";
+import { PublicHeader } from "@/components/PublicHeader";
 
 const ITALIAN_REGIONS = [
   "Abruzzo","Basilicata","Calabria","Campania","Emilia-Romagna","Friuli-Venezia Giulia",
@@ -83,12 +84,7 @@ function CartPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b border-border/40">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
-          <Link to="/"><img src={logoAsset} alt="Aurora" className="h-10 w-auto" width={200} height={48} /></Link>
-          <Button asChild variant="ghost" size="sm"><Link to="/catalog">← Catalogo</Link></Button>
-        </div>
-      </header>
+      <PublicHeader />
 
       <div className="mx-auto max-w-5xl px-4 py-8">
         <h1 className="mb-6 text-2xl font-bold tracking-tight">Il tuo carrello</h1>

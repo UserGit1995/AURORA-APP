@@ -13,6 +13,7 @@ import { CartLink } from "@/components/CartLink";
 import { useCart } from "@/lib/cart-context";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
+import { PublicHeader } from "@/components/PublicHeader";
 
 const searchSchema = z.object({
   category: z.string().uuid().optional(),
@@ -102,22 +103,7 @@ function Catalog() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b border-border/40">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
-          <Link to="/">
-            <img src={logoAsset} alt="Aurora" className="h-10 w-auto" width={200} height={48} />
-          </Link>
-          <div className="flex items-center gap-2">
-            <Button asChild variant="outline" size="sm">
-              <Link to="/personalizza">🎨 Personalizza con il tuo logo</Link>
-            </Button>
-            <CartLink />
-            <Button asChild variant="ghost" size="sm">
-              <Link to="/auth">Area riservata</Link>
-            </Button>
-          </div>
-        </div>
-      </header>
+      <PublicHeader />
 
       <div className="mx-auto max-w-6xl px-4 py-8">
         <h1 className="mb-6 text-2xl font-bold tracking-tight">Catalogo</h1>

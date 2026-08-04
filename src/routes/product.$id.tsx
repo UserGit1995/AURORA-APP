@@ -16,6 +16,7 @@ import { getPublicProduct, listPublicVariants, submitProductRequest } from "@/li
 import { useCart } from "@/lib/cart-context";
 import { CartLink } from "@/components/CartLink";
 import { ShoppingCart } from "lucide-react";
+import { PublicHeader } from "@/components/PublicHeader";
 
 const ITALIAN_REGIONS = [
   "Abruzzo","Basilicata","Calabria","Campania","Emilia-Romagna","Friuli-Venezia Giulia",
@@ -126,15 +127,7 @@ function ProductPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b border-border/40">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
-          <Link to="/"><img src={logoAsset} alt="Aurora" className="h-10 w-auto" width={200} height={48} /></Link>
-          <div className="flex items-center gap-2">
-            <CartLink />
-            <Button asChild variant="ghost" size="sm"><Link to="/catalog">← Catalogo</Link></Button>
-          </div>
-        </div>
-      </header>
+      <PublicHeader />
 
       <div className="mx-auto grid max-w-5xl gap-8 px-4 py-8 lg:grid-cols-2">
         <div>

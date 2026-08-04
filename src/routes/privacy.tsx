@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import logoAsset from "@/assets/aurora-logo.png";
+import { PublicHeader } from "@/components/PublicHeader";
 
 export const Route = createFileRoute("/privacy")({
   component: PrivacyPage,
@@ -10,12 +11,7 @@ export const Route = createFileRoute("/privacy")({
 function PrivacyPage() {
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b border-border/40">
-        <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-4">
-          <Link to="/"><img src={logoAsset} alt="Aurora" className="h-10 w-auto" width={200} height={48} /></Link>
-          <Button asChild variant="ghost" size="sm"><Link to="/catalog">← Catalogo</Link></Button>
-        </div>
-      </header>
+      <PublicHeader />
 
       <div className="mx-auto max-w-3xl px-4 py-10 text-sm leading-relaxed text-muted-foreground">
         <h1 className="mb-2 text-2xl font-bold text-foreground">Informativa sulla Privacy</h1>

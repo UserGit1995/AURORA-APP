@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import logoAsset from "@/assets/aurora-logo.png";
 import { listPublicCategories, listPublicProducts } from "@/lib/public.functions";
 import { CartLink } from "@/components/CartLink";
+import { PublicHeader } from "@/components/PublicHeader";
 
 const categoriesQO = queryOptions({
   queryKey: ["public", "categories"],
@@ -39,22 +40,7 @@ function Home() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b border-border/40">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
-          <Link to="/" className="flex items-center">
-            <img src={logoAsset} alt="Aurora" className="h-10 w-auto" width={200} height={48} />
-          </Link>
-          <div className="flex gap-2">
-            <Button asChild variant="ghost" size="sm">
-              <Link to="/catalog">Catalogo</Link>
-            </Button>
-            <CartLink />
-            <Button asChild variant="outline" size="sm">
-              <Link to="/auth">Area riservata</Link>
-            </Button>
-          </div>
-        </div>
-      </header>
+      <PublicHeader />
 
       <section className="mx-auto max-w-6xl px-4 py-16 text-center">
         <img src={logoAsset} alt="Aurora" className="mx-auto mb-8 h-auto w-full max-w-sm" width={400} height={120} />

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import logoAsset from "@/assets/aurora-logo.png";
 import { getCustomizationByToken } from "@/lib/public.functions";
+import { PublicHeader } from "@/components/PublicHeader";
 
 const STATUS_LABELS: Record<string, string> = {
   new: "Ricevuta",
@@ -38,12 +39,7 @@ function CustomizationStatusPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b border-border/40">
-        <div className="mx-auto flex max-w-2xl items-center justify-between px-4 py-4">
-          <Link to="/"><img src={logoAsset} alt="Aurora" className="h-10 w-auto" width={200} height={48} /></Link>
-          <Button asChild variant="ghost" size="sm"><Link to="/catalog">Catalogo</Link></Button>
-        </div>
-      </header>
+      <PublicHeader />
 
       <div className="mx-auto max-w-2xl px-4 py-10">
         <h1 className="mb-6 text-2xl font-bold">La tua richiesta di personalizzazione</h1>

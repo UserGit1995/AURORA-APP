@@ -12,8 +12,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Upload, ImageIcon, Loader2, Camera } from "lucide-react";
+import { Upload, ImageIcon, Loader2, Camera, Plus } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/admin/products")({
@@ -42,6 +43,7 @@ function ProductsPage() {
   });
 
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [formOpen, setFormOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [scanning, setScanning] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -89,6 +91,11 @@ function ProductsPage() {
     }
   }
 
+  function openNewProductForm() {
+    resetForm();
+    setFormOpen(true);
+  }
+
   function startEdit(product: any) {
     setEditingId(product.id);
     setForm({
@@ -106,6 +113,7 @@ function ProductsPage() {
       minOrderQty: product.min_order_qty ? String(product.min_order_qty) : "1",
       unitLabel: product.unit_label || "",
     });
+    setFormOpen(true);
   }
 
   // Handle uploading image to Supabase storage bucket "products"
@@ -221,6 +229,7 @@ function ProductsPage() {
         toast.success("Prodotto creato");
       }
       resetForm();
+      setFormOpen(false);
       refetchProducts();
     } catch (err: any) {
       toast.error(err.message || "Errore");
@@ -243,7 +252,18 @@ function ProductsPage() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-semibold">Prodotti</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-semibold">Prodotti</h2>
+        <Button size="sm" onClick={openNewProductForm}>
+          <Plus className="h-4 w-4" /> Nuovo prodotto
+        </Button>
+      </div>
+
+      <Dialog open={formOpen} onOpenChange={(open) => { setFormOpen(open); if (!open) resetForm(); }}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{editingId ? "Modifica prodotto" : "Nuovo prodotto"}</DialogTitle>
+          </DialogHeader>
 
       <div className="mb-4 flex items-center gap-3 rounded-lg border border-dashed border-primary/40 bg-primary/5 p-4">
         <input
@@ -413,11 +433,13 @@ function ProductsPage() {
         </div>
         <div className="sm:col-span-2 pt-2">
           <Button type="submit">{editingId ? "Salva modifiche" : "Aggiungi prodotto"}</Button>
-          {editingId && <Button type="button" variant="ghost" onClick={resetForm} className="ml-2">Annulla</Button>}
+          <Button type="button" variant="ghost" onClick={() => { resetForm(); setFormOpen(false); }} className="ml-2">Annulla</Button>
         </div>
       </form>
 
       {editingId && <VariantsManager productId={editingId} />}
+        </DialogContent>
+      </Dialog>
 
       {/* Products Table list */}
       {productsIsError && (
@@ -440,7 +462,7 @@ function ProductsPage() {
         </TableHeader>
         <TableBody>
           {products.map((product: any) => (
-            <TableRow key={product.id}>
+            <TableRow key={product.id} className="cursor-pointer" onClick={() => startEdit(product)}>
               <TableCell className="font-medium">
                 <div className="flex items-center gap-3">
                   {product.image_url ? (
@@ -474,7 +496,7 @@ function ProductsPage() {
                   {product.is_active ? "Disponibile" : "Non Disponibile"}
                 </Badge>
               </TableCell>
-              <TableCell className="text-right">
+              <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                 <Button size="sm" variant="ghost" onClick={() => startEdit(product)}>Modifica</Button>
                 <Button size="sm" variant="ghost" className="text-destructive" onClick={() => handleDelete(product.id)}>Elimina</Button>
               </TableCell>

@@ -14,6 +14,7 @@ import logoAsset from "@/assets/aurora-logo.png";
 import { CartLink } from "@/components/CartLink";
 import { supabase } from "@/integrations/supabase/client";
 import { submitCustomizationRequest } from "@/lib/customization.functions";
+import { PublicHeader } from "@/components/PublicHeader";
 
 export const Route = createFileRoute("/personalizza")({
   component: PersonalizzaPage,
@@ -213,15 +214,7 @@ function PersonalizzaPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b border-border/40">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
-          <Link to="/"><img src={logoAsset} alt="Aurora" className="h-10 w-auto" width={200} height={48} /></Link>
-          <div className="flex items-center gap-2">
-            <CartLink />
-            <Button asChild variant="ghost" size="sm"><Link to="/catalog">← Catalogo</Link></Button>
-          </div>
-        </div>
-      </header>
+      <PublicHeader />
 
       <div className="mx-auto max-w-5xl px-4 py-8">
         <h1 className="mb-2 text-2xl font-bold tracking-tight">Personalizza il tuo Monouso</h1>
