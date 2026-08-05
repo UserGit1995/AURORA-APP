@@ -142,3 +142,56 @@
     color: var(--color-foreground);
   }
 }
+
+@layer utilities {
+  /*
+   * Il marchio si chiama "Aurora": questa sfumatura richiama l'aurora
+   * boreale (ciano + un violetto tenue), sfocata e posizionata in modo
+   * asimmetrico per non sembrare un blob generico centrato. Va usata con
+   * parsimonia — nell'hero e in pochi altri punti chiave, non ovunque.
+   */
+  .aurora-glow {
+    position: relative;
+    isolation: isolate;
+  }
+  .aurora-glow::before {
+    content: "";
+    position: absolute;
+    inset: -20% -10% auto -10%;
+    height: 140%;
+    z-index: -1;
+    background:
+      radial-gradient(ellipse 60% 50% at 20% 15%, oklch(from #47BCEE l c h / 30%), transparent 60%),
+      radial-gradient(ellipse 45% 40% at 80% 0%, oklch(from #8B7CF6 l c h / 22%), transparent 65%),
+      radial-gradient(ellipse 50% 45% at 55% 35%, oklch(from #4EEBC0 l c h / 12%), transparent 70%);
+    filter: blur(40px);
+    pointer-events: none;
+  }
+
+  /* Card con profondità reale: ombra a più livelli, si solleva leggermente
+     al passaggio del mouse, e il bordo si illumina invece di limitarsi a
+     cambiare colore. */
+  .card-elevated {
+    box-shadow:
+      0 1px 2px oklch(0 0 0 / 30%),
+      0 8px 24px -12px oklch(0 0 0 / 50%);
+    transition: transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease;
+  }
+  .card-elevated:hover {
+    transform: translateY(-3px);
+    border-color: oklch(from #47BCEE l c h / 60%);
+    box-shadow:
+      0 1px 2px oklch(0 0 0 / 30%),
+      0 16px 32px -14px oklch(0 0 0 / 60%),
+      0 0 0 1px oklch(from #47BCEE l c h / 15%),
+      0 0 24px -4px oklch(from #47BCEE l c h / 25%);
+  }
+
+  /* Header "di vetro": leggermente trasparente con sfocatura sullo sfondo,
+     invece di un blocco piatto a tinta unita. */
+  .glass-header {
+    background: oklch(from #0C0F18 l c h / 75%);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+}

@@ -29,7 +29,7 @@ export function PublicHeader() {
   }
 
   return (
-    <header className="border-b border-border/40">
+    <header className="glass-header sticky top-0 z-40 border-b border-border/40">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-4">
         <Link to="/" className="flex shrink-0 items-center">
           <img src={logoAsset} alt="Aurora" className="h-10 w-auto" width={200} height={48} />

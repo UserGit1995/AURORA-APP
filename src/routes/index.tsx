@@ -42,39 +42,56 @@ function Home() {
     <div className="min-h-screen bg-background">
       <PublicHeader />
 
-      <section className="mx-auto max-w-6xl px-4 py-16 text-center">
-        <img src={logoAsset} alt="Aurora" className="mx-auto mb-8 h-auto w-full max-w-sm" width={400} height={120} />
-        <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Prodotti selezionati, consegna curata.</h1>
-        <p className="mx-auto mt-4 max-w-xl text-muted-foreground">
-          Scegli un prodotto dal catalogo e invia la tua richiesta. Ti risponderemo per email per confermare disponibilità e consegna.
-        </p>
-        <div className="mt-8">
-          <Button asChild size="lg">
-            <Link to="/catalog">Vai al catalogo</Link>
-          </Button>
+      <section className="aurora-glow border-b border-border/40 px-4 py-20 text-center sm:py-28">
+        <div className="mx-auto max-w-3xl">
+          <img src={logoAsset} alt="Aurora" className="mx-auto mb-10 h-auto w-full max-w-xs" width={400} height={120} />
+          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.25em] text-primary">
+            Forniture Ho.Re.Ca &amp; Packaging
+          </p>
+          <h1 className="text-4xl font-bold leading-[1.1] tracking-tight sm:text-5xl">
+            Prodotti selezionati,<br className="hidden sm:block" /> consegna curata.
+          </h1>
+          <p className="mx-auto mt-5 max-w-xl text-base text-muted-foreground">
+            Scegli un prodotto dal catalogo e invia la tua richiesta. Ti risponderemo per email per confermare disponibilità e consegna.
+          </p>
+          <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
+            <Button asChild size="lg" className="shadow-[0_0_24px_-6px_oklch(from_#47BCEE_l_c_h_/_50%)]">
+              <Link to="/catalog">Vai al catalogo</Link>
+            </Button>
+            <Button asChild size="lg" variant="outline">
+              <Link to="/personalizza">Personalizza con il tuo logo</Link>
+            </Button>
+          </div>
         </div>
       </section>
 
       {categories.length > 0 && (
-        <section className="mx-auto max-w-6xl px-4 py-8">
-          <h2 className="mb-6 text-xl font-semibold">Categorie</h2>
-          <div className="flex flex-wrap gap-3">
+        <section className="mx-auto max-w-6xl px-4 py-14">
+          <h2 className="mb-1 text-xl font-semibold">Categorie</h2>
+          <p className="mb-6 text-sm text-muted-foreground">Sfoglia il catalogo per reparto.</p>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
             {categories.map((c) => (
-              <Button asChild key={c.id} variant="outline">
-                <Link to="/catalog" search={{ category: c.id }}>{c.name}</Link>
-              </Button>
+              <Link
+                key={c.id}
+                to="/catalog"
+                search={{ category: c.id }}
+                className="card-elevated rounded-lg border border-border bg-card px-4 py-6 text-center font-medium"
+              >
+                {c.name}
+              </Link>
             ))}
           </div>
         </section>
       )}
 
       {featured.length > 0 && (
-        <section className="mx-auto max-w-6xl px-4 py-12">
-          <h2 className="mb-6 text-xl font-semibold">In evidenza</h2>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <section className="mx-auto max-w-6xl px-4 py-14">
+          <h2 className="mb-1 text-xl font-semibold">In evidenza</h2>
+          <p className="mb-6 text-sm text-muted-foreground">Una selezione dal nostro catalogo.</p>
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {featured.map((p) => (
               <Link key={p.id} to="/product/$id" params={{ id: p.id }}>
-                <Card className="overflow-hidden transition hover:border-primary">
+                <Card className="card-elevated overflow-hidden border-border">
                   {p.image_url && (
                     <div className="aspect-video w-full overflow-hidden bg-muted">
                       <img src={p.image_url} alt={p.name} className="h-full w-full object-cover" loading="lazy" />
