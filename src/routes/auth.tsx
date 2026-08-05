@@ -55,8 +55,8 @@ function AuthPage() {
         </Link>
         <Card>
           <CardHeader>
-            <CardTitle>Area riservata</CardTitle>
-            <CardDescription>Accedi per gestire catalogo e richieste.</CardDescription>
+            <CardTitle>Benvenuto</CardTitle>
+            <CardDescription>Accedi al tuo account</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -85,6 +85,9 @@ function AuthPage() {
                 </span>
               )}
             </div>
+            <Button asChild variant="outline" className="mt-4 w-full">
+              <Link to="/catalog">Continua senza account</Link>
+            </Button>
           </CardContent>
         </Card>
       </div>

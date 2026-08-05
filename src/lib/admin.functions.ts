@@ -10,6 +10,7 @@ const categorySchema = z.object({
 const subcategorySchema = z.object({
   categoryId: z.string().uuid(),
   name: z.string().min(1).max(100),
+  imageUrl: z.string().url().max(1000).nullable().optional().or(z.literal("")),
   sortOrder: z.number().int().default(0),
 });
 
@@ -181,6 +182,7 @@ export const createSubcategory = createServerFn({ method: "POST" })
         id: generateUuid(),
         category_id: data.categoryId,
         name: data.name,
+        image_url: data.imageUrl || null,
         sort_order: data.sortOrder,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
@@ -190,7 +192,7 @@ export const createSubcategory = createServerFn({ method: "POST" })
     }
     const { data: subcategory, error } = await context.supabase
       .from("subcategories")
-      .insert({ category_id: data.categoryId, name: data.name, sort_order: data.sortOrder })
+      .insert({ category_id: data.categoryId, name: data.name, image_url: data.imageUrl || null, sort_order: data.sortOrder })
       .select()
       .single();
     if (error) throw new Error(error.message);
@@ -199,12 +201,13 @@ export const createSubcategory = createServerFn({ method: "POST" })
 
 export const updateSubcategory = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: { id: string; categoryId: string; name: string; sortOrder: number }) =>
+  .inputValidator((data: { id: string; categoryId: string; name: string; imageUrl?: string | null; sortOrder: number }) =>
     z
       .object({
         id: z.string().uuid(),
         categoryId: z.string().uuid(),
         name: z.string().min(1).max(100),
+        imageUrl: z.string().url().max(1000).nullable().optional().or(z.literal("")),
         sortOrder: z.number().int(),
       })
       .parse(data),
@@ -219,6 +222,7 @@ export const updateSubcategory = createServerFn({ method: "POST" })
           ...db.subcategories[idx],
           category_id: data.categoryId,
           name: data.name,
+          image_url: data.imageUrl || null,
           sort_order: data.sortOrder,
           updated_at: new Date().toISOString(),
         };
@@ -227,7 +231,7 @@ export const updateSubcategory = createServerFn({ method: "POST" })
     }
     const { error } = await context.supabase
       .from("subcategories")
-      .update({ category_id: data.categoryId, name: data.name, sort_order: data.sortOrder })
+      .update({ category_id: data.categoryId, name: data.name, image_url: data.imageUrl || null, sort_order: data.sortOrder })
       .eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };

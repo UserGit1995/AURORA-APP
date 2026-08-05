@@ -1,7 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useState } from "react";
+import { useState, useRef } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Upload, ImageIcon, Loader2 } from "lucide-react";
 import {
   listCategories,
   createCategory,
@@ -90,13 +92,45 @@ function CategoriesPage() {
   // --- Form sottocategoria ---
   const [subName, setSubName] = useState("");
   const [subCategoryId, setSubCategoryId] = useState("");
+  const [subImageUrl, setSubImageUrl] = useState("");
   const [subSortOrder, setSubSortOrder] = useState(0);
   const [editingSubId, setEditingSubId] = useState<string | null>(null);
+  const [subUploading, setSubUploading] = useState(false);
+  const subFileInputRef = useRef<HTMLInputElement>(null);
 
   function resetSubForm() {
     setSubName("");
+    setSubImageUrl("");
     setSubSortOrder(0);
     setEditingSubId(null);
+    if (subFileInputRef.current) subFileInputRef.current.value = "";
+  }
+
+  async function handleSubImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setSubUploading(true);
+    try {
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+      const filePath = `subcategory-images/${fileName}`;
+      const { error: uploadError } = await supabase.storage
+        .from("products")
+        .upload(filePath, file, { cacheControl: "3600", upsert: false });
+      if (uploadError) {
+        if (uploadError.message.includes("not found")) {
+          throw new Error("Il bucket di storage 'products' non esiste. Crealo prima nel pannello di Supabase Storage.");
+        }
+        throw uploadError;
+      }
+      const { data: { publicUrl } } = supabase.storage.from("products").getPublicUrl(filePath);
+      setSubImageUrl(publicUrl);
+      toast.success("Immagine caricata correttamente!");
+    } catch (err: any) {
+      toast.error("Errore nel caricamento dell'immagine: " + err.message);
+    } finally {
+      setSubUploading(false);
+    }
   }
 
   async function handleSubSubmit(e: React.FormEvent) {
@@ -107,10 +141,10 @@ function CategoriesPage() {
     }
     try {
       if (editingSubId) {
-        await updateSubcategoryFn({ data: { id: editingSubId, categoryId: subCategoryId, name: subName, sortOrder: subSortOrder } });
+        await updateSubcategoryFn({ data: { id: editingSubId, categoryId: subCategoryId, name: subName, imageUrl: subImageUrl || null, sortOrder: subSortOrder } });
         toast.success("Sottocategoria aggiornata");
       } else {
-        await createSubcategoryFn({ data: { categoryId: subCategoryId, name: subName, sortOrder: subSortOrder } });
+        await createSubcategoryFn({ data: { categoryId: subCategoryId, name: subName, imageUrl: subImageUrl || null, sortOrder: subSortOrder } });
         toast.success("Sottocategoria creata");
       }
       resetSubForm();
@@ -124,6 +158,7 @@ function CategoriesPage() {
     setEditingSubId(sub.id);
     setSubName(sub.name);
     setSubCategoryId(sub.category_id);
+    setSubImageUrl(sub.image_url || "");
     setSubSortOrder(sub.sort_order);
   }
 
@@ -226,6 +261,26 @@ function CategoriesPage() {
             <Label htmlFor="subsort">Ordine</Label>
             <Input id="subsort" type="number" value={subSortOrder} onChange={(e) => setSubSortOrder(parseInt(e.target.value, 10))} />
           </div>
+          <div className="space-y-2 sm:col-span-4">
+            <Label>Immagine sottocategoria (opzionale, ma consigliata: compare come card nel catalogo)</Label>
+            <div className="flex items-center gap-3">
+              {subImageUrl ? (
+                <img src={subImageUrl} alt="" className="h-14 w-20 rounded border object-cover" />
+              ) : (
+                <div className="flex h-14 w-20 items-center justify-center rounded border bg-muted text-muted-foreground">
+                  <ImageIcon className="h-5 w-5" />
+                </div>
+              )}
+              <input ref={subFileInputRef} type="file" accept="image/*" className="hidden" onChange={handleSubImageUpload} />
+              <Button type="button" variant="outline" size="sm" disabled={subUploading} onClick={() => subFileInputRef.current?.click()}>
+                {subUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                {subUploading ? "Carico..." : subImageUrl ? "Cambia immagine" : "Carica immagine"}
+              </Button>
+              {subImageUrl && (
+                <Button type="button" variant="ghost" size="sm" onClick={() => setSubImageUrl("")}>Rimuovi</Button>
+              )}
+            </div>
+          </div>
           <div className="sm:col-span-4">
             <Button type="submit">{editingSubId ? "Salva modifiche" : "Aggiungi sottocategoria"}</Button>
             {editingSubId && (
@@ -252,7 +307,18 @@ function CategoriesPage() {
             ) : (
               subcategories.map((sub: any) => (
                 <TableRow key={sub.id}>
-                  <TableCell>{sub.name}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      {sub.image_url ? (
+                        <img src={sub.image_url} alt="" className="h-8 w-12 rounded border object-cover" />
+                      ) : (
+                        <div className="flex h-8 w-12 items-center justify-center rounded border bg-muted text-muted-foreground">
+                          <ImageIcon className="h-3 w-3" />
+                        </div>
+                      )}
+                      {sub.name}
+                    </div>
+                  </TableCell>
                   <TableCell>{categoryName(sub.category_id)}</TableCell>
                   <TableCell>{sub.sort_order}</TableCell>
                   <TableCell className="text-right">

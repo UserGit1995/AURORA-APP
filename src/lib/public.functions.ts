@@ -30,13 +30,13 @@ export const listPublicCategories = createServerFn({ method: "GET" }).handler(as
 export const listPublicSubcategories = createServerFn({ method: "GET" }).handler(async () => {
   if (!process.env.SUPABASE_URL || !process.env.SUPABASE_PUBLISHABLE_KEY) {
     const { db } = await import("./mockDb");
-    return db.subcategories.map((s) => ({ id: s.id, category_id: s.category_id, name: s.name, sort_order: s.sort_order }));
+    return db.subcategories.map((s) => ({ id: s.id, category_id: s.category_id, name: s.name, image_url: s.image_url ?? null, sort_order: s.sort_order }));
   }
 
   const supabase = publicClient();
   const { data, error } = await supabase
     .from("subcategories")
-    .select("id, category_id, name, sort_order")
+    .select("id, category_id, name, image_url, sort_order")
     .order("sort_order", { ascending: true })
     .order("name", { ascending: true });
   if (error) throw error;

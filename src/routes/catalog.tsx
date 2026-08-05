@@ -5,7 +5,7 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
+import { Search, LayoutGrid, List } from "lucide-react";
 import logoAsset from "@/assets/aurora-logo.png";
 import { listPublicCategories, listPublicSubcategories, listPublicVariants, listPublicProducts } from "@/lib/public.functions";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -86,6 +86,7 @@ function Catalog() {
   // Se si arriva da un'altra pagina con una ricerca già scritta nell'header
   // (es. dalla Home), la casella qui parte già valorizzata con quel testo.
   const [search, setSearch] = useState(searchFromUrl ?? "");
+  const [subcategoryView, setSubcategoryView] = useState<"grid" | "list">("grid");
 
   const term = search.trim().toLowerCase();
   const textFiltered = term
@@ -103,6 +104,12 @@ function Catalog() {
   const subcategoriesForCategory = category
     ? allSubcategories.filter((s) => s.category_id === category)
     : [];
+
+  // Si mostra la griglia di card sottocategoria (stile merco.it) solo
+  // quando: c'è una categoria selezionata, ha sottocategorie, non se ne è
+  // ancora scelta una, e non si sta cercando (la ricerca salta la
+  // navigazione a step e va dritta ai risultati).
+  const showSubcategoryLanding = Boolean(category) && subcategoriesForCategory.length > 0 && !subcategory && !term;
 
   return (
     <div className="min-h-screen bg-background">
@@ -132,11 +139,81 @@ function Catalog() {
           ))}
         </div>
 
-        {category && subcategoriesForCategory.length > 0 && (
-          <div className="mb-8 flex flex-wrap gap-2 border-l-2 border-border pl-3">
-            <Button asChild variant={!subcategory ? "secondary" : "ghost"} size="sm">
-              <Link to="/catalog" search={{ category }}>Tutte le sottocategorie</Link>
-            </Button>
+        {/* Landing sottocategorie: quando si entra in una categoria che ne ha,
+            si vedono prima le card visive (come su merco.it), non subito i
+            prodotti — a meno che non si stia già cercando qualcosa. */}
+        {showSubcategoryLanding && (
+          <div>
+            <div className="mb-3 flex justify-end gap-1">
+              <Button
+                type="button"
+                variant={subcategoryView === "grid" ? "secondary" : "ghost"}
+                size="icon"
+                aria-label="Vista a griglia"
+                onClick={() => setSubcategoryView("grid")}
+              >
+                <LayoutGrid className="h-4 w-4" />
+              </Button>
+              <Button
+                type="button"
+                variant={subcategoryView === "list" ? "secondary" : "ghost"}
+                size="icon"
+                aria-label="Vista a lista"
+                onClick={() => setSubcategoryView("list")}
+              >
+                <List className="h-4 w-4" />
+              </Button>
+            </div>
+
+            {subcategoryView === "grid" ? (
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {subcategoriesForCategory.map((s) => (
+                  <Link
+                    key={s.id}
+                    to="/catalog"
+                    search={{ category, subcategory: s.id }}
+                    className="group overflow-hidden rounded-lg border border-border bg-card transition hover:border-primary"
+                  >
+                    <div className="aspect-[4/3] w-full overflow-hidden bg-muted">
+                      {s.image_url ? (
+                        <img src={s.image_url} alt={s.name} className="h-full w-full object-cover transition group-hover:scale-105" />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-sm text-muted-foreground">{s.name}</div>
+                      )}
+                    </div>
+                    <div className="p-3 text-center font-semibold">{s.name}</div>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col divide-y divide-border rounded-lg border border-border">
+                {subcategoriesForCategory.map((s) => (
+                  <Link
+                    key={s.id}
+                    to="/catalog"
+                    search={{ category, subcategory: s.id }}
+                    className="group flex items-center gap-4 bg-card p-3 transition hover:bg-accent"
+                  >
+                    <div className="h-14 w-20 shrink-0 overflow-hidden rounded bg-muted">
+                      {s.image_url ? (
+                        <img src={s.image_url} alt={s.name} className="h-full w-full object-cover" />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-[10px] text-muted-foreground">{s.name}</div>
+                      )}
+                    </div>
+                    <span className="font-semibold">{s.name}</span>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {subcategory && subcategoriesForCategory.length > 0 && (
+          <div className="mb-8 flex flex-wrap items-center gap-2 border-l-2 border-border pl-3">
+            <Link to="/catalog" search={{ category }} className="text-sm text-primary hover:underline">
+              ← Tutte le sottocategorie
+            </Link>
             {subcategoriesForCategory.map((s) => (
               <Button asChild key={s.id} variant={subcategory === s.id ? "secondary" : "ghost"} size="sm">
                 <Link to="/catalog" search={{ category, subcategory: s.id }}>{s.name}</Link>
@@ -145,12 +222,12 @@ function Catalog() {
           </div>
         )}
 
-        {products.length === 0 ? (
+        {showSubcategoryLanding ? null : products.length === 0 ? (
           <p className="text-muted-foreground">
             {term ? `Nessun prodotto trovato per "${search}".` : "Nessun prodotto disponibile in questa categoria."}
           </p>
         ) : category ? (
-          subcategory || subcategoriesForCategory.length === 0 ? (
+          subcategory || subcategoriesForCategory.length === 0 || term ? (
             <ProductGrid products={products} variants={allVariants} />
           ) : (
             <div className="space-y-10">
