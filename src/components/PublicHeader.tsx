@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { Menu, Home, Grid3x3, Palette, ShieldCheck, LogIn, Search } from "lucide-react";
+import { Menu, Home, Grid3x3, Tags, FileText, Palette, ShieldCheck, LogIn, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle, SheetClose } from "@/components/ui/sheet";
@@ -10,6 +10,8 @@ import { CartLink } from "@/components/CartLink";
 const NAV_ITEMS = [
   { to: "/", label: "Home", icon: Home },
   { to: "/catalog", label: "Catalogo", icon: Grid3x3 },
+  { to: "/catalog", label: "Categorie", icon: Tags },
+  { to: "/catalogo-pdf", label: "Catalogo PDF", icon: FileText },
   { to: "/personalizza", label: "Personalizza con il tuo logo", icon: Palette },
   { to: "/privacy", label: "Informativa Privacy", icon: ShieldCheck },
 ] as const;
@@ -60,7 +62,7 @@ export function PublicHeader() {
 
               <div className="mt-6 flex flex-col gap-1">
                 {NAV_ITEMS.map(({ to, label, icon: Icon }) => (
-                  <SheetClose asChild key={to}>
+                  <SheetClose asChild key={label}>
                     <Link
                       to={to}
                       activeOptions={{ exact: to === "/" }}

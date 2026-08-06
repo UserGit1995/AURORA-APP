@@ -659,3 +659,91 @@ export const updateOrderDestinationEmail = createServerFn({ method: "POST" })
     if (error) throw error;
     return { ok: true };
   });
+
+export const getWhatsappNumber = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await requireAdmin(context);
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_PUBLISHABLE_KEY) {
+      const { db } = await import("./mockDb");
+      const setting = db.settings.find(s => s.key === "whatsapp_number");
+      return { number: setting?.value || "" };
+    }
+    const { data, error } = await context.supabase
+      .from("settings")
+      .select("value")
+      .eq("key", "whatsapp_number")
+      .maybeSingle();
+    return { number: data?.value || "" };
+  });
+
+export const updateWhatsappNumber = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { number: string }) =>
+    z.object({ number: z.string().regex(/^\+?[0-9\s]{6,20}$/, "Numero non valido") }).parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    await requireAdmin(context);
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_PUBLISHABLE_KEY) {
+      const { db } = await import("./mockDb");
+      const idx = db.settings.findIndex(s => s.key === "whatsapp_number");
+      if (idx !== -1) {
+        db.settings[idx].value = data.number;
+      } else {
+        db.settings.push({ key: "whatsapp_number", value: data.number });
+      }
+      return { ok: true };
+    }
+    const { error } = await context.supabase
+      .from("settings")
+      .upsert({ key: "whatsapp_number", value: data.number });
+    if (error) throw error;
+    return { ok: true };
+  });
+
+// Nota interna per cliente: riusa la stessa tabella "settings" a chiave/valore,
+// con una chiave dedicata per ogni cliente (email). Evita di dover creare
+// una tabella nuova solo per questo.
+export const getCustomerNote = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { email: string }) => z.object({ email: z.string().email() }).parse(data))
+  .handler(async ({ data, context }) => {
+    await requireAdmin(context);
+    const key = `customer_note:${data.email.toLowerCase()}`;
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_PUBLISHABLE_KEY) {
+      const { db } = await import("./mockDb");
+      const setting = db.settings.find(s => s.key === key);
+      return { note: setting?.value || "" };
+    }
+    const { data: row } = await context.supabase
+      .from("settings")
+      .select("value")
+      .eq("key", key)
+      .maybeSingle();
+    return { note: row?.value || "" };
+  });
+
+export const updateCustomerNote = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { email: string; note: string }) =>
+    z.object({ email: z.string().email(), note: z.string().max(2000) }).parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    await requireAdmin(context);
+    const key = `customer_note:${data.email.toLowerCase()}`;
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_PUBLISHABLE_KEY) {
+      const { db } = await import("./mockDb");
+      const idx = db.settings.findIndex(s => s.key === key);
+      if (idx !== -1) {
+        db.settings[idx].value = data.note;
+      } else {
+        db.settings.push({ key, value: data.note });
+      }
+      return { ok: true };
+    }
+    const { error } = await context.supabase
+      .from("settings")
+      .upsert({ key, value: data.note });
+    if (error) throw error;
+    return { ok: true };
+  });
