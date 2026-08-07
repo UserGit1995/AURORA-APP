@@ -37,26 +37,6 @@ export const requireSupabaseAuth = createMiddleware({ type: 'function' }).server
     const SUPABASE_PUBLISHABLE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY;
 
     if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
-      const request = getRequest();
-      const authHeader = request?.headers?.get('authorization');
-      if (authHeader && authHeader.startsWith('Bearer mock-token.')) {
-        const token = authHeader.replace('Bearer mock-token.', '');
-        try {
-          const claimsBase64 = token.split('.')[0];
-          const claimsStr = Buffer.from(claimsBase64, 'base64').toString('utf-8');
-          const claims = JSON.parse(claimsStr);
-          return next({
-            context: {
-              supabase: {}, // Mock client placeholder
-              userId: claims.sub,
-              claims: claims,
-            },
-          });
-        } catch (e) {
-          throw new Error('Unauthorized: Invalid mock token');
-        }
-      }
-      
       const missing = [
         ...(!SUPABASE_URL ? ['SUPABASE_URL'] : []),
         ...(!SUPABASE_PUBLISHABLE_KEY ? ['SUPABASE_PUBLISHABLE_KEY'] : []),
@@ -109,20 +89,20 @@ export const requireSupabaseAuth = createMiddleware({ type: 'function' }).server
       }
     );
 
-    const { data, error } = await supabase.auth.getUser(token);
-    if (error || !data?.user) {
+    const { data, error } = await supabase.auth.getClaims(token);
+    if (error || !data?.claims) {
       throw new Error('Unauthorized: Invalid token');
     }
 
-    if (!data.user.id) {
+    if (!data.claims.sub) {
       throw new Error('Unauthorized: No user ID found in token');
     }
 
     return next({
       context: {
         supabase,
-        userId: data.user.id,
-        claims: data.user,
+        userId: data.claims.sub,
+        claims: data.claims,
       },
     });
   },

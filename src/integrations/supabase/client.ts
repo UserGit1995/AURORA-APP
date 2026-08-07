@@ -30,16 +30,20 @@ function createSupabaseFetch(supabaseKey: string): typeof fetch {
 function createSupabaseClient() {
   // Use import.meta.env for client-side (Vite build-time replacement)
   // Fall back to process.env for SSR (server-side rendering)
-  let SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
-  let SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_PUBLISHABLE_KEY;
+  const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
+  const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_PUBLISHABLE_KEY;
 
   if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
-    console.warn("[Supabase] Missing environment variables. Using placeholder client for local execution.");
-    SUPABASE_URL = "https://placeholder-project-id.supabase.co";
-    SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBsYWNlaG9sZGVyIiwicm9sZSI6ImFub24iLCJpYXQiOjE2MDAwMDAwMDAsImV4cCI6MTkwMDAwMDAwMH0.placeholder";
+    const missing = [
+      ...(!SUPABASE_URL ? ['SUPABASE_URL'] : []),
+      ...(!SUPABASE_PUBLISHABLE_KEY ? ['SUPABASE_PUBLISHABLE_KEY'] : []),
+    ];
+    const message = `Missing Supabase environment variable(s): ${missing.join(', ')}. Connect Supabase in Lovable Cloud.`;
+    console.error(`[Supabase] ${message}`);
+    throw new Error(message);
   }
 
-  const client = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+  return createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
     global: {
       fetch: createSupabaseFetch(SUPABASE_PUBLISHABLE_KEY),
     },
@@ -49,77 +53,6 @@ function createSupabaseClient() {
       autoRefreshToken: true,
     }
   });
-
-  const isMock = !import.meta.env.VITE_SUPABASE_URL && !process.env.SUPABASE_URL;
-  if (isMock && typeof window !== 'undefined') {
-    const mockAuth = {
-      ...client.auth,
-      signUp: async (credentials: any) => {
-        localStorage.setItem("mock_session", JSON.stringify({
-          access_token: "mock-token.eyJncm91cCI6ImFkbWluIiwic3ViIjoiMTExMTExMTEtMTExMS0xMTExLTExMTEtMTExMTExMTExMTExIn0.mock",
-          user: { id: "11111111-1111-1111-1111-111111111111", email: credentials.email }
-        }));
-        return { data: { user: { id: "11111111-1111-1111-1111-111111111111", email: credentials.email } }, error: null };
-      },
-      signInWithPassword: async (credentials: any) => {
-        localStorage.setItem("mock_session", JSON.stringify({
-          access_token: "mock-token.eyJncm91cCI6ImFkbWluIiwic3ViIjoiMTExMTExMTEtMTExMS0xMTExLTExMTEtMTExMTExMTExMTExIn0.mock",
-          user: { id: "11111111-1111-1111-1111-111111111111", email: credentials.email }
-        }));
-        return { data: { user: { id: "11111111-1111-1111-1111-111111111111", email: credentials.email } }, error: null };
-      },
-      signOut: async () => {
-        localStorage.removeItem("mock_session");
-        return { error: null };
-      },
-      getUser: async (token?: string) => {
-        const stored = localStorage.getItem("mock_session");
-        if (stored) {
-          const session = JSON.parse(stored);
-          return { data: { user: session.user }, error: null };
-        }
-        return { data: { user: null }, error: new Error("No session") };
-      },
-      getSession: async () => {
-        const stored = localStorage.getItem("mock_session");
-        if (stored) {
-          const session = JSON.parse(stored);
-          return { data: { session }, error: null };
-        }
-        return { data: { session: null }, error: null };
-      },
-      onAuthStateChange: (callback: any) => {
-        const handler = (e: Event) => {
-          const stored = localStorage.getItem("mock_session");
-          if (stored) {
-            callback("SIGNED_IN", JSON.parse(stored));
-          } else {
-            callback("SIGNED_OUT", null);
-          }
-        };
-        window.addEventListener("storage", handler);
-        // Trigger initial
-        const stored = localStorage.getItem("mock_session");
-        if (stored) {
-          setTimeout(() => callback("SIGNED_IN", JSON.parse(stored)), 0);
-        } else {
-          setTimeout(() => callback("SIGNED_OUT", null), 0);
-        }
-        return {
-          data: {
-            subscription: {
-              unsubscribe: () => {
-                window.removeEventListener("storage", handler);
-              }
-            }
-          }
-        };
-      }
-    };
-    Object.assign(client, { auth: mockAuth });
-  }
-
-  return client;
 }
 
 let _supabase: ReturnType<typeof createSupabaseClient> | undefined;
@@ -132,3 +65,4 @@ export const supabase = new Proxy({} as ReturnType<typeof createSupabaseClient>,
     return Reflect.get(_supabase, prop, receiver);
   },
 });
+

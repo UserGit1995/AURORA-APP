@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useSuspenseQuery, useQuery, queryOptions } from "@tanstack/react-query";
+import { useSuspenseQuery, queryOptions } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -10,13 +10,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
-import { Info } from "lucide-react";
-import logoAsset from "@/assets/aurora-logo.png";
-import { getPublicProduct, listPublicVariants, submitProductRequest } from "@/lib/public.functions";
-import { useCart } from "@/lib/cart-context";
-import { CartLink } from "@/components/CartLink";
-import { ShoppingCart } from "lucide-react";
-import { PublicHeader } from "@/components/PublicHeader";
+import logoAsset from "@/assets/logo.png.asset.json";
+import { getPublicProduct, submitProductRequest } from "@/lib/public.functions";
 
 const ITALIAN_REGIONS = [
   "Abruzzo","Basilicata","Calabria","Campania","Emilia-Romagna","Friuli-Venezia Giulia",
@@ -25,8 +20,7 @@ const ITALIAN_REGIONS = [
 ];
 
 function shippingFor(region: string) {
-  if (!region) return 0;
-  return region.trim().toLowerCase() === "lazio" ? 4.90 : 6.90;
+  return region.trim().toLowerCase() === "lazio" ? 3.5 : region ? 5.0 : 0;
 }
 
 const productQO = (id: string) =>
@@ -34,26 +28,14 @@ const productQO = (id: string) =>
     queryKey: ["public", "product", id],
     queryFn: () => getPublicProduct({ data: { id } }),
   });
-const variantsQO = queryOptions({
-  queryKey: ["public", "variants"],
-  queryFn: () => listPublicVariants(),
-});
 
 export const Route = createFileRoute("/product/$id")({
   loader: async ({ context, params }) => {
-    const [product] = await Promise.all([
-      context.queryClient.ensureQueryData(productQO(params.id)),
-    ]);
-    await context.queryClient.ensureQueryData(variantsQO).catch(() => {});
+    const product = await context.queryClient.ensureQueryData(productQO(params.id));
     return { product };
   },
   component: ProductPage,
-  errorComponent: ({ error }: { error: any }) => (
-    <div className="p-8 text-center">
-      <p className="mb-2 font-semibold text-destructive">Errore nel caricamento del prodotto</p>
-      <p className="text-sm text-muted-foreground">{error?.message || String(error)}</p>
-    </div>
-  ),
+  errorComponent: () => <div className="p-8 text-center">Errore.</div>,
   notFoundComponent: () => <div className="p-8 text-center">Prodotto non trovato.</div>,
 });
 
@@ -61,17 +43,10 @@ function ProductPage() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
   const { data: product } = useSuspenseQuery(productQO(id));
-  const { data: allVariants = [] } = useQuery({ ...variantsQO, retry: false });
-  const variants = allVariants.filter((v) => v.product_id === id)
-    .sort((a, b) => (a.sort_order - b.sort_order) || a.label.localeCompare(b.label));
-  const hasVariants = variants.length > 0;
-  const [variantId, setVariantId] = useState<string>("");
-  const selectedVariant = variants.find((v) => v.id === variantId);
-  const { addItem } = useCart();
   const submit = useServerFn(submitProductRequest);
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState({
-    quantity: product?.min_order_qty ?? 1,
+    quantity: 1,
     customerName: "",
     customerEmail: "",
     customerPhone: "",
@@ -79,7 +54,6 @@ function ProductPage() {
     customerCity: "",
     customerRegion: "",
     customerNotes: "",
-    privacyConsent: false,
   });
 
   if (!product) {
@@ -91,13 +65,8 @@ function ProductPage() {
     );
   }
 
-  const isOffer = product.is_offer && product.offer_price !== null && !selectedVariant;
-  const activePrice = selectedVariant?.price !== null && selectedVariant?.price !== undefined
-    ? Number(selectedVariant.price)
-    : isOffer ? Number(product.offer_price) : Number(product.price);
-
   const shipping = shippingFor(form.customerRegion);
-  const subtotal = activePrice * form.quantity;
+  const subtotal = Number(product.price) * form.quantity;
   const total = subtotal + shipping;
 
   async function handleSubmit(e: React.FormEvent) {
@@ -106,17 +75,9 @@ function ProductPage() {
       toast.error("Seleziona la regione");
       return;
     }
-    if (hasVariants && !variantId) {
-      toast.error("Scegli una variante prima di inviare la richiesta");
-      return;
-    }
-    if (!form.privacyConsent) {
-      toast.error("Devi accettare l'informativa privacy per procedere");
-      return;
-    }
     setSubmitting(true);
     try {
-      await submit({ data: { productId: product!.id, variantId: variantId || undefined, ...form } });
+      await submit({ data: { productId: product!.id, ...form } });
       navigate({ to: "/thanks" });
     } catch (err: any) {
       toast.error(err?.message ?? "Errore durante l'invio");
@@ -127,7 +88,12 @@ function ProductPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <PublicHeader />
+      <header className="border-b border-border/40">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
+          <Link to="/"><img src={logoAsset.url} alt="Aurora" className="h-10 w-auto" width={200} height={48} /></Link>
+          <Button asChild variant="ghost" size="sm"><Link to="/catalog">← Catalogo</Link></Button>
+        </div>
+      </header>
 
       <div className="mx-auto grid max-w-5xl gap-8 px-4 py-8 lg:grid-cols-2">
         <div>
@@ -139,97 +105,23 @@ function ProductPage() {
             </div>
           )}
           <h1 className="mt-6 text-2xl font-bold">{product.name}</h1>
-          {isOffer ? (
-            <div className="mt-2 flex items-baseline gap-3">
-              <span className="text-2xl font-bold text-primary">€ {Number(product.offer_price).toFixed(2)}</span>
-              <span className="text-sm text-muted-foreground line-through">€ {Number(product.price).toFixed(2)}</span>
-              <span className="text-xs font-bold uppercase tracking-wider text-red-500 bg-red-500/10 px-2 py-0.5 rounded">Offerta Speciale</span>
-            </div>
-          ) : (
-            <p className="mt-2 text-2xl text-primary">
-              € {activePrice.toFixed(2)}
-              {selectedVariant && <span className="ml-2 text-sm font-normal text-muted-foreground">({selectedVariant.label})</span>}
-            </p>
-          )}
-          {hasVariants && (
-            <div className="mt-4 max-w-xs">
-              <Label className="mb-1 block">Scegli variante</Label>
-              <Select value={variantId} onValueChange={setVariantId}>
-                <SelectTrigger><SelectValue placeholder="Seleziona..." /></SelectTrigger>
-                <SelectContent>
-                  {variants.map((v) => (
-                    <SelectItem key={v.id} value={v.id}>
-                      {v.label}{v.price !== null ? ` — € ${Number(v.price).toFixed(2)}` : ""}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
+          <p className="mt-2 text-2xl text-primary">€ {Number(product.price).toFixed(2)}</p>
           {product.description && (
             <p className="mt-4 whitespace-pre-line text-muted-foreground">{product.description}</p>
           )}
-
-          {/* Delivery Information Banner */}
-          <div className="mt-6 rounded-lg border border-primary/20 bg-primary/5 p-4 text-sm text-muted-foreground space-y-2">
-            <div className="flex items-center gap-2 font-semibold text-foreground">
-              <Info className="h-4 w-4 text-primary" />
-              <span>Informazioni sulla Spedizione</span>
-            </div>
-            <p className="leading-relaxed">
-              Le consegne vengono effettuate entro <strong>24/48 h lavorative</strong> in tutto il <strong>Lazio</strong> con spese di spedizione di <strong>€ 4 e 90 cent.</strong> mentre il costo di spedizione su <strong>altre regioni italiane</strong> è di <strong>€ 6 e 90 cent</strong> entro <strong>5 giorni lavorativi</strong>.
-            </p>
-          </div>
         </div>
-
-        <div className="space-y-4">
-          <Card>
-            <CardContent className="p-6">
-              <h2 className="mb-2 text-lg font-semibold">Aggiungi al carrello</h2>
-              <p className="mb-4 text-sm text-muted-foreground">
-                Vuoi ordinare più prodotti insieme? Aggiungili al carrello e completa un solo ordine alla fine.
-              </p>
-              <Button
-                type="button"
-                className="w-full"
-                disabled={hasVariants && !variantId}
-                onClick={() => {
-                  addItem({
-                    productId: product!.id,
-                    variantId: selectedVariant?.id ?? null,
-                    variantLabel: selectedVariant?.label ?? null,
-                    name: product!.name,
-                    price: activePrice,
-                    imageUrl: product!.image_url,
-                    minOrderQty: product!.min_order_qty ?? 1,
-                    unitLabel: product!.unit_label ?? null,
-                  }, form.quantity);
-                  toast.success(`${product!.name}${selectedVariant ? ` (${selectedVariant.label})` : ""} aggiunto al carrello`);
-                }}
-              >
-                <ShoppingCart className="h-4 w-4" /> {hasVariants && !variantId ? "Scegli una variante" : "Aggiungi al carrello"}
-              </Button>
-            </CardContent>
-          </Card>
 
         <Card>
           <CardContent className="p-6">
-            <h2 className="mb-2 text-lg font-semibold">Oppure ordina subito solo questo prodotto</h2>
+            <h2 className="mb-2 text-lg font-semibold">Ordina questo prodotto</h2>
             <Alert className="mb-4">
               <AlertDescription>Pagamento alla consegna. Ti contattiamo per confermare.</AlertDescription>
             </Alert>
             <form onSubmit={handleSubmit} className="space-y-3">
               <div>
-                <Label>
-                  Quantità
-                  {product && product.min_order_qty && product.min_order_qty > 1 && (
-                    <span className="ml-1 text-xs font-normal text-muted-foreground">
-                      (minimo {product.min_order_qty}{product.unit_label ? ` ${product.unit_label}` : ""})
-                    </span>
-                  )}
-                </Label>
-                <Input type="number" min={product?.min_order_qty ?? 1} max={999} value={form.quantity}
-                  onChange={(e) => setForm({ ...form, quantity: Math.max(product?.min_order_qty ?? 1, parseInt(e.target.value || "1", 10)) })} />
+                <Label>Quantità</Label>
+                <Input type="number" min={1} max={999} value={form.quantity}
+                  onChange={(e) => setForm({ ...form, quantity: Math.max(1, parseInt(e.target.value || "1", 10)) })} />
               </div>
               <div>
                 <Label>Nome e cognome</Label>
@@ -271,24 +163,12 @@ function ProductPage() {
                 <div className="flex justify-between"><span>Spedizione {form.customerRegion || "(scegli regione)"}</span><span>€ {shipping.toFixed(2)}</span></div>
                 <div className="mt-2 flex justify-between border-t border-border/50 pt-2 font-semibold"><span>Totale</span><span>€ {total.toFixed(2)}</span></div>
               </div>
-              <label className="flex items-start gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  className="mt-1 h-4 w-4 rounded border-border"
-                  checked={form.privacyConsent}
-                  onChange={(e) => setForm({ ...form, privacyConsent: e.target.checked })}
-                />
-                <span>
-                  Ho letto e accetto l'<Link to="/privacy" target="_blank" className="text-primary underline">informativa privacy</Link> per l'invio di questa richiesta.
-                </span>
-              </label>
-              <Button type="submit" className="w-full" disabled={submitting || (hasVariants && !variantId) || !form.privacyConsent}>
-                {submitting ? "Invio..." : hasVariants && !variantId ? "Scegli una variante" : "Invia richiesta"}
+              <Button type="submit" className="w-full" disabled={submitting}>
+                {submitting ? "Invio..." : "Invia richiesta"}
               </Button>
             </form>
           </CardContent>
         </Card>
-        </div>
       </div>
     </div>
   );

@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import logoAsset from "@/assets/aurora-logo.png";
+import logoAsset from "@/assets/logo.png.asset.json";
 
 export const Route = createFileRoute("/auth")({
   component: AuthPage,
@@ -51,12 +51,12 @@ function AuthPage() {
     <div className="flex min-h-screen items-center justify-center bg-background px-4 py-8">
       <div className="w-full max-w-sm">
         <Link to="/" className="mb-8 flex justify-center">
-          <img src={logoAsset} alt="Aurora" className="h-auto w-full max-w-[240px]" width={240} height={72} />
+          <img src={logoAsset.url} alt="Aurora" className="h-auto w-full max-w-[240px]" width={240} height={72} />
         </Link>
         <Card>
           <CardHeader>
-            <CardTitle>Benvenuto</CardTitle>
-            <CardDescription>Accedi al tuo account</CardDescription>
+            <CardTitle>Area riservata</CardTitle>
+            <CardDescription>Accedi per gestire catalogo e richieste.</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -85,9 +85,6 @@ function AuthPage() {
                 </span>
               )}
             </div>
-            <Button asChild variant="outline" className="mt-4 w-full">
-              <Link to="/catalog">Continua senza account</Link>
-            </Button>
           </CardContent>
         </Card>
       </div>
