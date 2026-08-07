@@ -47,7 +47,7 @@ export const requireSupabaseAuth = createMiddleware({ type: 'function' }).server
           const claims = JSON.parse(claimsStr);
           return next({
             context: {
-              supabase: {} as any, // Mock client placeholder
+              supabase: {}, // Mock client placeholder
               userId: claims.sub,
               claims: claims,
             },
@@ -120,7 +120,7 @@ export const requireSupabaseAuth = createMiddleware({ type: 'function' }).server
 
     return next({
       context: {
-        supabase: supabase as any,
+        supabase,
         userId: data.user.id,
         claims: data.user,
       },

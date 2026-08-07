@@ -1,10 +1,8 @@
-import {StrictMode} from 'react';
-import {createRoot} from 'react-dom/client';
-import App from './App.tsx';
-import './index.css';
+import { hydrateRoot } from "react-dom/client";
+import { StartClient } from "@tanstack/react-start";
+import { getRouter } from "./router";
+import "./styles.css";
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-);
+const router = getRouter();
+
+hydrateRoot(document.getElementById("root")!, <StartClient router={router} />);

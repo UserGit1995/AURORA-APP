@@ -249,7 +249,7 @@ function ProductGrid({ products, variants }: { products: PublicProduct[]; varian
       {products.map((p) => {
         const variantsForProduct = variants
           .filter((v) => v.product_id === p.id)
-          .sort((a, b) => ((a.sort_order ?? 0) - (b.sort_order ?? 0)) || a.label.localeCompare(b.label));
+          .sort((a, b) => (a.sort_order - b.sort_order) || a.label.localeCompare(b.label));
         return <ProductCard key={p.id} product={p} variants={variantsForProduct} />;
       })}
     </div>

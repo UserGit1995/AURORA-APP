@@ -31,9 +31,8 @@ function OrderGroupStatusPage() {
   const { groupId } = Route.useParams();
   const { data: rows } = useSuspenseQuery(groupQO(groupId));
 
-  const items = Array.isArray(rows) ? rows : [];
-  const total = items.reduce((sum, r: any) => sum + Number(r.total_amount || 0), 0);
-  const first = items[0];
+  const total = rows.reduce((sum, r: any) => sum + Number(r.total_amount || 0), 0);
+  const first = rows[0];
 
   return (
     <div className="min-h-screen bg-background">
@@ -42,7 +41,7 @@ function OrderGroupStatusPage() {
       <div className="mx-auto max-w-2xl px-4 py-10">
         <h1 className="mb-6 text-2xl font-bold">Il tuo ordine</h1>
 
-        {items.length === 0 ? (
+        {rows.length === 0 ? (
           <p className="text-muted-foreground">
             Non troviamo nessun ordine con questo link. Controlla di aver copiato l'indirizzo per intero
             dall'email, oppure contattaci se il problema persiste.
@@ -51,7 +50,7 @@ function OrderGroupStatusPage() {
           <div className="rounded-lg border border-border bg-card/50 p-6">
             <Badge className="mb-4">{STATUS_LABELS[first.status] ?? first.status}</Badge>
             <div className="space-y-1 text-sm">
-              {items.map((r: any) => (
+              {rows.map((r: any) => (
                 <div key={r.id} className="flex justify-between border-b border-border/30 py-1">
                   <span>{r.product_name} × {r.quantity}</span>
                   <span>€ {(Number(r.product_price) * r.quantity).toFixed(2)}</span>

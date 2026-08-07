@@ -12,7 +12,7 @@ async function requireAdmin(context: { supabase: any; userId: string }) {
 
 export const listWhatsappContacts = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }: any) => {
+  .handler(async ({ context }) => {
     await requireAdmin(context);
     if (!process.env.SUPABASE_URL || !process.env.SUPABASE_PUBLISHABLE_KEY) return [];
     const { data, error } = await context.supabase
@@ -26,7 +26,7 @@ export const listWhatsappContacts = createServerFn({ method: "GET" })
 export const listWhatsappMessages = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: { contactId: string }) => z.object({ contactId: z.string().uuid() }).parse(data))
-  .handler(async ({ data, context }: any) => {
+  .handler(async ({ data, context }) => {
     await requireAdmin(context);
     if (!process.env.SUPABASE_URL || !process.env.SUPABASE_PUBLISHABLE_KEY) return [];
     const { data: rows, error } = await context.supabase
@@ -41,7 +41,7 @@ export const listWhatsappMessages = createServerFn({ method: "GET" })
 export const markContactRead = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: { contactId: string }) => z.object({ contactId: z.string().uuid() }).parse(data))
-  .handler(async ({ data, context }: any) => {
+  .handler(async ({ data, context }) => {
     await requireAdmin(context);
     if (!process.env.SUPABASE_URL || !process.env.SUPABASE_PUBLISHABLE_KEY) return { ok: true };
     await context.supabase.from("whatsapp_contacts").update({ unread_count: 0 }).eq("id", data.contactId);
@@ -53,7 +53,7 @@ export const setContactArchived = createServerFn({ method: "POST" })
   .inputValidator((data: { contactId: string; archived: boolean }) =>
     z.object({ contactId: z.string().uuid(), archived: z.boolean() }).parse(data),
   )
-  .handler(async ({ data, context }: any) => {
+  .handler(async ({ data, context }) => {
     await requireAdmin(context);
     if (!process.env.SUPABASE_URL || !process.env.SUPABASE_PUBLISHABLE_KEY) return { ok: true };
     const { error } = await context.supabase
@@ -69,7 +69,7 @@ export const updateContactNotes = createServerFn({ method: "POST" })
   .inputValidator((data: { contactId: string; notes: string }) =>
     z.object({ contactId: z.string().uuid(), notes: z.string().max(2000) }).parse(data),
   )
-  .handler(async ({ data, context }: any) => {
+  .handler(async ({ data, context }) => {
     await requireAdmin(context);
     if (!process.env.SUPABASE_URL || !process.env.SUPABASE_PUBLISHABLE_KEY) return { ok: true };
     const { error } = await context.supabase
@@ -86,7 +86,7 @@ export const updateContactNotes = createServerFn({ method: "POST" })
 export const getContactOrderHistory = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: { phone: string }) => z.object({ phone: z.string() }).parse(data))
-  .handler(async ({ data, context }: any) => {
+  .handler(async ({ data, context }) => {
     await requireAdmin(context);
     if (!process.env.SUPABASE_URL || !process.env.SUPABASE_PUBLISHABLE_KEY) return [];
     const digits = data.phone.replace(/[^0-9]/g, "").slice(-9); // confronto sulle ultime 9 cifre, per tollerare prefissi scritti diversamente
@@ -106,7 +106,7 @@ const createContactSchema = z.object({
 export const createWhatsappContact = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => createContactSchema.parse(data))
-  .handler(async ({ data, context }: any) => {
+  .handler(async ({ data, context }) => {
     await requireAdmin(context);
     if (!process.env.SUPABASE_URL || !process.env.SUPABASE_PUBLISHABLE_KEY) {
       throw new Error("Disponibile solo con Supabase collegato.");
@@ -134,7 +134,7 @@ const sendMessageSchema = z.object({
 export const sendWhatsappMessage = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => sendMessageSchema.parse(data))
-  .handler(async ({ data, context }: any) => {
+  .handler(async ({ data, context }) => {
     await requireAdmin(context);
     if (!process.env.SUPABASE_URL || !process.env.SUPABASE_PUBLISHABLE_KEY) {
       throw new Error("Disponibile solo con Supabase collegato.");
@@ -199,7 +199,7 @@ export const sendWhatsappMessage = createServerFn({ method: "POST" })
 export const generateAiSuggestions = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: { contactId: string }) => z.object({ contactId: z.string().uuid() }).parse(data))
-  .handler(async ({ data, context }: any) => {
+  .handler(async ({ data, context }) => {
     await requireAdmin(context);
 
     const apiKey = process.env.GEMINI_API_KEY;
@@ -269,7 +269,7 @@ Restituisci SOLO un oggetto JSON valido, senza testo prima o dopo, senza blocchi
 
 export const listWhatsappTemplates = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }: any) => {
+  .handler(async ({ context }) => {
     await requireAdmin(context);
     if (!process.env.SUPABASE_URL || !process.env.SUPABASE_PUBLISHABLE_KEY) return [];
     const { data, error } = await context.supabase.from("whatsapp_templates").select("*").order("created_at", { ascending: false });
@@ -286,7 +286,7 @@ const templateSchema = z.object({
 export const createWhatsappTemplate = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => templateSchema.parse(data))
-  .handler(async ({ data, context }: any) => {
+  .handler(async ({ data, context }) => {
     await requireAdmin(context);
     if (!process.env.SUPABASE_URL || !process.env.SUPABASE_PUBLISHABLE_KEY) {
       throw new Error("Disponibile solo con Supabase collegato.");
@@ -303,7 +303,7 @@ export const createWhatsappTemplate = createServerFn({ method: "POST" })
 export const deleteWhatsappTemplate = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: { id: string }) => z.object({ id: z.string().uuid() }).parse(data))
-  .handler(async ({ data, context }: any) => {
+  .handler(async ({ data, context }) => {
     await requireAdmin(context);
     if (!process.env.SUPABASE_URL || !process.env.SUPABASE_PUBLISHABLE_KEY) return { ok: true };
     const { error } = await context.supabase.from("whatsapp_templates").delete().eq("id", data.id);

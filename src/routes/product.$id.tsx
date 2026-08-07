@@ -63,7 +63,7 @@ function ProductPage() {
   const { data: product } = useSuspenseQuery(productQO(id));
   const { data: allVariants = [] } = useQuery({ ...variantsQO, retry: false });
   const variants = allVariants.filter((v) => v.product_id === id)
-    .sort((a, b) => ((a.sort_order ?? 0) - (b.sort_order ?? 0)) || a.label.localeCompare(b.label));
+    .sort((a, b) => (a.sort_order - b.sort_order) || a.label.localeCompare(b.label));
   const hasVariants = variants.length > 0;
   const [variantId, setVariantId] = useState<string>("");
   const selectedVariant = variants.find((v) => v.id === variantId);
