@@ -21,7 +21,7 @@ const scanSchema = z.object({
 export const scanProductPhoto = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => scanSchema.parse(data))
-  .handler(async ({ data, context }) => {
+  .handler(async ({ data, context }: any) => {
     await requireAdmin(context);
 
     const apiKey = process.env.GEMINI_API_KEY;

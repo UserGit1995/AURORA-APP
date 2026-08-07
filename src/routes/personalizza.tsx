@@ -9,7 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
-import { Upload, Info, RotateCcw, Sparkles, Move, Check, Box, Palette } from "lucide-react";
+import { Upload, Info, RotateCcw, Move, Check, Box, Palette } from "lucide-react";
 import logoAsset from "@/assets/aurora-logo.png";
 import { supabase } from "@/integrations/supabase/client";
 import { submitCustomizationRequest } from "@/lib/customization.functions";
@@ -282,9 +282,6 @@ function PersonalizzaPage() {
 
       <div className="mx-auto max-w-6xl px-4 py-8">
         <div className="mb-8 text-center sm:text-left">
-          <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-xs font-semibold text-primary mb-2">
-            <Sparkles className="h-3.5 w-3.5" /> Studio 3D Personalizzazione Monouso e Asporto
-          </div>
           <h1 className="text-3xl font-bold tracking-tight">Personalizza il tuo Monouso in 3D</h1>
           <p className="mt-1 text-muted-foreground max-w-3xl">
             Scegli la categoria specifica, seleziona il modello e il colore base del materiale e carica il tuo logo.

@@ -132,7 +132,7 @@ export const submitCustomizationRequest = createServerFn({ method: "POST" })
 
 export const listCustomizationRequests = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .handler(async ({ context }: any) => {
     await requireAdmin(context);
     if (!process.env.SUPABASE_URL || !process.env.SUPABASE_PUBLISHABLE_KEY) {
       const { db } = await import("./mockDb");
@@ -168,7 +168,7 @@ export const updateCustomizationStatus = createServerFn({ method: "POST" })
       })
       .parse(data),
   )
-  .handler(async ({ data, context }) => {
+  .handler(async ({ data, context }: any) => {
     await requireAdmin(context);
     if (!process.env.SUPABASE_URL || !process.env.SUPABASE_PUBLISHABLE_KEY) {
       const { db } = await import("./mockDb");
@@ -193,7 +193,7 @@ export const updateCustomizationStatus = createServerFn({ method: "POST" })
 export const deleteCustomizationRequest = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: { id: string }) => z.object({ id: z.string().uuid() }).parse(data))
-  .handler(async ({ data, context }) => {
+  .handler(async ({ data, context }: any) => {
     await requireAdmin(context);
     if (!process.env.SUPABASE_URL || !process.env.SUPABASE_PUBLISHABLE_KEY) {
       const { db } = await import("./mockDb");

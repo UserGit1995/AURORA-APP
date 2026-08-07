@@ -305,7 +305,7 @@ export const getOrderByToken = createServerFn({ method: "GET" })
       return row ? [row] : [];
     }
     const supabase = publicClient();
-    const { data: rows, error } = await supabase.rpc("get_order_by_token", { p_access_token: data.token });
+    const { data: rows, error } = await (supabase as any).rpc("get_order_by_token", { p_access_token: data.token });
     if (error) throw error;
     return rows ?? [];
   });
@@ -318,7 +318,7 @@ export const getOrderGroupById = createServerFn({ method: "GET" })
       return db.requests.filter((r: any) => r.order_group_id === data.groupId);
     }
     const supabase = publicClient();
-    const { data: rows, error } = await supabase.rpc("get_order_group_by_id", { p_group_id: data.groupId });
+    const { data: rows, error } = await (supabase as any).rpc("get_order_group_by_id", { p_group_id: data.groupId });
     if (error) throw error;
     return rows ?? [];
   });
@@ -332,7 +332,7 @@ export const getCustomizationByToken = createServerFn({ method: "GET" })
       return row ?? null;
     }
     const supabase = publicClient();
-    const { data: rows, error } = await supabase.rpc("get_customization_by_token", { p_access_token: data.token });
+    const { data: rows, error } = await (supabase as any).rpc("get_customization_by_token", { p_access_token: data.token });
     if (error) throw error;
     return rows?.[0] ?? null;
   });
