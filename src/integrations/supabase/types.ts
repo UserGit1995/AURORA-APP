@@ -129,6 +129,114 @@ export type Database = {
           },
         ]
       }
+      whatsapp_contacts: {
+        Row: {
+          id: string
+          phone: string
+          name: string
+          email: string | null
+          company: string | null
+          unread_count: number
+          last_message: string | null
+          last_message_at: string | null
+          notes: string | null
+          archived: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          phone: string
+          name?: string
+          email?: string | null
+          company?: string | null
+          unread_count?: number
+          last_message?: string | null
+          last_message_at?: string | null
+          notes?: string | null
+          archived?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          phone?: string
+          name?: string
+          email?: string | null
+          company?: string | null
+          unread_count?: number
+          last_message?: string | null
+          last_message_at?: string | null
+          notes?: string | null
+          archived?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      whatsapp_messages: {
+        Row: {
+          id: string
+          contact_id: string
+          sender: string
+          content: string
+          message_type: string
+          status: string
+          meta_message_id: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          contact_id: string
+          sender: string
+          content: string
+          message_type?: string
+          status?: string
+          meta_message_id?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          contact_id?: string
+          sender?: string
+          content?: string
+          message_type?: string
+          status?: string
+          meta_message_id?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
+      whatsapp_templates: {
+        Row: {
+          id: string
+          name: string
+          category: string
+          language: string
+          body: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          category?: string
+          language?: string
+          body: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          category?: string
+          language?: string
+          body?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       subcategories: {
         Row: {
           category_id: string

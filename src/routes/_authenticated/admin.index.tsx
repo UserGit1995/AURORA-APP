@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Mail, Settings, ClipboardList, Package, Tags, Clock, CalendarDays, Palette } from "lucide-react";
+import { Mail, MessageCircle, Settings, ClipboardList, Package, Tags, Clock, CalendarDays, Palette, Users } from "lucide-react";
 import { toast } from "sonner";
 import { listRequests, getOrderDestinationEmail, updateOrderDestinationEmail } from "@/lib/admin.functions";
 
@@ -141,6 +141,30 @@ function Dashboard() {
               <CardDescription>Richieste logo su monouso e packaging.</CardDescription>
             </CardHeader>
             <CardContent className="text-sm text-primary">Gestisci →</CardContent>
+          </Card>
+        </Link>
+        <Link to="/admin/customers">
+          <Card className="transition hover:border-primary">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-4 w-4 text-primary" />
+                Clienti
+              </CardTitle>
+              <CardDescription>Schede cliente, storico ordini e note.</CardDescription>
+            </CardHeader>
+            <CardContent className="text-sm text-primary">Gestisci →</CardContent>
+          </Card>
+        </Link>
+        <Link to="/admin/whatsapp">
+          <Card className="transition hover:border-primary">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <MessageCircle className="h-4 w-4 text-primary" />
+                WhatsApp
+              </CardTitle>
+              <CardDescription>Configurazione numero e API Business.</CardDescription>
+            </CardHeader>
+            <CardContent className="text-sm text-primary">Configura →</CardContent>
           </Card>
         </Link>
       </div>

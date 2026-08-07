@@ -63,73 +63,73 @@
 
 :root {
   --radius: 0.625rem;
-  --background: oklch(from #0C0F18 l c h);
-  --foreground: oklch(from #FEFEFE l c h);
-  --card: oklch(from #141824 l c h);
-  --card-foreground: oklch(from #FEFEFE l c h);
-  --popover: oklch(from #141824 l c h);
-  --popover-foreground: oklch(from #FEFEFE l c h);
-  --primary: oklch(from #47BCEE l c h);
-  --primary-foreground: oklch(from #0C0F18 l c h);
-  --secondary: oklch(from #94969A l c h);
-  --secondary-foreground: oklch(from #0C0F18 l c h);
-  --muted: oklch(from #94969A l c h / 15%);
-  --muted-foreground: oklch(from #94969A l c h);
-  --accent: oklch(from #47BCEE l c h / 15%);
-  --accent-foreground: oklch(from #FEFEFE l c h);
+  --background: #0C0F18;
+  --foreground: #FEFEFE;
+  --card: #141824;
+  --card-foreground: #FEFEFE;
+  --popover: #141824;
+  --popover-foreground: #FEFEFE;
+  --primary: #47BCEE;
+  --primary-foreground: #0C0F18;
+  --secondary: #94969A;
+  --secondary-foreground: #0C0F18;
+  --muted: rgb(148 150 154 / 15%);
+  --muted-foreground: #94969A;
+  --accent: rgb(71 188 238 / 15%);
+  --accent-foreground: #FEFEFE;
   --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(from #FEFEFE l c h);
-  --border: oklch(from #94969A l c h / 20%);
-  --input: oklch(from #94969A l c h / 15%);
-  --ring: oklch(from #47BCEE l c h);
-  --chart-1: oklch(from #47BCEE l c h);
-  --chart-2: oklch(from #94969A l c h);
-  --chart-3: oklch(from #FEFEFE l c h);
-  --chart-4: oklch(from #47BCEE l c h / 70%);
-  --chart-5: oklch(from #94969A l c h / 70%);
-  --sidebar: oklch(from #141824 l c h);
-  --sidebar-foreground: oklch(from #FEFEFE l c h);
-  --sidebar-primary: oklch(from #47BCEE l c h);
-  --sidebar-primary-foreground: oklch(from #0C0F18 l c h);
-  --sidebar-accent: oklch(from #47BCEE l c h / 15%);
-  --sidebar-accent-foreground: oklch(from #FEFEFE l c h);
-  --sidebar-border: oklch(from #94969A l c h / 20%);
-  --sidebar-ring: oklch(from #47BCEE l c h);
+  --destructive-foreground: #FEFEFE;
+  --border: rgb(148 150 154 / 20%);
+  --input: rgb(148 150 154 / 15%);
+  --ring: #47BCEE;
+  --chart-1: #47BCEE;
+  --chart-2: #94969A;
+  --chart-3: #FEFEFE;
+  --chart-4: rgb(71 188 238 / 70%);
+  --chart-5: rgb(148 150 154 / 70%);
+  --sidebar: #141824;
+  --sidebar-foreground: #FEFEFE;
+  --sidebar-primary: #47BCEE;
+  --sidebar-primary-foreground: #0C0F18;
+  --sidebar-accent: rgb(71 188 238 / 15%);
+  --sidebar-accent-foreground: #FEFEFE;
+  --sidebar-border: rgb(148 150 154 / 20%);
+  --sidebar-ring: #47BCEE;
 }
 
 .dark {
-  --background: oklch(from #0C0F18 l c h);
-  --foreground: oklch(from #FEFEFE l c h);
-  --card: oklch(from #141824 l c h);
-  --card-foreground: oklch(from #FEFEFE l c h);
-  --popover: oklch(from #141824 l c h);
-  --popover-foreground: oklch(from #FEFEFE l c h);
-  --primary: oklch(from #47BCEE l c h);
-  --primary-foreground: oklch(from #0C0F18 l c h);
-  --secondary: oklch(from #94969A l c h);
-  --secondary-foreground: oklch(from #0C0F18 l c h);
-  --muted: oklch(from #94969A l c h / 15%);
-  --muted-foreground: oklch(from #94969A l c h);
-  --accent: oklch(from #47BCEE l c h / 15%);
-  --accent-foreground: oklch(from #FEFEFE l c h);
+  --background: #0C0F18;
+  --foreground: #FEFEFE;
+  --card: #141824;
+  --card-foreground: #FEFEFE;
+  --popover: #141824;
+  --popover-foreground: #FEFEFE;
+  --primary: #47BCEE;
+  --primary-foreground: #0C0F18;
+  --secondary: #94969A;
+  --secondary-foreground: #0C0F18;
+  --muted: rgb(148 150 154 / 15%);
+  --muted-foreground: #94969A;
+  --accent: rgb(71 188 238 / 15%);
+  --accent-foreground: #FEFEFE;
   --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(from #FEFEFE l c h);
-  --border: oklch(from #94969A l c h / 20%);
-  --input: oklch(from #94969A l c h / 15%);
-  --ring: oklch(from #47BCEE l c h);
-  --chart-1: oklch(from #47BCEE l c h);
-  --chart-2: oklch(from #94969A l c h);
-  --chart-3: oklch(from #FEFEFE l c h);
-  --chart-4: oklch(from #47BCEE l c h / 70%);
-  --chart-5: oklch(from #94969A l c h / 70%);
-  --sidebar: oklch(from #141824 l c h);
-  --sidebar-foreground: oklch(from #FEFEFE l c h);
-  --sidebar-primary: oklch(from #47BCEE l c h);
-  --sidebar-primary-foreground: oklch(from #0C0F18 l c h);
-  --sidebar-accent: oklch(from #47BCEE l c h / 15%);
-  --sidebar-accent-foreground: oklch(from #FEFEFE l c h);
-  --sidebar-border: oklch(from #94969A l c h / 20%);
-  --sidebar-ring: oklch(from #47BCEE l c h);
+  --destructive-foreground: #FEFEFE;
+  --border: rgb(148 150 154 / 20%);
+  --input: rgb(148 150 154 / 15%);
+  --ring: #47BCEE;
+  --chart-1: #47BCEE;
+  --chart-2: #94969A;
+  --chart-3: #FEFEFE;
+  --chart-4: rgb(71 188 238 / 70%);
+  --chart-5: rgb(148 150 154 / 70%);
+  --sidebar: #141824;
+  --sidebar-foreground: #FEFEFE;
+  --sidebar-primary: #47BCEE;
+  --sidebar-primary-foreground: #0C0F18;
+  --sidebar-accent: rgb(71 188 238 / 15%);
+  --sidebar-accent-foreground: #FEFEFE;
+  --sidebar-border: rgb(148 150 154 / 20%);
+  --sidebar-ring: #47BCEE;
 }
 
 @layer base {
@@ -140,5 +140,71 @@
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
+  }
+}
+
+@layer utilities {
+  /*
+   * Il marchio si chiama "Aurora": questa sfumatura richiama l'aurora
+   * boreale (ciano + un violetto tenue), sfocata e posizionata in modo
+   * asimmetrico per non sembrare un blob generico centrato. Va usata con
+   * parsimonia — nell'hero e in pochi altri punti chiave, non ovunque.
+   */
+  .aurora-glow {
+    position: relative;
+    isolation: isolate;
+  }
+  .aurora-glow::before {
+    content: "";
+    position: absolute;
+    inset: -20% -10% auto -10%;
+    height: 140%;
+    z-index: -1;
+    background:
+      radial-gradient(ellipse 60% 50% at 20% 15%, rgb(71 188 238 / 30%), transparent 60%),
+      radial-gradient(ellipse 45% 40% at 80% 0%, rgb(139 124 246 / 22%), transparent 65%),
+      radial-gradient(ellipse 50% 45% at 55% 35%, rgb(78 235 192 / 12%), transparent 70%);
+    filter: blur(40px);
+    pointer-events: none;
+  }
+
+  /* Card con profondità reale: ombra a più livelli, si solleva leggermente
+     al passaggio del mouse, e il bordo si illumina invece di limitarsi a
+     cambiare colore. */
+  .card-elevated {
+    box-shadow:
+      0 1px 2px rgb(0 0 0 / 30%),
+      0 8px 24px -12px rgb(0 0 0 / 50%);
+    transition: transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease;
+  }
+  .card-elevated:hover {
+    transform: translateY(-3px);
+    border-color: rgb(71 188 238 / 60%);
+    box-shadow:
+      0 1px 2px rgb(0 0 0 / 30%),
+      0 16px 32px -14px rgb(0 0 0 / 60%),
+      0 0 0 1px rgb(71 188 238 / 15%),
+      0 0 24px -4px rgb(71 188 238 / 25%);
+  }
+
+  /* Header "di vetro": leggermente trasparente con sfocatura sullo sfondo,
+     invece di un blocco piatto a tinta unita. */
+  .glass-header {
+    background: rgb(12 15 24 / 75%);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+}
+
+/*
+ * Regole di stampa, usate dalla pagina "Catalogo PDF": quando si stampa
+ * o si salva come PDF, si forza sfondo bianco e testo nero (il tema
+ * scuro del sito costerebbe inchiostro e sarebbe illeggibile stampato),
+ * e si nasconde tutto ciò che è marcato con la classe print:hidden.
+ */
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
   }
 }
