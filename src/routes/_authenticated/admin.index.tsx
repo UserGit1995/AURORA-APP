@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Mail, MessageCircle, Settings, ClipboardList, Package, Tags, Clock, CalendarDays, Palette, Users } from "lucide-react";
 import { toast } from "sonner";
-import { listRequests, getOrderDestinationEmail, updateOrderDestinationEmail, getWhatsappNumber, updateWhatsappNumber } from "@/lib/admin.functions";
+import { listRequests, getOrderDestinationEmail, updateOrderDestinationEmail } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/_authenticated/admin/")({
   component: Dashboard,
@@ -19,8 +19,6 @@ function Dashboard() {
   const fetchRequests = useServerFn(listRequests);
   const getEmailFn = useServerFn(getOrderDestinationEmail);
   const updateEmailFn = useServerFn(updateOrderDestinationEmail);
-  const getWhatsappFn = useServerFn(getWhatsappNumber);
-  const updateWhatsappFn = useServerFn(updateWhatsappNumber);
 
   const { data: requests = [] } = useQuery({
     queryKey: ["admin", "requests"],
@@ -32,27 +30,14 @@ function Dashboard() {
     queryFn: () => getEmailFn({ data: undefined }),
   });
 
-  const { data: whatsappData, refetch: refetchWhatsapp } = useQuery({
-    queryKey: ["admin", "whatsappNumber"],
-    queryFn: () => getWhatsappFn({ data: undefined }),
-  });
-
   const [emailInput, setEmailInput] = useState("");
   const [savingEmail, setSavingEmail] = useState(false);
-  const [whatsappInput, setWhatsappInput] = useState("");
-  const [savingWhatsapp, setSavingWhatsapp] = useState(false);
 
   useEffect(() => {
     if (emailData?.email) {
       setEmailInput(emailData.email);
     }
   }, [emailData]);
-
-  useEffect(() => {
-    if (whatsappData?.number) {
-      setWhatsappInput(whatsappData.number);
-    }
-  }, [whatsappData]);
 
   async function handleSaveEmail(e: React.FormEvent) {
     e.preventDefault();
@@ -66,21 +51,6 @@ function Dashboard() {
       toast.error(err.message || "Errore nel salvataggio dell'email");
     } finally {
       setSavingEmail(false);
-    }
-  }
-
-  async function handleSaveWhatsapp(e: React.FormEvent) {
-    e.preventDefault();
-    if (!whatsappInput.trim()) return;
-    setSavingWhatsapp(true);
-    try {
-      await updateWhatsappFn({ data: { number: whatsappInput } });
-      toast.success("Numero WhatsApp salvato correttamente!");
-      refetchWhatsapp();
-    } catch (err: any) {
-      toast.error(err.message || "Errore nel salvataggio del numero");
-    } finally {
-      setSavingWhatsapp(false);
     }
   }
 
@@ -185,6 +155,18 @@ function Dashboard() {
             <CardContent className="text-sm text-primary">Gestisci →</CardContent>
           </Card>
         </Link>
+        <Link to="/admin/whatsapp">
+          <Card className="transition hover:border-primary">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <MessageCircle className="h-4 w-4 text-primary" />
+                WhatsApp
+              </CardTitle>
+              <CardDescription>Configurazione numero e API Business.</CardDescription>
+            </CardHeader>
+            <CardContent className="text-sm text-primary">Configura →</CardContent>
+          </Card>
+        </Link>
       </div>
 
       {/* Dynamic Email Configuration Card */}
@@ -222,45 +204,6 @@ function Dashboard() {
               <p className="text-xs text-muted-foreground">
                 L'indirizzo e-mail viene salvato dinamicamente nel database Supabase ed è riconfigurabile in qualsiasi momento.
               </p>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
-
-      <Card className="border border-primary/20">
-        <CardHeader className="flex flex-row items-center gap-3">
-          <div className="p-2 rounded-lg bg-primary/10 text-primary">
-            <MessageCircle className="h-5 w-5" />
-          </div>
-          <div>
-            <CardTitle>Numero WhatsApp</CardTitle>
-            <CardDescription>
-              Salva il numero WhatsApp aziendale. Per ora serve a preparare il collegamento futuro; una volta
-              disponibile l'integrazione completa, questo numero verrà usato per la chat diretta con i clienti.
-            </CardDescription>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSaveWhatsapp} className="max-w-md space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="whatsapp-number" className="flex items-center gap-1.5">
-                <MessageCircle className="h-4 w-4 text-muted-foreground" />
-                <span>Numero WhatsApp (con prefisso, es. +39 333 1234567)</span>
-              </Label>
-              <div className="flex gap-2">
-                <Input
-                  id="whatsapp-number"
-                  type="tel"
-                  placeholder="+39 333 1234567"
-                  value={whatsappInput}
-                  onChange={(e) => setWhatsappInput(e.target.value)}
-                  required
-                  className="flex-1"
-                />
-                <Button type="submit" disabled={savingWhatsapp}>
-                  {savingWhatsapp ? "Salvataggio..." : "Salva"}
-                </Button>
-              </div>
             </div>
           </form>
         </CardContent>

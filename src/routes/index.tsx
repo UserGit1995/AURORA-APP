@@ -80,25 +80,6 @@ function Home() {
         </div>
       </section>
 
-      {categories.length > 0 && (
-        <section className="mx-auto max-w-6xl px-4 py-14">
-          <h2 className="mb-1 text-xl font-semibold">Categorie</h2>
-          <p className="mb-6 text-sm text-muted-foreground">Sfoglia il catalogo per reparto.</p>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-            {categories.map((c) => (
-              <Link
-                key={c.id}
-                to="/catalog"
-                search={{ category: c.id }}
-                className="card-elevated rounded-lg border border-border bg-card px-4 py-6 text-center font-medium"
-              >
-                {c.name}
-              </Link>
-            ))}
-          </div>
-        </section>
-      )}
-
       {subcategoryGroups.length > 0 && <SubcategorySlider groups={subcategoryGroups} />}
 
       {featured.length > 0 && (
