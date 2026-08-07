@@ -140,6 +140,7 @@ export type Database = {
           last_message: string | null
           last_message_at: string | null
           notes: string | null
+          archived: boolean
           created_at: string
           updated_at: string
         }
@@ -153,6 +154,7 @@ export type Database = {
           last_message?: string | null
           last_message_at?: string | null
           notes?: string | null
+          archived?: boolean
           created_at?: string
           updated_at?: string
         }
@@ -166,6 +168,7 @@ export type Database = {
           last_message?: string | null
           last_message_at?: string | null
           notes?: string | null
+          archived?: boolean
           created_at?: string
           updated_at?: string
         }

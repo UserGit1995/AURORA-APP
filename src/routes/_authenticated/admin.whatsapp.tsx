@@ -12,12 +12,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   MessageCircle, Phone, KeyRound, Hash, Building2, ShieldCheck,
   Search, Send, Sparkles, PhoneCall, Plus, Trash2, FileText,
+  Archive, User2, ShoppingBag, StickyNote,
 } from "lucide-react";
 import { toast } from "sonner";
 import { getWhatsappConfig, updateWhatsappConfig } from "@/lib/admin.functions";
 import {
   listWhatsappContacts, listWhatsappMessages, sendWhatsappMessage, markContactRead,
   createWhatsappContact, generateAiSuggestions, listWhatsappTemplates, createWhatsappTemplate, deleteWhatsappTemplate,
+  setContactArchived, updateContactNotes, getContactOrderHistory,
 } from "@/lib/whatsapp.functions";
 
 export const Route = createFileRoute("/_authenticated/admin/whatsapp")({
@@ -55,7 +57,10 @@ function WhatsappPage() {
   );
 }
 
+
 // ================= CHAT =================
+
+type ContactFilter = "all" | "unread" | "archived";
 
 function ChatTab() {
   const fetchContacts = useServerFn(listWhatsappContacts);
@@ -69,9 +74,20 @@ function ChatTab() {
   });
 
   const [search, setSearch] = useState("");
-  const filtered = contacts.filter((c: any) =>
+  const [filter, setFilter] = useState<ContactFilter>("all");
+
+  const visibleContacts = contacts.filter((c: any) => {
+    if (filter === "archived") return c.archived;
+    if (c.archived) return false;
+    if (filter === "unread") return c.unread_count > 0;
+    return true;
+  });
+  const filtered = visibleContacts.filter((c: any) =>
     c.name.toLowerCase().includes(search.toLowerCase()) || c.phone.includes(search),
   );
+  const unreadTotal = contacts.filter((c: any) => c.unread_count > 0 && !c.archived).length;
+  const archivedTotal = contacts.filter((c: any) => c.archived).length;
+
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const selected = filtered.find((c: any) => c.id === selectedId) ?? filtered[0] ?? null;
 
@@ -85,75 +101,107 @@ function ChatTab() {
     setCreating(true);
     try {
       const created = await createContactFn({ data: { name: newName, phone: newPhone } });
-      toast.success("Contatto creato");
+      toast.success("Chat creata");
       setNewName("");
       setNewPhone("");
       setNewOpen(false);
       queryClient.invalidateQueries({ queryKey: ["admin", "whatsappContacts"] });
       setSelectedId(created.id);
     } catch (err: any) {
-      toast.error(err.message || "Errore nella creazione del contatto");
+      toast.error(err.message || "Errore nella creazione della chat");
     } finally {
       setCreating(false);
     }
   }
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
-      <Card className="h-fit">
-        <CardContent className="p-3">
-          <div className="mb-3 flex gap-2">
-            <div className="relative flex-1">
+    <Card className="overflow-hidden border-primary/20 p-0">
+      <div className="flex items-center justify-between border-b border-border bg-primary/5 px-4 py-3">
+        <div className="flex items-center gap-2 font-semibold">
+          <MessageCircle className="h-5 w-5 text-primary" /> Centro WhatsApp
+        </div>
+        <Button size="sm" onClick={() => setNewOpen((v) => !v)}>
+          <Plus className="h-4 w-4" /> Nuova chat
+        </Button>
+      </div>
+
+      <div className="grid lg:grid-cols-[300px_1fr_300px]">
+        {/* Colonna 1: elenco conversazioni */}
+        <div className="border-b border-border lg:border-b-0 lg:border-r">
+          <div className="space-y-3 p-3">
+            <div className="relative">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input placeholder="Cerca..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+              <Input placeholder="Cerca conversazione..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
             </div>
-            <Button type="button" size="icon" variant="outline" onClick={() => setNewOpen((v) => !v)} aria-label="Nuovo contatto">
-              <Plus className="h-4 w-4" />
-            </Button>
+
+            {newOpen && (
+              <form onSubmit={handleCreateContact} className="space-y-2 rounded-md border border-border p-3">
+                <Input placeholder="Nome cliente" value={newName} onChange={(e) => setNewName(e.target.value)} required />
+                <Input placeholder="+39 333 1234567" value={newPhone} onChange={(e) => setNewPhone(e.target.value)} required />
+                <Button type="submit" size="sm" disabled={creating} className="w-full">
+                  {creating ? "Creo..." : "Crea"}
+                </Button>
+              </form>
+            )}
+
+            <div className="flex gap-1.5">
+              <button onClick={() => setFilter("all")} className={`rounded-full px-3 py-1 text-xs font-medium transition ${filter === "all" ? "bg-primary text-primary-foreground" : "bg-accent text-muted-foreground hover:text-foreground"}`}>
+                Tutte
+              </button>
+              <button onClick={() => setFilter("unread")} className={`rounded-full px-3 py-1 text-xs font-medium transition ${filter === "unread" ? "bg-primary text-primary-foreground" : "bg-accent text-muted-foreground hover:text-foreground"}`}>
+                Non lette{unreadTotal > 0 ? ` (${unreadTotal})` : ""}
+              </button>
+              <button onClick={() => setFilter("archived")} className={`rounded-full px-3 py-1 text-xs font-medium transition ${filter === "archived" ? "bg-primary text-primary-foreground" : "bg-accent text-muted-foreground hover:text-foreground"}`}>
+                Archiviate{archivedTotal > 0 ? ` (${archivedTotal})` : ""}
+              </button>
+            </div>
           </div>
 
-          {newOpen && (
-            <form onSubmit={handleCreateContact} className="mb-3 space-y-2 rounded-md border border-border p-3">
-              <Input placeholder="Nome cliente" value={newName} onChange={(e) => setNewName(e.target.value)} required />
-              <Input placeholder="+39 333 1234567" value={newPhone} onChange={(e) => setNewPhone(e.target.value)} required />
-              <Button type="submit" size="sm" disabled={creating} className="w-full">
-                {creating ? "Creo..." : "Crea contatto"}
-              </Button>
-            </form>
-          )}
-
-          <div className="max-h-[65vh] space-y-1 overflow-y-auto">
+          <div className="max-h-[60vh] space-y-0.5 overflow-y-auto px-2 pb-3 lg:max-h-[68vh]">
             {isLoading && <p className="px-3 py-2 text-sm text-muted-foreground">Carico...</p>}
             {!isLoading && filtered.length === 0 && (
-              <p className="px-3 py-6 text-center text-sm text-muted-foreground">
-                Nessuna conversazione ancora. Compariranno qui i messaggi reali dei clienti, una volta collegata l'API.
+              <p className="px-3 py-8 text-center text-sm text-muted-foreground">
+                {filter === "archived"
+                  ? "Nessuna conversazione archiviata."
+                  : "Nessuna conversazione ancora. Compariranno qui i messaggi reali dei clienti, una volta collegata l'API."}
               </p>
             )}
             {filtered.map((c: any) => (
               <button
                 key={c.id}
                 onClick={() => setSelectedId(c.id)}
-                className={`flex w-full items-center justify-between rounded-md px-3 py-2 text-left text-sm transition ${
+                className={`flex w-full items-center gap-2 rounded-md px-3 py-2.5 text-left text-sm transition ${
                   selected?.id === c.id ? "bg-primary/10 text-primary" : "hover:bg-accent"
                 }`}
               >
-                <div className="min-w-0">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/15 text-xs font-semibold text-primary">
+                  {c.name.slice(0, 2).toUpperCase()}
+                </div>
+                <div className="min-w-0 flex-1">
                   <div className="truncate font-medium">{c.name}</div>
                   <div className="truncate text-xs text-muted-foreground">{c.last_message || c.phone}</div>
                 </div>
-                {c.unread_count > 0 && <Badge className="ml-2 shrink-0">{c.unread_count}</Badge>}
+                {c.unread_count > 0 && <Badge className="shrink-0">{c.unread_count}</Badge>}
               </button>
             ))}
           </div>
-        </CardContent>
-      </Card>
+        </div>
 
-      {selected ? <ChatThread contact={selected} /> : (
-        <Card><CardContent className="p-8 text-center text-sm text-muted-foreground">
-          Seleziona una conversazione, oppure creane una nuova con il pulsante "+".
-        </CardContent></Card>
-      )}
-    </div>
+        {/* Colonna 2: conversazione attiva */}
+        <div className="border-b border-border lg:border-b-0 lg:border-r">
+          {selected ? (
+            <ChatThread contact={selected} />
+          ) : (
+            <div className="flex h-[50vh] items-center justify-center p-8 text-center text-sm text-muted-foreground lg:h-[75vh]">
+              Seleziona una conversazione, oppure creane una nuova con "+ Nuova chat".
+            </div>
+          )}
+        </div>
+
+        {/* Colonna 3: scheda cliente */}
+        <div>{selected && <ContactDetailsPanel contact={selected} />}</div>
+      </div>
+    </Card>
   );
 }
 
@@ -228,20 +276,20 @@ function ChatThread({ contact }: { contact: any }) {
   const waLink = `https://wa.me/${contact.phone.replace(/[^0-9]/g, "")}`;
 
   return (
-    <Card className="flex h-[75vh] flex-col">
-      <CardHeader className="flex flex-row items-center justify-between border-b border-border py-3">
+    <div className="flex h-[50vh] flex-col lg:h-[75vh]">
+      <div className="flex items-center justify-between border-b border-border px-4 py-3">
         <div>
-          <CardTitle className="text-base">{contact.name}</CardTitle>
-          <CardDescription>{contact.phone}</CardDescription>
+          <p className="font-semibold">{contact.name}</p>
+          <p className="text-xs text-muted-foreground">{contact.phone}</p>
         </div>
         <Button asChild size="sm" variant="outline">
           <a href={waLink} target="_blank" rel="noopener noreferrer">
-            <PhoneCall className="h-4 w-4" /> Chiama con WhatsApp
+            <PhoneCall className="h-4 w-4" /> Chiama cliente
           </a>
         </Button>
-      </CardHeader>
+      </div>
 
-      <CardContent className="flex-1 space-y-2 overflow-y-auto p-4">
+      <div className="flex-1 space-y-2 overflow-y-auto p-4">
         {messages.length === 0 && (
           <p className="py-8 text-center text-sm text-muted-foreground">Nessun messaggio ancora con questo contatto.</p>
         )}
@@ -258,7 +306,7 @@ function ChatThread({ contact }: { contact: any }) {
           </div>
         ))}
         <div ref={bottomRef} />
-      </CardContent>
+      </div>
 
       <div className="border-t border-border p-3">
         {suggestions.length > 0 && (
@@ -268,7 +316,7 @@ function ChatThread({ contact }: { contact: any }) {
                 key={i}
                 type="button"
                 onClick={() => setText(s)}
-                className="rounded-full border border-primary/30 bg-primary/5 px-3 py-1 text-xs text-left hover:bg-primary/10"
+                className="rounded-full border border-primary/30 bg-primary/5 px-3 py-1 text-left text-xs hover:bg-primary/10"
               >
                 {s}
               </button>
@@ -297,9 +345,106 @@ function ChatThread({ contact }: { contact: any }) {
           </Button>
         </form>
       </div>
-    </Card>
+    </div>
   );
 }
+
+// Colonna 3: scheda cliente con dati veri (storico ordini collegato per
+// telefono, come nella pagina "Clienti") + note interne + archiviazione.
+function ContactDetailsPanel({ contact }: { contact: any }) {
+  const fetchHistory = useServerFn(getContactOrderHistory);
+  const updateNotesFn = useServerFn(updateContactNotes);
+  const setArchivedFn = useServerFn(setContactArchived);
+  const queryClient = useQueryClient();
+
+  const { data: orders = [] } = useQuery({
+    queryKey: ["admin", "whatsappContactOrders", contact.phone],
+    queryFn: () => fetchHistory({ data: { phone: contact.phone } }),
+  });
+
+  const [notes, setNotes] = useState(contact.notes || "");
+  const [savingNotes, setSavingNotes] = useState(false);
+
+  useEffect(() => setNotes(contact.notes || ""), [contact.id]);
+
+  async function handleSaveNotes() {
+    setSavingNotes(true);
+    try {
+      await updateNotesFn({ data: { contactId: contact.id, notes } });
+      toast.success("Nota salvata");
+      queryClient.invalidateQueries({ queryKey: ["admin", "whatsappContacts"] });
+    } catch (err: any) {
+      toast.error(err.message || "Errore nel salvataggio della nota");
+    } finally {
+      setSavingNotes(false);
+    }
+  }
+
+  async function handleToggleArchive() {
+    try {
+      await setArchivedFn({ data: { contactId: contact.id, archived: !contact.archived } });
+      toast.success(contact.archived ? "Conversazione ripristinata" : "Conversazione archiviata");
+      queryClient.invalidateQueries({ queryKey: ["admin", "whatsappContacts"] });
+    } catch (err: any) {
+      toast.error(err.message || "Errore");
+    }
+  }
+
+  const totalSpent = orders.reduce((sum: number, o: any) => sum + Number(o.total_amount ?? 0), 0);
+
+  return (
+    <div className="max-h-[50vh] space-y-4 overflow-y-auto p-4 lg:max-h-[75vh]">
+      <div>
+        <div className="mb-1 flex items-center gap-2 text-sm font-semibold text-muted-foreground">
+          <User2 className="h-4 w-4" /> Dettagli cliente
+        </div>
+        <p className="text-lg font-semibold">{contact.name}</p>
+        <p className="text-xs text-muted-foreground">
+          Contatto dal {new Date(contact.created_at).toLocaleDateString("it-IT")}
+        </p>
+        <div className="mt-2 space-y-1 text-sm">
+          <p className="flex items-center gap-1.5 text-muted-foreground"><Phone className="h-3.5 w-3.5" /> {contact.phone}</p>
+          {contact.email && <p className="flex items-center gap-1.5 text-muted-foreground">{contact.email}</p>}
+        </div>
+        <Button size="sm" variant="outline" className="mt-3 w-full" onClick={handleToggleArchive}>
+          <Archive className="h-4 w-4" /> {contact.archived ? "Ripristina conversazione" : "Archivia conversazione"}
+        </Button>
+      </div>
+
+      <div className="border-t border-border pt-4">
+        <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-muted-foreground">
+          <ShoppingBag className="h-4 w-4" /> Storico ordini
+        </div>
+        {orders.length === 0 ? (
+          <p className="text-xs text-muted-foreground">Nessun ordine collegato a questo numero, per ora.</p>
+        ) : (
+          <>
+            <div className="space-y-2">
+              {orders.slice(0, 5).map((o: any) => (
+                <div key={o.id} className="flex items-center justify-between text-sm">
+                  <span className="truncate">{o.product_name}</span>
+                  <span className="shrink-0 font-medium text-primary">€ {Number(o.total_amount ?? 0).toFixed(2)}</span>
+                </div>
+              ))}
+            </div>
+            <p className="mt-2 text-xs text-muted-foreground">Totale: € {totalSpent.toFixed(2)} · {orders.length} {orders.length === 1 ? "ordine" : "ordini"}</p>
+          </>
+        )}
+      </div>
+
+      <div className="border-t border-border pt-4">
+        <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-muted-foreground">
+          <StickyNote className="h-4 w-4" /> Note interne
+        </div>
+        <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} placeholder="Es. cliente attento ai prezzi, preferisce consegne al mattino..." />
+        <Button size="sm" className="mt-2" onClick={handleSaveNotes} disabled={savingNotes}>
+          {savingNotes ? "Salvataggio..." : "Salva nota"}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 
 // ================= CONFIGURAZIONE =================
 

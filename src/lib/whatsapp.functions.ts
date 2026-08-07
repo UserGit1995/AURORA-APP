@@ -48,6 +48,56 @@ export const markContactRead = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+export const setContactArchived = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { contactId: string; archived: boolean }) =>
+    z.object({ contactId: z.string().uuid(), archived: z.boolean() }).parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    await requireAdmin(context);
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_PUBLISHABLE_KEY) return { ok: true };
+    const { error } = await context.supabase
+      .from("whatsapp_contacts")
+      .update({ archived: data.archived })
+      .eq("id", data.contactId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const updateContactNotes = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { contactId: string; notes: string }) =>
+    z.object({ contactId: z.string().uuid(), notes: z.string().max(2000) }).parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    await requireAdmin(context);
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_PUBLISHABLE_KEY) return { ok: true };
+    const { error } = await context.supabase
+      .from("whatsapp_contacts")
+      .update({ notes: data.notes })
+      .eq("id", data.contactId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+// Storico ordini reale del cliente, agganciato per numero di telefono:
+// se lo stesso numero ha già fatto ordini/richieste dal sito, li vediamo
+// qui — stessa fonte di dati vera della pagina "Clienti".
+export const getContactOrderHistory = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { phone: string }) => z.object({ phone: z.string() }).parse(data))
+  .handler(async ({ data, context }) => {
+    await requireAdmin(context);
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_PUBLISHABLE_KEY) return [];
+    const digits = data.phone.replace(/[^0-9]/g, "").slice(-9); // confronto sulle ultime 9 cifre, per tollerare prefissi scritti diversamente
+    const { data: rows, error } = await context.supabase
+      .from("product_requests")
+      .select("id, product_name, quantity, total_amount, status, created_at, customer_phone")
+      .order("created_at", { ascending: false });
+    if (error) throw new Error(error.message);
+    return (rows ?? []).filter((r: any) => (r.customer_phone || "").replace(/[^0-9]/g, "").endsWith(digits) && digits.length >= 6);
+  });
+
 const createContactSchema = z.object({
   phone: z.string().regex(/^\+?[0-9\s]{6,20}$/, "Numero non valido"),
   name: z.string().min(1).max(150),
