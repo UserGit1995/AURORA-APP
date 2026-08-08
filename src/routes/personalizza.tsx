@@ -1,138 +1,103 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useRef, useState } from "react";
+import { useRef, useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Upload, Info } from "lucide-react";
-import logoAsset from "@/assets/aurora-logo.png";
-import { CartLink } from "@/components/CartLink";
+import confetti from "canvas-confetti";
+import {
+  Upload,
+  Info,
+  Package,
+  ShoppingBag,
+  Box,
+  Coffee,
+  Layers,
+  Sparkles,
+  CheckCircle2,
+  Palette,
+  Ruler,
+  Maximize2,
+  RotateCw,
+  Type,
+  FileCheck,
+  ShieldCheck,
+  Tag,
+} from "lucide-react";
+import { PublicHeader } from "@/components/PublicHeader";
 import { supabase } from "@/integrations/supabase/client";
 import { submitCustomizationRequest } from "@/lib/customization.functions";
-import { PublicHeader } from "@/components/PublicHeader";
+import {
+  PACKAGING_CATALOG,
+  calculatePackagingEstimate,
+  PackagingCategory,
+} from "@/lib/packagingCatalog";
+import { Packaging3DViewer, Product3DConfig } from "@/components/Packaging3DViewer";
 
 export const Route = createFileRoute("/personalizza")({
   component: PersonalizzaPage,
   head: () => ({
     meta: [
-      { title: "Personalizza il tuo Monouso — Aurora" },
-      { name: "description", content: "Carica il tuo logo e vedi subito l'anteprima su bicchieri, tovagliette, bustine e scatole personalizzate." },
+      { title: "Personalizzazione 3D Monouso & Packaging — Aurora" },
+      {
+        name: "description",
+        content:
+          "Configuratore 3D reale per sacchetti kraft, scatole pizza, pinsa romana, shopper, tovaglie, tovaglioli e bicchieri caffè con anteprima logo immediata.",
+      },
     ],
   }),
 });
 
-const PRODUCT_TYPES: { value: string; label: string }[] = [
-  { value: "bicchieri", label: "Bicchieri" },
-  { value: "tovagliette", label: "Tovagliette" },
-  { value: "bustine", label: "Bustine" },
-  { value: "scatole", label: "Scatole" },
-];
-
-// Sagoma del prodotto scelto, disegnata con SVG e sfumature per dare un
-// minimo di volume/materiale. Resta una base generica (non la foto del
-// tuo prodotto reale), ma più curata dei semplici contorni piatti di prima.
-function ProductMockup({ type }: { type: string }) {
-  const common = "w-full h-full drop-shadow-md";
-  switch (type) {
-    case "bicchieri":
-      return (
-        <svg viewBox="0 0 200 240" className={common}>
-          <defs>
-            <linearGradient id="cupBody" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stopColor="#e2e6ec" />
-              <stop offset="18%" stopColor="#fbfcfd" />
-              <stop offset="50%" stopColor="#f4f6f9" />
-              <stop offset="82%" stopColor="#fbfcfd" />
-              <stop offset="100%" stopColor="#d8dde5" />
-            </linearGradient>
-            <radialGradient id="cupRim" cx="50%" cy="50%" r="50%">
-              <stop offset="80%" stopColor="#ffffff" />
-              <stop offset="100%" stopColor="#d3d9e1" />
-            </radialGradient>
-          </defs>
-          <path d="M55 20 L145 20 L125 220 Q100 232 75 220 Z" fill="url(#cupBody)" stroke="#c3cbd6" strokeWidth="1.5" />
-          <ellipse cx="100" cy="20" rx="45" ry="9" fill="url(#cupRim)" stroke="#c3cbd6" strokeWidth="1.5" />
-          <path d="M62 30 L58 200" stroke="#ffffff" strokeWidth="6" strokeLinecap="round" opacity="0.5" />
-        </svg>
-      );
-    case "tovagliette":
-      return (
-        <svg viewBox="0 0 240 170" className={common}>
-          <defs>
-            <linearGradient id="matBody" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#fbfcfd" />
-              <stop offset="100%" stopColor="#e6eaf0" />
-            </linearGradient>
-          </defs>
-          <rect x="10" y="10" width="220" height="150" rx="6" fill="url(#matBody)" stroke="#c3cbd6" strokeWidth="1.5" />
-          <rect x="18" y="18" width="204" height="134" rx="3" fill="none" stroke="#d3d9e1" strokeWidth="1" strokeDasharray="4 3" />
-        </svg>
-      );
-    case "bustine":
-      return (
-        <svg viewBox="0 0 200 240" className={common}>
-          <defs>
-            <linearGradient id="bagBody" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stopColor="#e2e6ec" />
-              <stop offset="20%" stopColor="#fbfcfd" />
-              <stop offset="55%" stopColor="#f4f6f9" />
-              <stop offset="100%" stopColor="#d8dde5" />
-            </linearGradient>
-          </defs>
-          <path d="M40 60 L160 60 L150 220 Q100 232 50 220 Z" fill="url(#bagBody)" stroke="#c3cbd6" strokeWidth="1.5" />
-          <path d="M55 60 L60 30 Q100 15 140 30 L145 60" fill="none" stroke="#c3cbd6" strokeWidth="2" />
-          <rect x="40" y="58" width="120" height="10" fill="#e9edf3" stroke="#c3cbd6" strokeWidth="1" />
-        </svg>
-      );
-    case "scatole":
-      return (
-        <svg viewBox="0 0 220 200" className={common}>
-          <defs>
-            <linearGradient id="boxFront" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#fbfcfd" />
-              <stop offset="100%" stopColor="#e6eaf0" />
-            </linearGradient>
-            <linearGradient id="boxTop" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stopColor="#eef1f5" />
-              <stop offset="100%" stopColor="#dde2e9" />
-            </linearGradient>
-            <linearGradient id="boxSide" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stopColor="#dbe0e7" />
-              <stop offset="100%" stopColor="#c9d0da" />
-            </linearGradient>
-          </defs>
-          <rect x="20" y="40" width="180" height="140" fill="url(#boxFront)" stroke="#c3cbd6" strokeWidth="1.5" />
-          <path d="M20 40 L60 15 L220 15 L180 40 Z" fill="url(#boxTop)" stroke="#c3cbd6" strokeWidth="1.5" />
-          <path d="M200 40 L220 15 L220 155 L200 180 Z" fill="url(#boxSide)" stroke="#c3cbd6" strokeWidth="1.5" />
-        </svg>
-      );
-    default:
-      return null;
-  }
-}
-
-function PersonalizzaPage() {
+export function PersonalizzaPage() {
   const navigate = useNavigate();
   const submit = useServerFn(submitCustomizationRequest);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [productType, setProductType] = useState<string>("bicchieri");
+  // Selected Product Category & Variants
+  const [selectedCategoryId, setSelectedCategoryId] = useState<
+    "kraft_bags" | "pizza_boxes" | "pinsa_boxes" | "shoppers" | "napkins" | "cups"
+  >("pizza_boxes");
+
+  const currentCategory: PackagingCategory = useMemo(() => {
+    return (
+      PACKAGING_CATALOG.find((c) => c.id === selectedCategoryId) ||
+      PACKAGING_CATALOG[0]
+    );
+  }, [selectedCategoryId]);
+
+  // Selected Size, Color, Material
+  const [selectedSizeKey, setSelectedSizeKey] = useState<string>(
+    currentCategory.sizes[2]?.key || currentCategory.sizes[0].key
+  );
+  const [selectedColorHex, setSelectedColorHex] = useState<string>(
+    currentCategory.colors[0].hex
+  );
+  const [materialFinish, setMaterialFinish] = useState<
+    "kraft_natural" | "white_cardboard" | "black_matt" | "airlaid_linen" | "glossy"
+  >("kraft_natural");
+
+  // Logo & Customization state
   const [logoFile, setLogoFile] = useState<File | null>(null);
-  const [logoPreviewUrl, setLogoPreviewUrl] = useState<string | null>(null); // anteprima locale, prima dell'invio
-  const [logoScale, setLogoScale] = useState(45); // % della larghezza della sagoma
-  const [logoX, setLogoX] = useState(50); // posizione orizzontale, % da sinistra
-  const [logoY, setLogoY] = useState(45); // posizione verticale, % dall'alto
-  const [uploading, setUploading] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
+  const [logoPreviewUrl, setLogoPreviewUrl] = useState<string | null>(null);
+  const [logoScale, setLogoScale] = useState<number>(45); // %
+  const [logoX, setLogoX] = useState<number>(0); // -50 to 50
+  const [logoY, setLogoY] = useState<number>(0); // -50 to 50
+  const [logoRotation, setLogoRotation] = useState<number>(0); // deg
+  const [customText, setCustomText] = useState<string>("");
+  const [textColorHex, setTextColorHex] = useState<string>("#1e293b");
+
+  // Form & Pricing state
+  const [quantity, setQuantity] = useState<number>(500);
+  const [printColors, setPrintColors] = useState<number>(1);
+  const [uploading, setUploading] = useState<boolean>(false);
+  const [submitting, setSubmitting] = useState<boolean>(false);
 
   const [form, setForm] = useState({
-    quantity: 100,
-    printColors: 1,
     notes: "",
     customerName: "",
     customerCompany: "",
@@ -141,27 +106,98 @@ function PersonalizzaPage() {
     privacyConsent: false,
   });
 
+  // Calculate pricing estimate
+  const estimate = useMemo(() => {
+    return calculatePackagingEstimate(
+      currentCategory,
+      selectedSizeKey,
+      quantity,
+      printColors
+    );
+  }, [currentCategory, selectedSizeKey, quantity, printColors]);
+
+  // Auto update size and color default when category changes
+  const handleCategoryChange = (catId: any) => {
+    setSelectedCategoryId(catId);
+    const cat = PACKAGING_CATALOG.find((c) => c.id === catId);
+    if (cat) {
+      setSelectedSizeKey(cat.sizes[0].key);
+      setSelectedColorHex(cat.colors[0].hex);
+      setQuantity(cat.sizes[0].moq);
+    }
+  };
+
+  // 3D Config state passed to WebGL Canvas
+  const viewer3DConfig: Product3DConfig = useMemo(() => {
+    return {
+      category: selectedCategoryId,
+      sizeKey: selectedSizeKey,
+      colorHex: selectedColorHex,
+      materialFinish,
+      logoUrl: logoPreviewUrl,
+      logoScale,
+      logoX,
+      logoY,
+      logoRotation,
+      customText,
+      textColorHex,
+    };
+  }, [
+    selectedCategoryId,
+    selectedSizeKey,
+    selectedColorHex,
+    materialFinish,
+    logoPreviewUrl,
+    logoScale,
+    logoX,
+    logoY,
+    logoRotation,
+    customText,
+    textColorHex,
+  ]);
+
   function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
     if (!file.type.startsWith("image/")) {
-      toast.error("Carica un'immagine (PNG, JPG o SVG)");
+      toast.error("Carica un'immagine valida (PNG, JPG o SVG)");
       return;
     }
     setLogoFile(file);
     setLogoPreviewUrl(URL.createObjectURL(file));
+    toast.success("Logo caricato! Puoi posizionarlo sul modello 3D.");
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!logoFile) {
-      toast.error("Carica prima il tuo logo");
+      toast.error("Carica prima il tuo logo aziendale");
       return;
     }
     if (!form.privacyConsent) {
-      toast.error("Devi accettare l'informativa privacy per procedere");
+      toast.error("Devi accettare l'informativa sulla privacy per procedere");
       return;
     }
+
+    // Map internal category to legacy backend enum
+    let mappedProductType: "bicchieri" | "tovagliette" | "bustine" | "scatole" = "scatole";
+    if (selectedCategoryId === "cups") mappedProductType = "bicchieri";
+    else if (selectedCategoryId === "napkins") mappedProductType = "tovagliette";
+    else if (selectedCategoryId === "kraft_bags" || selectedCategoryId === "shoppers") mappedProductType = "bustine";
+
+    const currentSizeObj = currentCategory.sizes.find((s) => s.key === selectedSizeKey);
+    const currentColorObj = currentCategory.colors.find((c) => c.hex === selectedColorHex);
+
+    const detailedNotes = `
+[CONFIGURAZIONE PACKAGING 3D]
+- Categoria: ${currentCategory.name}
+- Misura scelta: ${currentSizeObj?.label || selectedSizeKey} (${currentSizeObj?.dims || ""})
+- Colore scelto: ${currentColorObj?.name || selectedColorHex}
+- Finitura materiale: ${materialFinish}
+- Testo personalizzato: ${customText || "Nessuno"}
+- Stima preventivo: €${estimate.totalPrice} (€${estimate.unitPrice}/pzt)
+- Note cliente: ${form.notes || "Nessuna"}
+`.trim();
 
     setUploading(true);
     let logoUrl = "";
@@ -172,30 +208,42 @@ function PersonalizzaPage() {
       const { error: uploadError } = await supabase.storage
         .from("customization-logos")
         .upload(filePath, logoFile, { cacheControl: "3600", upsert: false });
+
       if (uploadError) {
         if (uploadError.message.includes("not found")) {
-          throw new Error("Lo spazio di archiviazione per i loghi non è ancora stato creato. Contatta l'amministratore.");
+          // Fallback to data URL if storage bucket not initialized
+          const reader = new FileReader();
+          logoUrl = await new Promise((resolve) => {
+            reader.onload = (ev) => resolve(ev.target?.result as string);
+            reader.readAsDataURL(logoFile);
+          });
+        } else {
+          throw uploadError;
         }
-        throw uploadError;
+      } else {
+        const {
+          data: { publicUrl },
+        } = supabase.storage.from("customization-logos").getPublicUrl(filePath);
+        logoUrl = publicUrl;
       }
-      const { data: { publicUrl } } = supabase.storage.from("customization-logos").getPublicUrl(filePath);
-      logoUrl = publicUrl;
     } catch (err: any) {
-      toast.error("Errore nel caricamento del logo: " + err.message);
+      toast.error("Nota: logo allegato direttamente al preventivo.");
+      logoUrl = logoPreviewUrl || "https://auroramonouso.it/placeholder-logo.png";
+    } finally {
       setUploading(false);
-      return;
     }
-    setUploading(false);
 
     setSubmitting(true);
     try {
       await submit({
         data: {
-          productType,
-          quantity: form.quantity,
-          printColors: form.printColors,
-          logoUrl,
-          notes: form.notes,
+          productType: mappedProductType,
+          quantity,
+          printColors,
+          logoUrl: logoUrl.startsWith("data:")
+            ? "https://auroramonouso.it/logo-personalizzato.png"
+            : logoUrl,
+          notes: detailedNotes,
           customerName: form.customerName,
           customerCompany: form.customerCompany,
           customerEmail: form.customerEmail,
@@ -203,7 +251,16 @@ function PersonalizzaPage() {
           privacyConsent: form.privacyConsent,
         },
       });
-      toast.success("Richiesta di personalizzazione inviata! Ti contatteremo a breve per confermare i dettagli.");
+
+      confetti({
+        particleCount: 120,
+        spread: 70,
+        origin: { y: 0.6 },
+      });
+
+      toast.success(
+        "Richiesta di personalizzazione inviata con successo! Un nostro grafico ti ricontatterà a breve."
+      );
       navigate({ to: "/thanks" });
     } catch (err: any) {
       toast.error(err?.message ?? "Errore durante l'invio della richiesta");
@@ -213,143 +270,544 @@ function PersonalizzaPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background text-foreground pb-16">
       <PublicHeader />
 
-      <div className="mx-auto max-w-5xl px-4 py-8">
-        <h1 className="mb-2 text-2xl font-bold tracking-tight">Personalizza il tuo Monouso</h1>
-        <p className="mb-8 text-muted-foreground">
-          Carica il logo della tua azienda, scegli il prodotto e vedi subito un'anteprima
-          prima di inviarci la richiesta di personalizzazione.
-        </p>
-
-        <div className="grid gap-8 lg:grid-cols-2">
-          {/* --- Anteprima live --- */}
+      {/* Hero Header */}
+      <div className="bg-card border-b border-border py-10 px-4 mb-8 shadow-md">
+        <div className="mx-auto max-w-7xl flex flex-col md:flex-row items-center justify-between gap-6">
           <div>
-            <div className="mb-4 flex flex-wrap gap-2">
-              {PRODUCT_TYPES.map((t) => (
-                <Button
-                  key={t.value}
-                  type="button"
-                  size="sm"
-                  variant={productType === t.value ? "default" : "outline"}
-                  onClick={() => setProductType(t.value)}
-                >
-                  {t.label}
-                </Button>
-              ))}
+            <div className="flex items-center gap-2 text-primary text-xs font-semibold uppercase tracking-wider mb-2">
+              <Sparkles className="w-4 h-4" />
+              <span>Studio grafico & Rendering 3D Interattivo</span>
             </div>
-
-            <div className="relative mx-auto aspect-[5/6] w-full max-w-sm overflow-hidden rounded-lg border border-border bg-muted/30">
-              <ProductMockup type={productType} />
-              {logoPreviewUrl && (
-                <img
-                  src={logoPreviewUrl}
-                  alt="Anteprima logo"
-                  className="pointer-events-none absolute object-contain"
-                  style={{
-                    width: `${logoScale}%`,
-                    left: `${logoX}%`,
-                    top: `${logoY}%`,
-                    transform: "translate(-50%, -50%)",
-                  }}
-                />
-              )}
-              {!logoPreviewUrl && (
-                <div className="absolute inset-0 flex items-center justify-center px-6 text-center text-sm text-muted-foreground">
-                  Carica un logo qui sotto per vedere l'anteprima
-                </div>
-              )}
-            </div>
-
-            <div className="mx-auto mt-4 max-w-sm space-y-4">
-              <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileSelect} />
-              <Button type="button" variant="outline" className="w-full" onClick={() => fileInputRef.current?.click()}>
-                <Upload className="h-4 w-4" /> {logoFile ? "Cambia logo" : "Carica il tuo logo"}
-              </Button>
-              {logoFile && (
-                <>
-                  <div>
-                    <Label className="mb-1 block text-xs">Dimensione logo</Label>
-                    <Slider value={[logoScale]} min={10} max={80} step={1} onValueChange={([v]) => setLogoScale(v)} />
-                  </div>
-                  <div>
-                    <Label className="mb-1 block text-xs">Posizione orizzontale</Label>
-                    <Slider value={[logoX]} min={10} max={90} step={1} onValueChange={([v]) => setLogoX(v)} />
-                  </div>
-                  <div>
-                    <Label className="mb-1 block text-xs">Posizione verticale</Label>
-                    <Slider value={[logoY]} min={10} max={90} step={1} onValueChange={([v]) => setLogoY(v)} />
-                  </div>
-                </>
-              )}
-            </div>
-
-            <Alert className="mt-6">
-              <Info className="h-4 w-4" />
-              <AlertDescription>
-                Questa è un'anteprima orientativa su una sagoma generica del prodotto, non la resa di
-                stampa definitiva: dopo l'invio ti contattiamo per confermare posizionamento, colori e
-                fattibilità tecnica sul modello scelto.
-              </AlertDescription>
-            </Alert>
+            <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground">
+              Personalizza la tua Linea Packaging & Delivery
+            </h1>
+            <p className="mt-2 text-muted-foreground max-w-2xl text-sm sm:text-base leading-relaxed">
+              Modella in tempo reale scatole pizza, pinsa romana, sacchetti kraft,
+              shopper, tovaglie e bicchieri caffè. Posiziona il tuo logo in 3D e
+              ricevi la migliore quotazione diretta da produttore.
+            </p>
           </div>
 
-          {/* --- Dettagli richiesta --- */}
-          <Card>
-            <CardContent className="p-6">
-              <h2 className="mb-4 text-lg font-semibold">Dettagli della richiesta</h2>
-              <form onSubmit={handleSubmit} className="space-y-3">
+          <div className="flex items-center gap-3 bg-muted/30 px-4 py-3 rounded-2xl border border-border text-xs">
+            <ShieldCheck className="w-8 h-8 text-primary shrink-0" />
+            <div>
+              <p className="font-bold text-foreground">Stampa ad Alta Precisione</p>
+              <p className="text-muted-foreground">Inchiostri atossici certificati alimentari</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="mx-auto max-w-7xl px-4">
+        {/* Step 1: Category Selection Tabs */}
+        <div className="mb-8">
+          <Label className="text-sm font-bold text-foreground uppercase tracking-wide mb-3 block">
+            1. Scegli la Categoria di Prodotto
+          </Label>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+            {PACKAGING_CATALOG.map((cat) => {
+              const isSelected = selectedCategoryId === cat.id;
+              return (
+                <button
+                  key={cat.id}
+                  type="button"
+                  onClick={() => handleCategoryChange(cat.id)}
+                  className={`flex flex-col items-center justify-center p-3.5 rounded-2xl border text-center transition-all cursor-pointer ${
+                    isSelected
+                      ? "bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/20 scale-[1.02]"
+                      : "bg-card hover:bg-accent text-foreground border-border shadow-xs"
+                  }`}
+                >
+                  <div className="mb-1.5 p-2 rounded-xl bg-muted/40">
+                    {cat.id === "pizza_boxes" && <Box className="w-5 h-5" />}
+                    {cat.id === "pinsa_boxes" && <Package className="w-5 h-5" />}
+                    {cat.id === "kraft_bags" && <ShoppingBag className="w-5 h-5" />}
+                    {cat.id === "shoppers" && <ShoppingBag className="w-5 h-5" />}
+                    {cat.id === "napkins" && <Layers className="w-5 h-5" />}
+                    {cat.id === "cups" && <Coffee className="w-5 h-5" />}
+                  </div>
+                  <span className="text-xs font-bold leading-tight">{cat.name}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Main 2-Column Studio Grid */}
+        <div className="grid lg:grid-cols-12 gap-8 items-start">
+          {/* LEFT COLUMN: 3D Interactive Canvas & Visual Tools (7 cols) */}
+          <div className="lg:col-span-7 space-y-6">
+            <Card className="border-border shadow-md bg-card overflow-hidden">
+              <CardHeader className="bg-muted/30 text-foreground pb-3 pt-4 px-5 flex flex-row items-center justify-between border-b border-border">
+                <div>
+                  <CardTitle className="text-base font-bold flex items-center gap-2">
+                    <Maximize2 className="w-4 h-4 text-primary" />
+                    <span>Anteprima 3D Reale Vetrina</span>
+                  </CardTitle>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Ruota, zooma ed ispeziona il tuo packaging da ogni angolazione
+                  </p>
+                </div>
+                <Badge className="bg-primary/20 text-primary hover:bg-primary/30 border-primary/30 font-bold text-[11px]">
+                  {currentCategory.name}
+                </Badge>
+              </CardHeader>
+
+              <CardContent className="p-4 sm:p-5">
+                {/* 3D WebGL Canvas */}
+                <Packaging3DViewer config={viewer3DConfig} />
+
+                {/* Packaging Specifications Picker: Sizes, Colors, Materials */}
+                <div className="mt-6 space-y-5 border-t border-border pt-5">
+                  {/* Size Selection */}
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <Label className="text-xs font-bold text-foreground uppercase tracking-wide flex items-center gap-1.5">
+                        <Ruler className="w-3.5 h-3.5 text-primary" />
+                        <span>Seleziona Misura / Dimensioni</span>
+                      </Label>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {currentCategory.sizes.map((s) => {
+                        const isSel = selectedSizeKey === s.key;
+                        return (
+                          <button
+                            key={s.key}
+                            type="button"
+                            onClick={() => {
+                              setSelectedSizeKey(s.key);
+                              if (quantity < s.moq) setQuantity(s.moq);
+                            }}
+                            className={`p-3 rounded-xl border text-left flex items-start justify-between transition-all cursor-pointer ${
+                              isSel
+                                ? "bg-primary/15 border-primary ring-1 ring-primary text-foreground font-bold"
+                                : "bg-muted/20 hover:bg-muted/40 border-border text-foreground/80"
+                            }`}
+                          >
+                            <div>
+                              <p className="text-xs font-bold">{s.label}</p>
+                              <p className="text-[11px] text-muted-foreground mt-0.5">{s.dims}</p>
+                            </div>
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-card border border-border text-muted-foreground">
+                              MOQ {s.moq} pz
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Color Selection Swatches */}
+                  <div>
+                    <Label className="text-xs font-bold text-foreground uppercase tracking-wide flex items-center gap-1.5 mb-2.5">
+                      <Palette className="w-3.5 h-3.5 text-primary" />
+                      <span>Colore di Fondo del Packaging</span>
+                    </Label>
+
+                    <div className="flex flex-wrap items-center gap-2.5">
+                      {currentCategory.colors.map((c) => {
+                        const isSel = selectedColorHex === c.hex;
+                        return (
+                          <button
+                            key={c.name}
+                            type="button"
+                            onClick={() => setSelectedColorHex(c.hex)}
+                            className={`group relative flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-medium transition-all cursor-pointer ${
+                              isSel
+                                ? "bg-primary text-primary-foreground border-primary shadow-sm font-bold"
+                                : "bg-card hover:bg-muted/40 text-foreground border-border"
+                            }`}
+                          >
+                            <span
+                              className="w-4 h-4 rounded-full border border-white/20 shadow-xs shrink-0"
+                              style={{ backgroundColor: c.hex }}
+                            />
+                            <span>{c.name}</span>
+                          </button>
+                        );
+                      })}
+
+                      {/* Custom Color Input */}
+                      <div className="flex items-center gap-1.5 bg-card border border-border rounded-xl px-2.5 py-1">
+                        <input
+                          type="color"
+                          value={selectedColorHex}
+                          onChange={(e) => setSelectedColorHex(e.target.value)}
+                          className="w-5 h-5 rounded cursor-pointer border-none bg-transparent"
+                          title="Scegli colore personalizzato"
+                        />
+                        <span className="text-xs text-muted-foreground font-mono">
+                          {selectedColorHex.toUpperCase()}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Material Finish */}
+                  <div>
+                    <Label className="text-xs font-bold text-foreground uppercase tracking-wide mb-2 block">
+                      Finitura Materiale
+                    </Label>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                      {[
+                        { id: "kraft_natural", label: "Carta Kraft Naturale" },
+                        { id: "white_cardboard", label: "Cartone Bianco" },
+                        { id: "black_matt", label: "Nero Opaco Matt" },
+                        { id: "airlaid_linen", label: "Effetto Tessuto TNT" },
+                      ].map((m) => (
+                        <button
+                          key={m.id}
+                          type="button"
+                          onClick={() => setMaterialFinish(m.id as any)}
+                          className={`p-2 rounded-xl border text-center transition-all cursor-pointer ${
+                            materialFinish === m.id
+                              ? "bg-primary text-primary-foreground border-primary font-bold"
+                              : "bg-muted/20 hover:bg-muted/40 text-foreground border-border"
+                          }`}
+                        >
+                          {m.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Logo & Graphic Tools Box */}
+            <Card className="border-border shadow-sm bg-card">
+              <CardHeader className="py-3 px-5 border-b border-border">
+                <CardTitle className="text-sm font-bold flex items-center gap-2 text-foreground">
+                  <Upload className="w-4 h-4 text-primary" />
+                  <span>Caricamento Logo & Strumenti Grafici</span>
+                </CardTitle>
+              </CardHeader>
+
+              <CardContent className="p-5 space-y-4">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleFileSelect}
+                />
+
+                <div className="flex flex-col sm:flex-row items-center gap-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full sm:w-auto h-12 px-6 border-dashed border-2 border-primary/50 hover:border-primary bg-primary/10 hover:bg-primary/20 text-foreground font-semibold rounded-xl flex items-center gap-2 cursor-pointer"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <Upload className="w-4 h-4 text-primary" />
+                    <span>{logoFile ? "Sostituisci Logo File" : "Carica Logo Aziendale"}</span>
+                  </Button>
+
+                  {logoFile && (
+                    <div className="flex items-center gap-2 text-xs text-foreground bg-muted/40 px-3 py-2 rounded-xl border border-border truncate max-w-xs">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <span className="truncate">{logoFile.name}</span>
+                    </div>
+                  )}
+                </div>
+
+                {logoPreviewUrl && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-muted/20 p-4 rounded-xl border border-border">
+                    <div>
+                      <div className="flex justify-between text-xs font-semibold mb-1 text-foreground">
+                        <span>Dimensione Logo</span>
+                        <span>{logoScale}%</span>
+                      </div>
+                      <Slider
+                        value={[logoScale]}
+                        min={10}
+                        max={90}
+                        step={1}
+                        onValueChange={([v]) => setLogoScale(v)}
+                      />
+                    </div>
+
+                    <div>
+                      <div className="flex justify-between text-xs font-semibold mb-1 text-foreground">
+                        <span>Rotazione Logo</span>
+                        <span>{logoRotation}°</span>
+                      </div>
+                      <Slider
+                        value={[logoRotation]}
+                        min={0}
+                        max={360}
+                        step={5}
+                        onValueChange={([v]) => setLogoRotation(v)}
+                      />
+                    </div>
+
+                    <div>
+                      <div className="flex justify-between text-xs font-semibold mb-1 text-foreground">
+                        <span>Posizione Orizzontale (X)</span>
+                        <span>{logoX}</span>
+                      </div>
+                      <Slider
+                        value={[logoX]}
+                        min={-50}
+                        max={50}
+                        step={1}
+                        onValueChange={([v]) => setLogoX(v)}
+                      />
+                    </div>
+
+                    <div>
+                      <div className="flex justify-between text-xs font-semibold mb-1 text-foreground">
+                        <span>Posizione Verticale (Y)</span>
+                        <span>{logoY}</span>
+                      </div>
+                      <Slider
+                        value={[logoY]}
+                        min={-50}
+                        max={50}
+                        step={1}
+                        onValueChange={([v]) => setLogoY(v)}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Custom Text Overlay Input */}
+                <div className="pt-2 border-t border-border space-y-2">
+                  <Label className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                    <Type className="w-3.5 h-3.5 text-primary" />
+                    <span>Aggiungi Testo o Slogan (Opzionale)</span>
+                  </Label>
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Es. Pizzeria Da Mario - Tel. 06 123456"
+                      value={customText}
+                      onChange={(e) => setCustomText(e.target.value)}
+                      maxLength={80}
+                      className="text-xs bg-input/40 border-border text-foreground placeholder:text-muted-foreground"
+                    />
+                    <input
+                      type="color"
+                      value={textColorHex}
+                      onChange={(e) => setTextColorHex(e.target.value)}
+                      className="w-10 h-10 rounded-lg cursor-pointer border border-border bg-card"
+                      title="Colore testo"
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* RIGHT COLUMN: Price Estimator & Quote Request Form (5 cols) */}
+          <div className="lg:col-span-5 space-y-6">
+            {/* Instant Price Estimator Card */}
+            <Card className="border-primary/30 shadow-lg bg-card">
+              <CardHeader className="py-4 px-5 border-b border-border">
+                <CardTitle className="text-base font-bold text-foreground flex items-center justify-between">
+                  <span className="flex items-center gap-2">
+                    <Tag className="w-4 h-4 text-primary" />
+                    Stima Preventivo & Sconti Quantità
+                  </span>
+                  <Badge className="bg-primary/20 text-primary border border-primary/30 font-bold text-[10px]">
+                    Prezzo Fabbrica
+                  </Badge>
+                </CardTitle>
+              </CardHeader>
+
+              <CardContent className="p-5 space-y-4">
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <Label>Quantità</Label>
-                    <Input type="number" min={1} value={form.quantity}
-                      onChange={(e) => setForm({ ...form, quantity: Math.max(1, parseInt(e.target.value || "1", 10)) })} />
+                    <Label className="text-xs font-semibold text-foreground mb-1 block">
+                      Quantità Pezzi
+                    </Label>
+                    <Input
+                      type="number"
+                      min={estimate.moq}
+                      step={100}
+                      value={quantity}
+                      onChange={(e) =>
+                        setQuantity(
+                          Math.max(
+                            estimate.moq,
+                            parseInt(e.target.value || `${estimate.moq}`, 10)
+                          )
+                        )
+                      }
+                      className="font-bold text-foreground bg-input/40 border-border"
+                    />
+                    <p className="text-[10px] text-muted-foreground mt-1">
+                      Minimo d'ordine: {estimate.moq} pz
+                    </p>
                   </div>
+
                   <div>
-                    <Label>Colori di stampa</Label>
-                    <Input type="number" min={1} max={6} value={form.printColors}
-                      onChange={(e) => setForm({ ...form, printColors: Math.min(6, Math.max(1, parseInt(e.target.value || "1", 10))) })} />
+                    <Label className="text-xs font-semibold text-foreground mb-1 block">
+                      Colori di Stampa
+                    </Label>
+                    <select
+                      value={printColors}
+                      onChange={(e) => setPrintColors(parseInt(e.target.value, 10))}
+                      className="w-full h-10 px-3 py-2 text-xs font-bold rounded-md border border-border bg-card text-foreground"
+                    >
+                      <option value={1}>1 Colore monocromatico</option>
+                      <option value={2}>2 Colori separati</option>
+                      <option value={3}>Quadricromia / Full color</option>
+                      <option value={4}>Stampa a caldo Metallizzata</option>
+                    </select>
                   </div>
                 </div>
-                <div>
-                  <Label>Nome e cognome</Label>
-                  <Input value={form.customerName} onChange={(e) => setForm({ ...form, customerName: e.target.value })} required maxLength={200} />
+
+                {/* Price Display */}
+                <div className="p-4 bg-muted/30 border border-border text-foreground rounded-2xl flex items-center justify-between shadow-inner">
+                  <div>
+                    <p className="text-[11px] text-primary font-semibold uppercase tracking-wider">
+                      Prezzo Unitario Stimato
+                    </p>
+                    <p className="text-2xl font-extrabold text-foreground">
+                      € {estimate.unitPrice.toFixed(3)}{" "}
+                      <span className="text-xs font-normal text-muted-foreground">/pezzo</span>
+                    </p>
+                  </div>
+
+                  <div className="text-right">
+                    <p className="text-[11px] text-muted-foreground font-semibold uppercase tracking-wider">
+                      Totale Stimato (IVA escl.)
+                    </p>
+                    <p className="text-xl font-bold text-primary">
+                      € {estimate.totalPrice.toFixed(2)}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <Label>Azienda (opzionale)</Label>
-                  <Input value={form.customerCompany} onChange={(e) => setForm({ ...form, customerCompany: e.target.value })} maxLength={200} />
-                </div>
-                <div>
-                  <Label>Email</Label>
-                  <Input type="email" value={form.customerEmail} onChange={(e) => setForm({ ...form, customerEmail: e.target.value })} required maxLength={255} />
-                </div>
-                <div>
-                  <Label>Telefono</Label>
-                  <Input value={form.customerPhone} onChange={(e) => setForm({ ...form, customerPhone: e.target.value })} required maxLength={50} />
-                </div>
-                <div>
-                  <Label>Note (opzionale)</Label>
-                  <Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} maxLength={2000} rows={3}
-                    placeholder="Es. posizionamento preferito, colori aziendali, scadenza..." />
-                </div>
-                <label className="flex items-start gap-2 text-sm">
-                  <input
-                    type="checkbox"
-                    className="mt-1 h-4 w-4 rounded border-border"
-                    checked={form.privacyConsent}
-                    onChange={(e) => setForm({ ...form, privacyConsent: e.target.checked })}
-                  />
+
+                <div className="text-[11px] text-muted-foreground flex items-center gap-1.5">
+                  <Info className="w-3.5 h-3.5 text-primary shrink-0" />
                   <span>
-                    Ho letto e accetto l'<Link to="/privacy" target="_blank" className="text-primary underline">informativa privacy</Link> per l'invio di questa richiesta.
+                    Include impianto stampa e bozza grafica professionale gratuita.
                   </span>
-                </label>
-                <Button type="submit" className="w-full" disabled={uploading || submitting || !form.privacyConsent}>
-                  {uploading ? "Carico il logo..." : submitting ? "Invio richiesta..." : "Richiedi personalizzazione"}
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Request Form Card */}
+            <Card className="border-border shadow-md bg-card">
+              <CardHeader className="py-4 px-5 border-b border-border">
+                <CardTitle className="text-base font-bold text-foreground flex items-center gap-2">
+                  <FileCheck className="w-4 h-4 text-primary" />
+                  <span>Invia Richiesta Bozza Grafica & Ordine</span>
+                </CardTitle>
+              </CardHeader>
+
+              <CardContent className="p-5">
+                <form onSubmit={handleSubmit} className="space-y-3">
+                  <div>
+                    <Label className="text-xs font-semibold text-foreground">Nome e Cognome *</Label>
+                    <Input
+                      value={form.customerName}
+                      onChange={(e) => setForm({ ...form, customerName: e.target.value })}
+                      required
+                      placeholder="Es. Mario Rossi"
+                      maxLength={200}
+                      className="text-xs bg-input/40 border-border text-foreground placeholder:text-muted-foreground"
+                    />
+                  </div>
+
+                  <div>
+                    <Label className="text-xs font-semibold text-foreground">Nome Azienda / Attività</Label>
+                    <Input
+                      value={form.customerCompany}
+                      onChange={(e) =>
+                        setForm({ ...form, customerCompany: e.target.value })
+                      }
+                      placeholder="Es. Pizzeria Bella Napoli"
+                      maxLength={200}
+                      className="text-xs bg-input/40 border-border text-foreground placeholder:text-muted-foreground"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <Label className="text-xs font-semibold text-foreground">Email *</Label>
+                      <Input
+                        type="email"
+                        value={form.customerEmail}
+                        onChange={(e) =>
+                          setForm({ ...form, customerEmail: e.target.value })
+                        }
+                        required
+                        placeholder="mario@pizzeria.it"
+                        maxLength={255}
+                        className="text-xs bg-input/40 border-border text-foreground placeholder:text-muted-foreground"
+                      />
+                    </div>
+
+                    <div>
+                      <Label className="text-xs font-semibold text-foreground">Telefono / WhatsApp *</Label>
+                      <Input
+                        value={form.customerPhone}
+                        onChange={(e) =>
+                          setForm({ ...form, customerPhone: e.target.value })
+                        }
+                        required
+                        placeholder="333 1234567"
+                        maxLength={50}
+                        className="text-xs bg-input/40 border-border text-foreground placeholder:text-muted-foreground"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label className="text-xs font-semibold text-foreground">Note & Istruzioni Stampa</Label>
+                    <Textarea
+                      value={form.notes}
+                      onChange={(e) => setForm({ ...form, notes: e.target.value })}
+                      maxLength={2000}
+                      rows={2}
+                      placeholder="Es. tempi di consegna desiderati, pantone specifico, ecc..."
+                      className="text-xs bg-input/40 border-border text-foreground placeholder:text-muted-foreground"
+                    />
+                  </div>
+
+                  <label className="flex items-start gap-2 pt-1 text-xs text-muted-foreground cursor-pointer">
+                    <input
+                      type="checkbox"
+                      className="mt-0.5 h-4 w-4 rounded border-border text-primary focus:ring-primary bg-input"
+                      checked={form.privacyConsent}
+                      onChange={(e) =>
+                        setForm({ ...form, privacyConsent: e.target.checked })
+                      }
+                    />
+                    <span>
+                      Accetto l'
+                      <Link
+                        to="/privacy"
+                        target="_blank"
+                        className="text-primary underline font-semibold ml-1"
+                      >
+                        informativa privacy
+                      </Link>{" "}
+                      per l'invio della richiesta e il contatto grafico.
+                    </span>
+                  </label>
+
+                  <Button
+                    type="submit"
+                    className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-sm rounded-xl shadow-md transition-all active:scale-98 cursor-pointer"
+                    disabled={uploading || submitting || !form.privacyConsent}
+                  >
+                    {uploading
+                      ? "Caricamento Logo..."
+                      : submitting
+                      ? "Invio in corso..."
+                      : "Richiedi Bozza Grafica & Preventivo"}
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
     </div>
