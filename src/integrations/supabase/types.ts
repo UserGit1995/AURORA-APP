@@ -141,8 +141,6 @@ export type Database = {
           last_message_at: string | null
           notes: string | null
           archived: boolean
-          tags: string[]
-          is_vip: boolean
           created_at: string
           updated_at: string
         }
@@ -157,8 +155,6 @@ export type Database = {
           last_message_at?: string | null
           notes?: string | null
           archived?: boolean
-          tags?: string[]
-          is_vip?: boolean
           created_at?: string
           updated_at?: string
         }
@@ -173,64 +169,8 @@ export type Database = {
           last_message_at?: string | null
           notes?: string | null
           archived?: boolean
-          tags?: string[]
-          is_vip?: boolean
           created_at?: string
           updated_at?: string
-        }
-        Relationships: []
-      }
-      whatsapp_call_logs: {
-        Row: {
-          id: string
-          contact_id: string
-          direction: string
-          call_type: string
-          duration_seconds: number
-          notes: string | null
-          ai_summary: string | null
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          contact_id: string
-          direction?: string
-          call_type?: string
-          duration_seconds?: number
-          notes?: string | null
-          ai_summary?: string | null
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          contact_id?: string
-          direction?: string
-          call_type?: string
-          duration_seconds?: number
-          notes?: string | null
-          ai_summary?: string | null
-          created_at?: string
-        }
-        Relationships: []
-      }
-      whatsapp_webhook_logs: {
-        Row: {
-          id: string
-          event_type: string
-          payload: any
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          event_type?: string
-          payload?: any
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          event_type?: string
-          payload?: any
-          created_at?: string
         }
         Relationships: []
       }
