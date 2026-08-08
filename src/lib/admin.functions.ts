@@ -7,17 +7,33 @@ const categorySchema = z.object({
   sortOrder: z.number().int().default(0),
 });
 
+const subcategorySchema = z.object({
+  categoryId: z.string().uuid(),
+  name: z.string().min(1).max(100),
+  imageUrl: z.string().url().max(1000).nullable().optional().or(z.literal("")),
+  sortOrder: z.number().int().default(0),
+});
+
 const productSchema = z.object({
   categoryId: z.string().uuid().nullable(),
+  subcategoryId: z.string().uuid().nullable().optional(),
   name: z.string().min(1).max(200),
+  productCode: z.string().max(100).nullable().optional(),
   description: z.string().max(2000).nullable(),
   price: z.number().positive(),
   imageUrl: z.string().url().max(1000).nullable().or(z.literal("")),
   isActive: z.boolean().default(true),
   sortOrder: z.number().int().default(0),
+  isOffer: z.boolean().default(false),
+  offerPrice: z.number().nonnegative().nullable().optional(),
+  minOrderQty: z.number().int().min(1).default(1),
+  unitLabel: z.string().max(50).nullable().optional(),
 });
 
 async function requireAdmin(context: { supabase: any; userId: string }) {
+  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_PUBLISHABLE_KEY) {
+    return; // Local bypass under mock mode
+  }
   const { data, error } = await context.supabase.rpc("has_role", {
     _user_id: context.userId,
     _role: "admin",
@@ -28,6 +44,9 @@ async function requireAdmin(context: { supabase: any; userId: string }) {
 export const makeUserAdmin = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_PUBLISHABLE_KEY) {
+      return { promoted: true };
+    }
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { count } = await supabaseAdmin
       .from("user_roles")
@@ -44,6 +63,10 @@ export const listCategories = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await requireAdmin(context);
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_PUBLISHABLE_KEY) {
+      const { db } = await import("./mockDb");
+      return [...db.categories].sort((a, b) => (a.sort_order - b.sort_order) || a.name.localeCompare(b.name));
+    }
     const { data, error } = await context.supabase
       .from("categories")
       .select("*")
@@ -58,6 +81,18 @@ export const createCategory = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => categorySchema.parse(data))
   .handler(async ({ data, context }) => {
     await requireAdmin(context);
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_PUBLISHABLE_KEY) {
+      const { db, generateUuid } = await import("./mockDb");
+      const newCat = {
+        id: generateUuid(),
+        name: data.name,
+        sort_order: data.sortOrder,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+      db.categories.push(newCat);
+      return newCat;
+    }
     const { data: category, error } = await context.supabase
       .from("categories")
       .insert({ name: data.name, sort_order: data.sortOrder })
@@ -74,6 +109,19 @@ export const updateCategory = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await requireAdmin(context);
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_PUBLISHABLE_KEY) {
+      const { db } = await import("./mockDb");
+      const idx = db.categories.findIndex(c => c.id === data.id);
+      if (idx !== -1) {
+        db.categories[idx] = {
+          ...db.categories[idx],
+          name: data.name,
+          sort_order: data.sortOrder,
+          updated_at: new Date().toISOString(),
+        };
+      }
+      return { ok: true };
+    }
     const { error } = await context.supabase
       .from("categories")
       .update({ name: data.name, sort_order: data.sortOrder })
@@ -87,8 +135,233 @@ export const deleteCategory = createServerFn({ method: "POST" })
   .inputValidator((data: { id: string }) => z.object({ id: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
     await requireAdmin(context);
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_PUBLISHABLE_KEY) {
+      const { db } = await import("./mockDb");
+      db.categories = db.categories.filter(c => c.id !== data.id);
+      db.subcategories = db.subcategories.filter(s => s.category_id !== data.id);
+      return { ok: true };
+    }
     const { error } = await context.supabase.from("categories").delete().eq("id", data.id);
-    if (error) throw error;
+    if (error) {
+      if (error.code === "23503") {
+        throw new Error("Impossibile eliminare: ci sono ancora elementi collegati a questa categoria.");
+      }
+      if (error.code === "42501" || /permission|rls/i.test(error.message || "")) {
+        throw new Error("Permesso negato dal database (RLS). Verifica di essere loggato come admin.");
+      }
+      throw new Error(error.message || "Errore sconosciuto durante l'eliminazione della categoria.");
+    }
+    return { ok: true };
+  });
+
+export const listSubcategories = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await requireAdmin(context);
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_PUBLISHABLE_KEY) {
+      const { db } = await import("./mockDb");
+      return [...db.subcategories].sort((a, b) => (a.sort_order - b.sort_order) || a.name.localeCompare(b.name));
+    }
+    const { data, error } = await context.supabase
+      .from("subcategories")
+      .select("*")
+      .order("sort_order", { ascending: true })
+      .order("name", { ascending: true });
+    if (error) throw new Error(error.message);
+    return data ?? [];
+  });
+
+export const createSubcategory = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => subcategorySchema.parse(data))
+  .handler(async ({ data, context }) => {
+    await requireAdmin(context);
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_PUBLISHABLE_KEY) {
+      const { db, generateUuid } = await import("./mockDb");
+      const newSub = {
+        id: generateUuid(),
+        category_id: data.categoryId,
+        name: data.name,
+        image_url: data.imageUrl || null,
+        sort_order: data.sortOrder,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+      db.subcategories.push(newSub);
+      return newSub;
+    }
+    const { data: subcategory, error } = await context.supabase
+      .from("subcategories")
+      .insert({ category_id: data.categoryId, name: data.name, image_url: data.imageUrl || null, sort_order: data.sortOrder })
+      .select()
+      .single();
+    if (error) throw new Error(error.message);
+    return subcategory;
+  });
+
+export const updateSubcategory = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { id: string; categoryId: string; name: string; imageUrl?: string | null; sortOrder: number }) =>
+    z
+      .object({
+        id: z.string().uuid(),
+        categoryId: z.string().uuid(),
+        name: z.string().min(1).max(100),
+        imageUrl: z.string().url().max(1000).nullable().optional().or(z.literal("")),
+        sortOrder: z.number().int(),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    await requireAdmin(context);
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_PUBLISHABLE_KEY) {
+      const { db } = await import("./mockDb");
+      const idx = db.subcategories.findIndex(s => s.id === data.id);
+      if (idx !== -1) {
+        db.subcategories[idx] = {
+          ...db.subcategories[idx],
+          category_id: data.categoryId,
+          name: data.name,
+          image_url: data.imageUrl || null,
+          sort_order: data.sortOrder,
+          updated_at: new Date().toISOString(),
+        };
+      }
+      return { ok: true };
+    }
+    const { error } = await context.supabase
+      .from("subcategories")
+      .update({ category_id: data.categoryId, name: data.name, image_url: data.imageUrl || null, sort_order: data.sortOrder })
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const deleteSubcategory = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { id: string }) => z.object({ id: z.string().uuid() }).parse(data))
+  .handler(async ({ data, context }) => {
+    await requireAdmin(context);
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_PUBLISHABLE_KEY) {
+      const { db } = await import("./mockDb");
+      db.subcategories = db.subcategories.filter(s => s.id !== data.id);
+      return { ok: true };
+    }
+    const { error } = await context.supabase.from("subcategories").delete().eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+const variantSchema = z.object({
+  productId: z.string().uuid(),
+  label: z.string().min(1).max(100),
+  price: z.number().nonnegative().nullable().optional(),
+  sortOrder: z.number().int().default(0),
+});
+
+export const listVariants = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await requireAdmin(context);
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_PUBLISHABLE_KEY) {
+      const { db } = await import("./mockDb");
+      return [...(db.productVariants ?? [])].sort((a, b) => (a.sort_order - b.sort_order) || a.label.localeCompare(b.label));
+    }
+    // Stesso client "pubblico" già usato per prodotti/richieste: evita il
+    // problema di liste vuote in produzione visto con il client di sessione.
+    const { createClient } = await import("@supabase/supabase-js");
+    const fallbackClient = createClient(
+      process.env.SUPABASE_URL as string,
+      process.env.SUPABASE_PUBLISHABLE_KEY as string,
+      { auth: { storage: undefined, persistSession: false, autoRefreshToken: false } },
+    );
+    const { data, error } = await fallbackClient
+      .from("product_variants")
+      .select("*")
+      .order("sort_order", { ascending: true })
+      .order("label", { ascending: true });
+    if (error) throw new Error("listVariants fallback: " + error.message);
+    return data ?? [];
+  });
+
+export const createVariant = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => variantSchema.parse(data))
+  .handler(async ({ data, context }) => {
+    await requireAdmin(context);
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_PUBLISHABLE_KEY) {
+      const { db, generateUuid } = await import("./mockDb");
+      db.productVariants = db.productVariants ?? [];
+      const newVariant = {
+        id: generateUuid(),
+        product_id: data.productId,
+        label: data.label,
+        price: data.price ?? null,
+        sort_order: data.sortOrder,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+      db.productVariants.push(newVariant);
+      return newVariant;
+    }
+    const { data: variant, error } = await context.supabase
+      .from("product_variants")
+      .insert({ product_id: data.productId, label: data.label, price: data.price ?? null, sort_order: data.sortOrder })
+      .select()
+      .single();
+    if (error) throw new Error(error.message);
+    return variant;
+  });
+
+export const updateVariant = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { id: string; label: string; price?: number | null; sortOrder: number }) =>
+    z
+      .object({
+        id: z.string().uuid(),
+        label: z.string().min(1).max(100),
+        price: z.number().nonnegative().nullable().optional(),
+        sortOrder: z.number().int(),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    await requireAdmin(context);
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_PUBLISHABLE_KEY) {
+      const { db } = await import("./mockDb");
+      db.productVariants = db.productVariants ?? [];
+      const idx = db.productVariants.findIndex(v => v.id === data.id);
+      if (idx !== -1) {
+        db.productVariants[idx] = {
+          ...db.productVariants[idx],
+          label: data.label,
+          price: data.price ?? null,
+          sort_order: data.sortOrder,
+          updated_at: new Date().toISOString(),
+        };
+      }
+      return { ok: true };
+    }
+    const { error } = await context.supabase
+      .from("product_variants")
+      .update({ label: data.label, price: data.price ?? null, sort_order: data.sortOrder })
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const deleteVariant = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { id: string }) => z.object({ id: z.string().uuid() }).parse(data))
+  .handler(async ({ data, context }) => {
+    await requireAdmin(context);
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_PUBLISHABLE_KEY) {
+      const { db } = await import("./mockDb");
+      db.productVariants = (db.productVariants ?? []).filter(v => v.id !== data.id);
+      return { ok: true };
+    }
+    const { error } = await context.supabase.from("product_variants").delete().eq("id", data.id);
+    if (error) throw new Error(error.message);
     return { ok: true };
   });
 
@@ -96,13 +369,47 @@ export const listProducts = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await requireAdmin(context);
-    const { data, error } = await context.supabase
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_PUBLISHABLE_KEY) {
+      const { db } = await import("./mockDb");
+      const list = db.products.map(p => {
+        const cat = db.categories.find(c => c.id === p.category_id);
+        return {
+          ...p,
+          categories: cat ? { name: cat.name } : null
+        };
+      });
+      return list.sort((a, b) => (a.sort_order - b.sort_order) || a.name.localeCompare(b.name));
+    }
+    // Percorso temporaneo: usiamo lo stesso client "pubblico" del catalogo
+    // (quello che sappiamo funzionare sempre) invece del client di sessione
+    // admin, che per qualche motivo restituisce lista vuota in produzione.
+    // L'autorizzazione resta comunque protetta da requireAdmin() sopra.
+    const { createClient } = await import("@supabase/supabase-js");
+    const fallbackClient = createClient(
+      process.env.SUPABASE_URL as string,
+      process.env.SUPABASE_PUBLISHABLE_KEY as string,
+      { auth: { storage: undefined, persistSession: false, autoRefreshToken: false } },
+    );
+    // MAI PIÙ unioni dirette tra tabelle (categories(...)/subcategories(...))
+    // in questa funzione: è la causa già vista due volte di liste vuote in
+    // produzione. Leggiamo le tre tabelle separatamente e le uniamo a mano.
+    const { data, error } = await fallbackClient
       .from("products")
-      .select("*, categories(name)")
+      .select("*")
       .order("sort_order", { ascending: true })
       .order("name", { ascending: true });
-    if (error) throw error;
-    return data ?? [];
+    if (error) throw new Error("listProducts fallback: " + error.message);
+
+    const { data: cats, error: catsErr } = await fallbackClient.from("categories").select("id, name");
+    if (catsErr) throw new Error("listProducts (categorie) fallback: " + catsErr.message);
+    const { data: subs, error: subsErr } = await fallbackClient.from("subcategories").select("id, name");
+    if (subsErr) throw new Error("listProducts (sottocategorie) fallback: " + subsErr.message);
+
+    return (data ?? []).map((p: any) => ({
+      ...p,
+      categories: cats?.find((c: any) => c.id === p.category_id) ? { name: cats.find((c: any) => c.id === p.category_id)!.name } : null,
+      subcategories: subs?.find((s: any) => s.id === p.subcategory_id) ? { name: subs.find((s: any) => s.id === p.subcategory_id)!.name } : null,
+    }));
   });
 
 export const createProduct = createServerFn({ method: "POST" })
@@ -110,16 +417,45 @@ export const createProduct = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => productSchema.parse(data))
   .handler(async ({ data, context }) => {
     await requireAdmin(context);
-    const { data: product, error } = await context.supabase
-      .from("products")
-      .insert({
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_PUBLISHABLE_KEY) {
+      const { db, generateUuid } = await import("./mockDb");
+      const newProd = {
+        id: generateUuid(),
         category_id: data.categoryId || null,
+        subcategory_id: data.subcategoryId || null,
         name: data.name,
+        product_code: data.productCode || null,
         description: data.description || null,
         price: data.price,
         image_url: data.imageUrl || null,
         is_active: data.isActive,
         sort_order: data.sortOrder,
+        is_offer: data.isOffer,
+        offer_price: data.offerPrice || null,
+        min_order_qty: data.minOrderQty ?? 1,
+        unit_label: data.unitLabel || null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+      db.products.push(newProd);
+      return newProd;
+    }
+    const { data: product, error } = await context.supabase
+      .from("products")
+      .insert({
+        category_id: data.categoryId || null,
+        subcategory_id: data.subcategoryId || null,
+        name: data.name,
+        product_code: data.productCode || null,
+        description: data.description || null,
+        price: data.price,
+        image_url: data.imageUrl || null,
+        is_active: data.isActive,
+        sort_order: data.sortOrder,
+        is_offer: data.isOffer,
+        offer_price: data.offerPrice || null,
+        min_order_qty: data.minOrderQty ?? 1,
+        unit_label: data.unitLabel || null,
       })
       .select()
       .single();
@@ -134,27 +470,63 @@ export const updateProduct = createServerFn({ method: "POST" })
       .object({
         id: z.string().uuid(),
         categoryId: z.string().uuid().nullable(),
+        subcategoryId: z.string().uuid().nullable().optional(),
         name: z.string().min(1).max(200),
+        productCode: z.string().max(100).nullable().optional(),
         description: z.string().max(2000).nullable(),
         price: z.number().positive(),
         imageUrl: z.string().url().max(1000).nullable().or(z.literal("")),
         isActive: z.boolean(),
         sortOrder: z.number().int(),
+        isOffer: z.boolean(),
+        offerPrice: z.number().nonnegative().nullable().optional(),
+        minOrderQty: z.number().int().min(1),
+        unitLabel: z.string().max(50).nullable().optional(),
       })
       .parse(data),
   )
   .handler(async ({ data, context }) => {
     await requireAdmin(context);
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_PUBLISHABLE_KEY) {
+      const { db } = await import("./mockDb");
+      const idx = db.products.findIndex(p => p.id === data.id);
+      if (idx !== -1) {
+        db.products[idx] = {
+          ...db.products[idx],
+          category_id: data.categoryId || null,
+          subcategory_id: data.subcategoryId || null,
+          name: data.name,
+          product_code: data.productCode || null,
+          description: data.description || null,
+          price: data.price,
+          image_url: data.imageUrl || null,
+          is_active: data.isActive,
+          sort_order: data.sortOrder,
+          is_offer: data.isOffer,
+          offer_price: data.offerPrice || null,
+          min_order_qty: data.minOrderQty ?? 1,
+          unit_label: data.unitLabel || null,
+          updated_at: new Date().toISOString(),
+        };
+      }
+      return { ok: true };
+    }
     const { error } = await context.supabase
       .from("products")
       .update({
         category_id: data.categoryId || null,
+        subcategory_id: data.subcategoryId || null,
         name: data.name,
+        product_code: data.productCode || null,
         description: data.description || null,
         price: data.price,
         image_url: data.imageUrl || null,
         is_active: data.isActive,
         sort_order: data.sortOrder,
+        is_offer: data.isOffer,
+        offer_price: data.offerPrice || null,
+        min_order_qty: data.minOrderQty ?? 1,
+        unit_label: data.unitLabel || null,
       })
       .eq("id", data.id);
     if (error) throw error;
@@ -166,6 +538,11 @@ export const deleteProduct = createServerFn({ method: "POST" })
   .inputValidator((data: { id: string }) => z.object({ id: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
     await requireAdmin(context);
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_PUBLISHABLE_KEY) {
+      const { db } = await import("./mockDb");
+      db.products = db.products.filter(p => p.id !== data.id);
+      return { ok: true };
+    }
     const { error } = await context.supabase.from("products").delete().eq("id", data.id);
     if (error) throw error;
     return { ok: true };
@@ -175,11 +552,21 @@ export const listRequests = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await requireAdmin(context);
-    const { data, error } = await context.supabase
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_PUBLISHABLE_KEY) {
+      const { db } = await import("./mockDb");
+      return [...db.requests].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    }
+    const { createClient } = await import("@supabase/supabase-js");
+    const fallbackClient = createClient(
+      process.env.SUPABASE_URL as string,
+      process.env.SUPABASE_PUBLISHABLE_KEY as string,
+      { auth: { storage: undefined, persistSession: false, autoRefreshToken: false } },
+    );
+    const { data, error } = await fallbackClient
       .from("product_requests")
       .select("*")
       .order("created_at", { ascending: false });
-    if (error) throw error;
+    if (error) throw new Error("listRequests fallback: " + error.message);
     return data ?? [];
   });
 
@@ -196,6 +583,19 @@ export const updateRequestStatus = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await requireAdmin(context);
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_PUBLISHABLE_KEY) {
+      const { db } = await import("./mockDb");
+      const idx = db.requests.findIndex(r => r.id === data.id);
+      if (idx !== -1) {
+        db.requests[idx] = {
+          ...db.requests[idx],
+          status: data.status,
+          admin_notes: data.adminNotes !== undefined ? data.adminNotes : db.requests[idx].admin_notes,
+          updated_at: new Date().toISOString(),
+        };
+      }
+      return { ok: true };
+    }
     const update: { status: string; admin_notes?: string | null } = { status: data.status };
     if (data.adminNotes !== undefined) update.admin_notes = data.adminNotes;
     const { error } = await context.supabase
@@ -211,7 +611,189 @@ export const deleteRequest = createServerFn({ method: "POST" })
   .inputValidator((data: { id: string }) => z.object({ id: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
     await requireAdmin(context);
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_PUBLISHABLE_KEY) {
+      const { db } = await import("./mockDb");
+      db.requests = db.requests.filter(r => r.id !== data.id);
+      return { ok: true };
+    }
     const { error } = await context.supabase.from("product_requests").delete().eq("id", data.id);
+    if (error) throw error;
+    return { ok: true };
+  });
+
+export const getOrderDestinationEmail = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await requireAdmin(context);
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_PUBLISHABLE_KEY) {
+      const { db } = await import("./mockDb");
+      const setting = db.settings.find(s => s.key === "order_destination_email");
+      return { email: setting?.value || "ordini@aurora.it" };
+    }
+    const { data, error } = await context.supabase
+      .from("settings")
+      .select("value")
+      .eq("key", "order_destination_email")
+      .maybeSingle();
+    return { email: data?.value || "" };
+  });
+
+export const updateOrderDestinationEmail = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { email: string }) => z.object({ email: z.string().email() }).parse(data))
+  .handler(async ({ data, context }) => {
+    await requireAdmin(context);
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_PUBLISHABLE_KEY) {
+      const { db } = await import("./mockDb");
+      const idx = db.settings.findIndex(s => s.key === "order_destination_email");
+      if (idx !== -1) {
+        db.settings[idx].value = data.email;
+      } else {
+        db.settings.push({ key: "order_destination_email", value: data.email });
+      }
+      return { ok: true };
+    }
+    const { error } = await context.supabase
+      .from("settings")
+      .upsert({ key: "order_destination_email", value: data.email });
+    if (error) throw error;
+    return { ok: true };
+  });
+
+const WHATSAPP_CONFIG_KEYS = [
+  "whatsapp_number",
+  "whatsapp_phone_number_id",
+  "whatsapp_waba_id",
+  "whatsapp_access_token",
+  "whatsapp_verify_token",
+  "whatsapp_business_name",
+] as const;
+
+type WhatsappConfig = {
+  number: string;
+  phoneNumberId: string;
+  wabaId: string;
+  accessToken: string;
+  verifyToken: string;
+  businessName: string;
+};
+
+const WHATSAPP_KEY_TO_FIELD: Record<(typeof WHATSAPP_CONFIG_KEYS)[number], keyof WhatsappConfig> = {
+  whatsapp_number: "number",
+  whatsapp_phone_number_id: "phoneNumberId",
+  whatsapp_waba_id: "wabaId",
+  whatsapp_access_token: "accessToken",
+  whatsapp_verify_token: "verifyToken",
+  whatsapp_business_name: "businessName",
+};
+
+export const getWhatsappConfig = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await requireAdmin(context);
+    const empty: WhatsappConfig = { number: "", phoneNumberId: "", wabaId: "", accessToken: "", verifyToken: "", businessName: "" };
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_PUBLISHABLE_KEY) {
+      const { db } = await import("./mockDb");
+      const result = { ...empty };
+      for (const key of WHATSAPP_CONFIG_KEYS) {
+        const setting = db.settings.find(s => s.key === key);
+        if (setting) result[WHATSAPP_KEY_TO_FIELD[key]] = setting.value;
+      }
+      return result;
+    }
+    const { data } = await context.supabase
+      .from("settings")
+      .select("key, value")
+      .in("key", WHATSAPP_CONFIG_KEYS as unknown as string[]);
+    const result = { ...empty };
+    for (const row of data ?? []) {
+      const field = WHATSAPP_KEY_TO_FIELD[row.key as (typeof WHATSAPP_CONFIG_KEYS)[number]];
+      if (field) result[field] = row.value ?? "";
+    }
+    return result;
+  });
+
+export const updateWhatsappConfig = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: WhatsappConfig) =>
+    z
+      .object({
+        number: z.string().regex(/^\+?[0-9\s]{0,20}$/, "Numero non valido").optional().default(""),
+        phoneNumberId: z.string().max(100).optional().default(""),
+        wabaId: z.string().max(100).optional().default(""),
+        accessToken: z.string().max(2000).optional().default(""),
+        verifyToken: z.string().max(200).optional().default(""),
+        businessName: z.string().max(200).optional().default(""),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    await requireAdmin(context);
+    const rows: { key: string; value: string }[] = [
+      { key: "whatsapp_number", value: data.number },
+      { key: "whatsapp_phone_number_id", value: data.phoneNumberId },
+      { key: "whatsapp_waba_id", value: data.wabaId },
+      { key: "whatsapp_access_token", value: data.accessToken },
+      { key: "whatsapp_verify_token", value: data.verifyToken },
+      { key: "whatsapp_business_name", value: data.businessName },
+    ];
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_PUBLISHABLE_KEY) {
+      const { db } = await import("./mockDb");
+      for (const row of rows) {
+        const idx = db.settings.findIndex(s => s.key === row.key);
+        if (idx !== -1) db.settings[idx].value = row.value;
+        else db.settings.push(row);
+      }
+      return { ok: true };
+    }
+    const { error } = await context.supabase.from("settings").upsert(rows);
+    if (error) throw error;
+    return { ok: true };
+  });
+
+// Nota interna per cliente: riusa la stessa tabella "settings" a chiave/valore,
+// con una chiave dedicata per ogni cliente (email). Evita di dover creare
+// una tabella nuova solo per questo.
+export const getCustomerNote = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { email: string }) => z.object({ email: z.string().email() }).parse(data))
+  .handler(async ({ data, context }) => {
+    await requireAdmin(context);
+    const key = `customer_note:${data.email.toLowerCase()}`;
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_PUBLISHABLE_KEY) {
+      const { db } = await import("./mockDb");
+      const setting = db.settings.find(s => s.key === key);
+      return { note: setting?.value || "" };
+    }
+    const { data: row } = await context.supabase
+      .from("settings")
+      .select("value")
+      .eq("key", key)
+      .maybeSingle();
+    return { note: row?.value || "" };
+  });
+
+export const updateCustomerNote = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { email: string; note: string }) =>
+    z.object({ email: z.string().email(), note: z.string().max(2000) }).parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    await requireAdmin(context);
+    const key = `customer_note:${data.email.toLowerCase()}`;
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_PUBLISHABLE_KEY) {
+      const { db } = await import("./mockDb");
+      const idx = db.settings.findIndex(s => s.key === key);
+      if (idx !== -1) {
+        db.settings[idx].value = data.note;
+      } else {
+        db.settings.push({ key, value: data.note });
+      }
+      return { ok: true };
+    }
+    const { error } = await context.supabase
+      .from("settings")
+      .upsert({ key, value: data.note });
     if (error) throw error;
     return { ok: true };
   });

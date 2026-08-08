@@ -49,6 +49,12 @@ export const Route = createFileRoute("/api/whatsapp/webhook")({
 
         try {
           const payload = await request.json();
+
+          // Registro eventi: salva ogni chiamata reale ricevuta da Meta,
+          // così è visibile nell'Hub API — utile per verificare che il
+          // collegamento funzioni davvero.
+          await supabase.from("whatsapp_webhook_logs").insert({ event_type: "message_received", payload });
+
           const entry = payload?.entry?.[0];
           const changes = entry?.changes?.[0]?.value;
           const msgData = changes?.messages?.[0];
