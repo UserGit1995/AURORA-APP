@@ -14,7 +14,7 @@ import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Upload, ImageIcon, Loader2, Camera, Plus } from "lucide-react";
+import { Upload, ImageIcon, Loader2, Camera, Plus, Search } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/admin/products")({
@@ -43,6 +43,7 @@ function ProductsPage() {
   });
 
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
   const [formOpen, setFormOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [scanning, setScanning] = useState(false);
@@ -68,6 +69,17 @@ function ProductsPage() {
   const subcategoriesForSelectedCategory = subcategories.filter(
     (s: any) => s.category_id === form.categoryId
   );
+
+  const filteredProducts = products.filter((product: any) => {
+    if (!search.trim()) return true;
+    const term = search.trim().toLowerCase();
+    return (
+      product.name?.toLowerCase().includes(term) ||
+      product.product_code?.toLowerCase().includes(term) ||
+      product.categories?.name?.toLowerCase().includes(term) ||
+      product.subcategories?.name?.toLowerCase().includes(term)
+    );
+  });
 
   function resetForm() {
     setEditingId(null);
@@ -448,6 +460,20 @@ function ProductsPage() {
           <p className="mt-1">{(productsError as any)?.message || "Errore sconosciuto"}</p>
         </div>
       )}
+      <div className="relative">
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          placeholder="Cerca per nome, codice, categoria o sottocategoria..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="pl-9"
+        />
+      </div>
+      {search.trim() && (
+        <p className="text-sm text-muted-foreground">
+          {filteredProducts.length} {filteredProducts.length === 1 ? "risultato trovato" : "risultati trovati"}
+        </p>
+      )}
       <Table>
         <TableHeader>
           <TableRow>
@@ -461,7 +487,7 @@ function ProductsPage() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {products.map((product: any) => (
+          {filteredProducts.map((product: any) => (
             <TableRow key={product.id} className="cursor-pointer" onClick={() => startEdit(product)}>
               <TableCell className="font-medium">
                 <div className="flex items-center gap-3">
@@ -502,6 +528,13 @@ function ProductsPage() {
               </TableCell>
             </TableRow>
           ))}
+          {filteredProducts.length === 0 && (
+            <TableRow>
+              <TableCell colSpan={7} className="py-8 text-center text-sm text-muted-foreground">
+                {search.trim() ? "Nessun prodotto trovato con questa ricerca." : "Nessun prodotto ancora."}
+              </TableCell>
+            </TableRow>
+          )}
         </TableBody>
       </Table>
     </div>
