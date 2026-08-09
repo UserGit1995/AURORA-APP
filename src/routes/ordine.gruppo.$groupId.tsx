@@ -1,10 +1,12 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useSuspenseQuery, queryOptions } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { RotateCcw } from "lucide-react";
 import logoAsset from "@/assets/aurora-logo.png";
 import { getOrderGroupById } from "@/lib/public.functions";
 import { PublicHeader } from "@/components/PublicHeader";
+import { useCart } from "@/lib/cart-context";
 
 const STATUS_LABELS: Record<string, string> = {
   new: "Ricevuto",
@@ -30,9 +32,27 @@ export const Route = createFileRoute("/ordine/gruppo/$groupId")({
 function OrderGroupStatusPage() {
   const { groupId } = Route.useParams();
   const { data: rows } = useSuspenseQuery(groupQO(groupId));
+  const { addItem } = useCart();
+  const router = useRouter();
 
   const total = rows.reduce((sum, r: any) => sum + Number(r.total_amount || 0), 0);
   const first = rows[0];
+
+  function handleReorder() {
+    for (const r of rows as any[]) {
+      if (!r.product_id) continue;
+      addItem(
+        {
+          productId: r.product_id,
+          name: r.product_name || "Prodotto",
+          price: Number(r.product_price) || 0,
+          imageUrl: null,
+        },
+        r.quantity || 1,
+      );
+    }
+    router.navigate({ to: "/cart" });
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -63,6 +83,11 @@ function OrderGroupStatusPage() {
             <p className="mt-3 text-lg font-semibold">Totale: € {total.toFixed(2)}</p>
             {first.admin_notes && (
               <p className="mt-4 text-sm"><span className="text-muted-foreground">Nota da parte nostra:</span> {first.admin_notes}</p>
+            )}
+            {rows.some((r: any) => r.product_id) && (
+              <Button onClick={handleReorder} className="mt-6 w-full">
+                <RotateCcw className="h-4 w-4" /> Riordina questi prodotti
+              </Button>
             )}
           </div>
         )}

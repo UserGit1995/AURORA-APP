@@ -1,10 +1,12 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useSuspenseQuery, queryOptions } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { RotateCcw } from "lucide-react";
 import logoAsset from "@/assets/aurora-logo.png";
 import { getOrderByToken } from "@/lib/public.functions";
 import { PublicHeader } from "@/components/PublicHeader";
+import { useCart } from "@/lib/cart-context";
 
 const STATUS_LABELS: Record<string, string> = {
   new: "Ricevuto",
@@ -31,6 +33,22 @@ function OrderStatusPage() {
   const { token } = Route.useParams();
   const { data: rows } = useSuspenseQuery(orderQO(token));
   const order = rows?.[0];
+  const { addItem } = useCart();
+  const router = useRouter();
+
+  function handleReorder() {
+    if (!order?.product_id) return;
+    addItem(
+      {
+        productId: order.product_id,
+        name: order.product_name || "Prodotto",
+        price: Number(order.product_price) || 0,
+        imageUrl: null,
+      },
+      order.quantity || 1,
+    );
+    router.navigate({ to: "/cart" });
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -52,6 +70,11 @@ function OrderStatusPage() {
             <p className="mt-3 text-lg font-semibold">Totale: € {Number(order.total_amount).toFixed(2)}</p>
             {order.admin_notes && (
               <p className="mt-4 text-sm"><span className="text-muted-foreground">Nota da parte nostra:</span> {order.admin_notes}</p>
+            )}
+            {order.product_id && (
+              <Button onClick={handleReorder} className="mt-6 w-full">
+                <RotateCcw className="h-4 w-4" /> Riordina questo prodotto
+              </Button>
             )}
           </div>
         )}

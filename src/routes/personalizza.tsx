@@ -10,6 +10,7 @@ import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import confetti from "canvas-confetti";
+import logoAsset from "@/assets/aurora-logo.png";
 import {
   Upload,
   Info,
@@ -274,23 +275,26 @@ export function PersonalizzaPage() {
 
       {/* Hero Header */}
       <div className="glass-header aurora-glow border-b border-border/50 py-10 px-4 mb-8">
-        <div className="mx-auto max-w-7xl flex flex-col md:flex-row items-center justify-between gap-6">
-          <div>
-            <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground">
-              Personalizza la tua Linea Packaging & Delivery
-            </h1>
-            <p className="mt-2 text-muted-foreground max-w-2xl text-sm sm:text-base leading-relaxed">
-              Modella in tempo reale scatole pizza, pinsa romana, sacchetti kraft,
-              shopper, tovaglie e bicchieri caffè. Posiziona il tuo logo in 3D e
-              ricevi la migliore quotazione diretta da produttore.
-            </p>
-          </div>
+        <div className="mx-auto max-w-7xl flex flex-col items-center text-center gap-6">
+          <img src={logoAsset} alt="Aurora" className="h-auto w-full max-w-[220px]" width={220} height={66} />
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6 w-full">
+            <div className="md:text-left">
+              <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground">
+                Personalizza la tua Linea Packaging & Delivery
+              </h1>
+              <p className="mt-2 text-muted-foreground max-w-2xl text-sm sm:text-base leading-relaxed">
+                Modella in tempo reale scatole pizza, pinsa romana, sacchetti kraft,
+                shopper, tovaglie e bicchieri caffè. Posiziona il tuo logo in 3D e
+                ricevi la migliore quotazione diretta da produttore.
+              </p>
+            </div>
 
-          <div className="flex items-center gap-3 bg-muted/30 px-4 py-3 rounded-2xl border border-border text-xs">
-            <ShieldCheck className="w-8 h-8 text-primary shrink-0" />
-            <div>
-              <p className="font-bold text-foreground">Stampa ad Alta Precisione</p>
-              <p className="text-muted-foreground">Inchiostri atossici certificati alimentari</p>
+            <div className="flex items-center gap-3 bg-muted/30 px-4 py-3 rounded-2xl border border-border text-xs">
+              <ShieldCheck className="w-8 h-8 text-primary shrink-0" />
+              <div>
+                <p className="font-bold text-foreground">Stampa ad Alta Precisione</p>
+                <p className="text-muted-foreground">Inchiostri atossici certificati alimentari</p>
+              </div>
             </div>
           </div>
         </div>
