@@ -18,7 +18,6 @@ import {
   Box,
   Coffee,
   Layers,
-  Sparkles,
   CheckCircle2,
   Palette,
   Ruler,
@@ -277,10 +276,6 @@ export function PersonalizzaPage() {
       <div className="bg-card border-b border-border py-10 px-4 mb-8 shadow-md">
         <div className="mx-auto max-w-7xl flex flex-col md:flex-row items-center justify-between gap-6">
           <div>
-            <div className="flex items-center gap-2 text-primary text-xs font-semibold uppercase tracking-wider mb-2">
-              <Sparkles className="w-4 h-4" />
-              <span>Studio grafico & Rendering 3D Interattivo</span>
-            </div>
             <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground">
               Personalizza la tua Linea Packaging & Delivery
             </h1>
