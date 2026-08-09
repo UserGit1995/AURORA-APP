@@ -582,7 +582,7 @@ export function PersonalizzaPage() {
                   </Label>
                   <div className="flex gap-2">
                     <Input
-                      placeholder="Es. Pizzeria Da Mario - Tel. 06 123456"
+                      placeholder=""
                       value={customText}
                       onChange={(e) => setCustomText(e.target.value)}
                       maxLength={80}
@@ -708,7 +708,7 @@ export function PersonalizzaPage() {
                       value={form.customerName}
                       onChange={(e) => setForm({ ...form, customerName: e.target.value })}
                       required
-                      placeholder="Es. Mario Rossi"
+                      placeholder=""
                       maxLength={200}
                       className="text-xs bg-input/40 border-border text-foreground placeholder:text-muted-foreground"
                     />
@@ -721,7 +721,7 @@ export function PersonalizzaPage() {
                       onChange={(e) =>
                         setForm({ ...form, customerCompany: e.target.value })
                       }
-                      placeholder="Es. Pizzeria Bella Napoli"
+                      placeholder=""
                       maxLength={200}
                       className="text-xs bg-input/40 border-border text-foreground placeholder:text-muted-foreground"
                     />
@@ -765,7 +765,7 @@ export function PersonalizzaPage() {
                       onChange={(e) => setForm({ ...form, notes: e.target.value })}
                       maxLength={2000}
                       rows={2}
-                      placeholder="Es. tempi di consegna desiderati, pantone specifico, ecc..."
+                      placeholder="Tempi di consegna desiderati, pantone specifico, ecc."
                       className="text-xs bg-input/40 border-border text-foreground placeholder:text-muted-foreground"
                     />
                   </div>

@@ -188,6 +188,33 @@ export function Packaging3DViewer({ config, className = "", onTakeSnapshot }: Pa
     isDraggingRef.current = false;
   };
 
+  // Stessa identica logica di sopra, ma per il dito su schermo touch
+  // (prima mancava del tutto: il mouse funzionava, il tocco no).
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length !== 1) return;
+    isDraggingRef.current = true;
+    previousMousePositionRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isDraggingRef.current || !meshGroupRef.current || e.touches.length !== 1) return;
+    e.preventDefault();
+    const touch = e.touches[0];
+    const deltaX = touch.clientX - previousMousePositionRef.current.x;
+    const deltaY = touch.clientY - previousMousePositionRef.current.y;
+
+    meshGroupRef.current.rotation.y += deltaX * 0.008;
+    meshGroupRef.current.rotation.x += deltaY * 0.008;
+
+    meshGroupRef.current.rotation.x = Math.max(-Math.PI / 3, Math.min(Math.PI / 3, meshGroupRef.current.rotation.x));
+
+    previousMousePositionRef.current = { x: touch.clientX, y: touch.clientY };
+  };
+
+  const handleTouchEnd = () => {
+    isDraggingRef.current = false;
+  };
+
   const handleZoom = (delta: number) => {
     if (!cameraRef.current) return;
     cameraRef.current.position.z = Math.max(1.8, Math.min(7.0, cameraRef.current.position.z + delta));
@@ -224,6 +251,10 @@ export function Packaging3DViewer({ config, className = "", onTakeSnapshot }: Pa
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onTouchCancel={handleTouchEnd}
         className="w-full h-full cursor-grab active:cursor-grabbing touch-none"
       />
 
