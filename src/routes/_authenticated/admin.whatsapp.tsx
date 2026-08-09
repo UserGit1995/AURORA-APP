@@ -40,7 +40,7 @@ function WhatsappPage() {
   const unreadTotal = contacts.filter((c: any) => c.unread_count > 0 && !c.archived).length;
 
   return (
-    <div className="card-elevated flex h-[80vh] overflow-hidden rounded-xl border border-border">
+    <div className="card-elevated aurora-glow flex h-[80vh] overflow-hidden rounded-xl border border-border">
       {/* Menu laterale, stessa struttura dell'originale */}
       <aside className="flex w-16 shrink-0 flex-col justify-between border-r border-border bg-card/40 md:w-56">
         <nav className="space-y-1 p-2 pt-4">

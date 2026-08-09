@@ -87,7 +87,7 @@ function CustomizationsPage() {
             const isOpen = expanded === r.id;
             const notes = notesDraft[r.id] ?? r.admin_notes ?? "";
             return (
-              <Card key={r.id} className="card-elevated">
+              <Card key={r.id} className="card-elevated aurora-glow overflow-hidden">
                 <CardContent className="p-4">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">

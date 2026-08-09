@@ -60,7 +60,7 @@ export function TemplatesTab() {
         <p className="text-sm text-muted-foreground">Testi pronti da riusare nelle conversazioni.</p>
       </div>
       <div className="grid gap-4 lg:grid-cols-2">
-        <Card className="card-elevated">
+        <Card className="card-elevated aurora-glow overflow-hidden">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base"><FileText className="h-4 w-4 text-primary" /> Nuovo modello</CardTitle>
             <CardDescription>Nome interno, categoria e testo del messaggio.</CardDescription>
@@ -78,7 +78,7 @@ export function TemplatesTab() {
           </CardContent>
         </Card>
 
-        <Card className="card-elevated">
+        <Card className="card-elevated aurora-glow overflow-hidden">
           <CardHeader><CardTitle className="text-base">I tuoi modelli</CardTitle></CardHeader>
           <CardContent className="space-y-2">
             {isLoading && <p className="text-sm text-muted-foreground">Carico...</p>}

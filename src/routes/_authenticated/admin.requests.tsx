@@ -105,7 +105,7 @@ function RequestsPage() {
         const isMultiItem = order.items.length > 1;
 
         return (
-          <Card key={order.key} className="card-elevated">
+          <Card key={order.key} className="card-elevated aurora-glow overflow-hidden">
             <CardContent className="p-4">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
