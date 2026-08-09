@@ -273,7 +273,7 @@ export function PersonalizzaPage() {
       <PublicHeader />
 
       {/* Hero Header */}
-      <div className="bg-card border-b border-border py-10 px-4 mb-8 shadow-md">
+      <div className="glass-header aurora-glow border-b border-border/50 py-10 px-4 mb-8">
         <div className="mx-auto max-w-7xl flex flex-col md:flex-row items-center justify-between gap-6">
           <div>
             <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground">

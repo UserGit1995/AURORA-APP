@@ -106,7 +106,7 @@ function CustomersPage() {
         <p className="text-sm text-muted-foreground">Nessun cliente ancora: compariranno qui al primo ordine ricevuto.</p>
       ) : (
         <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
-          <Card className="h-fit">
+          <Card className="card-elevated h-fit">
             <CardContent className="p-3">
               <div className="relative mb-3">
                 <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -183,7 +183,7 @@ function CustomerDetail({ customer }: { customer: CustomerSummary }) {
 
   return (
     <div className="space-y-4">
-      <Card>
+      <Card className="card-elevated">
         <CardContent className="p-5">
           <div className="mb-4 flex items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 text-primary">
@@ -218,7 +218,7 @@ function CustomerDetail({ customer }: { customer: CustomerSummary }) {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="card-elevated">
         <CardContent className="p-5">
           <div className="mb-3 flex items-center gap-2 font-medium">
             <ShoppingBag className="h-4 w-4 text-primary" /> Storico ordini
@@ -242,7 +242,7 @@ function CustomerDetail({ customer }: { customer: CustomerSummary }) {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="card-elevated">
         <CardContent className="p-5">
           <div className="mb-3 flex items-center gap-2 font-medium">
             <StickyNote className="h-4 w-4 text-primary" /> Note interne
