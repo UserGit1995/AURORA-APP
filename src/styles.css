@@ -186,6 +186,20 @@
       0 0 0 1px rgb(71 188 238 / 15%),
       0 0 24px -4px rgb(71 188 238 / 25%);
   }
+  /* Su schermi touch non esiste un vero "passaggio del mouse": toccare una
+     card attiva l'hover e lo lascia bloccato acceso anche dopo aver tolto
+     il dito, e su forme rotonde il bagliore fuoriesce dal bordo. Per
+     questo l'effetto sopra si attiva solo se il dispositivo ha davvero
+     un puntatore preciso (mouse), mai su smartphone/tablet. */
+  @media (hover: none) or (pointer: coarse) {
+    .card-elevated:hover {
+      transform: none;
+      border-color: inherit;
+      box-shadow:
+        0 1px 2px rgb(0 0 0 / 30%),
+        0 8px 24px -12px rgb(0 0 0 / 50%);
+    }
+  }
 
   /* Header "di vetro": leggermente trasparente con sfocatura sullo sfondo,
      invece di un blocco piatto a tinta unita. */
