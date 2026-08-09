@@ -28,6 +28,8 @@ const productSchema = z.object({
   offerPrice: z.number().nonnegative().nullable().optional(),
   minOrderQty: z.number().int().min(1).default(1),
   unitLabel: z.string().max(50).nullable().optional(),
+  extraCategoryIds: z.array(z.string().uuid()).default([]),
+  extraSubcategoryIds: z.array(z.string().uuid()).default([]),
 });
 
 async function requireAdmin(context: { supabase: any; userId: string }) {
@@ -39,6 +41,32 @@ async function requireAdmin(context: { supabase: any; userId: string }) {
     _role: "admin",
   });
   if (error || !data) throw new Error("Forbidden");
+}
+
+// Sostituisce del tutto le categorie/sottocategorie extra di un prodotto
+// con quelle passate (elimina i vecchi collegamenti e inserisce quelli
+// nuovi) — usata sia alla creazione che alla modifica di un prodotto.
+async function syncExtraPlacements(
+  supabase: any,
+  productId: string,
+  extraCategoryIds: string[],
+  extraSubcategoryIds: string[],
+) {
+  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_PUBLISHABLE_KEY) return;
+
+  await supabase.from("product_extra_categories").delete().eq("product_id", productId);
+  await supabase.from("product_extra_subcategories").delete().eq("product_id", productId);
+
+  if (extraCategoryIds.length > 0) {
+    await supabase
+      .from("product_extra_categories")
+      .insert(extraCategoryIds.map((categoryId) => ({ product_id: productId, category_id: categoryId })));
+  }
+  if (extraSubcategoryIds.length > 0) {
+    await supabase
+      .from("product_extra_subcategories")
+      .insert(extraSubcategoryIds.map((subcategoryId) => ({ product_id: productId, subcategory_id: subcategoryId })));
+  }
 }
 
 export const makeUserAdmin = createServerFn({ method: "POST" })
@@ -404,11 +432,15 @@ export const listProducts = createServerFn({ method: "GET" })
     if (catsErr) throw new Error("listProducts (categorie) fallback: " + catsErr.message);
     const { data: subs, error: subsErr } = await fallbackClient.from("subcategories").select("id, name");
     if (subsErr) throw new Error("listProducts (sottocategorie) fallback: " + subsErr.message);
+    const { data: extraCats } = await fallbackClient.from("product_extra_categories").select("product_id, category_id");
+    const { data: extraSubs } = await fallbackClient.from("product_extra_subcategories").select("product_id, subcategory_id");
 
     return (data ?? []).map((p: any) => ({
       ...p,
       categories: cats?.find((c: any) => c.id === p.category_id) ? { name: cats.find((c: any) => c.id === p.category_id)!.name } : null,
       subcategories: subs?.find((s: any) => s.id === p.subcategory_id) ? { name: subs.find((s: any) => s.id === p.subcategory_id)!.name } : null,
+      extra_category_ids: (extraCats ?? []).filter((l: any) => l.product_id === p.id).map((l: any) => l.category_id),
+      extra_subcategory_ids: (extraSubs ?? []).filter((l: any) => l.product_id === p.id).map((l: any) => l.subcategory_id),
     }));
   });
 
@@ -460,6 +492,7 @@ export const createProduct = createServerFn({ method: "POST" })
       .select()
       .single();
     if (error) throw error;
+    await syncExtraPlacements(context.supabase, product.id, data.extraCategoryIds ?? [], data.extraSubcategoryIds ?? []);
     return product;
   });
 
@@ -482,6 +515,8 @@ export const updateProduct = createServerFn({ method: "POST" })
         offerPrice: z.number().nonnegative().nullable().optional(),
         minOrderQty: z.number().int().min(1),
         unitLabel: z.string().max(50).nullable().optional(),
+        extraCategoryIds: z.array(z.string().uuid()).default([]),
+        extraSubcategoryIds: z.array(z.string().uuid()).default([]),
       })
       .parse(data),
   )
@@ -530,6 +565,7 @@ export const updateProduct = createServerFn({ method: "POST" })
       })
       .eq("id", data.id);
     if (error) throw error;
+    await syncExtraPlacements(context.supabase, data.id, data.extraCategoryIds ?? [], data.extraSubcategoryIds ?? []);
     return { ok: true };
   });
 

@@ -78,16 +78,42 @@ export const listPublicProducts = createServerFn({ method: "GET" })
     }
 
     const supabase = publicClient();
+
+    // Un prodotto può comparire anche in categorie/sottocategorie
+    // aggiuntive, oltre a quella principale. Leggiamo questi due elenchi
+    // separatamente (mai unioni dirette tra tabelle in questa funzione,
+    // stessa regola già valida per le altre liste pubbliche) e li usiamo
+    // sia per allargare il filtro per categoria, sia per far sapere al
+    // catalogo dove altro mostrare ogni prodotto.
+    const { data: extraCatLinks } = await supabase.from("product_extra_categories").select("product_id, category_id");
+    const { data: extraSubLinks } = await supabase.from("product_extra_subcategories").select("product_id, subcategory_id");
+
     let query = supabase
       .from("products")
       .select("id, name, description, price, image_url, category_id, subcategory_id, sort_order, is_offer, offer_price, min_order_qty, unit_label")
       .eq("is_active", true)
       .order("sort_order", { ascending: true })
       .order("name", { ascending: true });
-    if (data.categoryId) query = query.eq("category_id", data.categoryId);
+
+    if (data.categoryId) {
+      const extraIds = (extraCatLinks ?? [])
+        .filter((l: any) => l.category_id === data.categoryId)
+        .map((l: any) => l.product_id);
+      if (extraIds.length > 0) {
+        query = query.or(`category_id.eq.${data.categoryId},id.in.(${extraIds.join(",")})`);
+      } else {
+        query = query.eq("category_id", data.categoryId);
+      }
+    }
+
     const { data: rows, error } = await query;
     if (error) throw error;
-    return rows ?? [];
+
+    return (rows ?? []).map((p: any) => ({
+      ...p,
+      extra_category_ids: (extraCatLinks ?? []).filter((l: any) => l.product_id === p.id).map((l: any) => l.category_id),
+      extra_subcategory_ids: (extraSubLinks ?? []).filter((l: any) => l.product_id === p.id).map((l: any) => l.subcategory_id),
+    }));
   });
 
 export const getPublicProduct = createServerFn({ method: "GET" })

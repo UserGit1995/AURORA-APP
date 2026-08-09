@@ -213,6 +213,18 @@ export type Database = {
         }
         Relationships: []
       }
+      product_extra_categories: {
+        Row: { product_id: string; category_id: string }
+        Insert: { product_id: string; category_id: string }
+        Update: { product_id?: string; category_id?: string }
+        Relationships: []
+      }
+      product_extra_subcategories: {
+        Row: { product_id: string; subcategory_id: string }
+        Insert: { product_id: string; subcategory_id: string }
+        Update: { product_id?: string; subcategory_id?: string }
+        Relationships: []
+      }
       whatsapp_webhook_logs: {
         Row: {
           id: string

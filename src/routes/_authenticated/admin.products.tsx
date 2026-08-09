@@ -64,6 +64,8 @@ function ProductsPage() {
     offerPrice: "",
     minOrderQty: "1",
     unitLabel: "",
+    extraCategoryIds: [] as string[],
+    extraSubcategoryIds: [] as string[],
   });
 
   const subcategoriesForSelectedCategory = subcategories.filter(
@@ -97,6 +99,8 @@ function ProductsPage() {
       offerPrice: "",
       minOrderQty: "1",
       unitLabel: "",
+      extraCategoryIds: [],
+      extraSubcategoryIds: [],
     });
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
@@ -124,6 +128,8 @@ function ProductsPage() {
       offerPrice: product.offer_price !== null ? String(product.offer_price) : "",
       minOrderQty: product.min_order_qty ? String(product.min_order_qty) : "1",
       unitLabel: product.unit_label || "",
+      extraCategoryIds: product.extra_category_ids ?? [],
+      extraSubcategoryIds: product.extra_subcategory_ids ?? [],
     });
     setFormOpen(true);
   }
@@ -230,6 +236,8 @@ function ProductsPage() {
       offerPrice: form.isOffer && form.offerPrice ? parseFloat(form.offerPrice) : null,
       minOrderQty: form.minOrderQty ? parseInt(form.minOrderQty, 10) : 1,
       unitLabel: form.unitLabel.trim() || null,
+      extraCategoryIds: form.extraCategoryIds,
+      extraSubcategoryIds: form.extraSubcategoryIds,
     };
 
     try {
@@ -347,6 +355,71 @@ function ProductsPage() {
               ))}
             </SelectContent>
           </Select>
+        </div>
+        <div className="space-y-2 sm:col-span-2 rounded-md border border-border p-4">
+          <Label>Mostra anche in altre categorie (facoltativo)</Label>
+          <p className="text-xs text-muted-foreground">
+            Il prodotto resta caricato una volta sola: spuntando qui compare anche in queste categorie, oltre a quella principale scelta sopra.
+          </p>
+          <div className="flex flex-wrap gap-2 pt-1">
+            {categories
+              .filter((c: any) => c.id !== form.categoryId)
+              .map((c: any) => {
+                const checked = form.extraCategoryIds.includes(c.id);
+                return (
+                  <button
+                    type="button"
+                    key={c.id}
+                    onClick={() =>
+                      setForm({
+                        ...form,
+                        extraCategoryIds: checked
+                          ? form.extraCategoryIds.filter((id) => id !== c.id)
+                          : [...form.extraCategoryIds, c.id],
+                      })
+                    }
+                    className={`rounded-full border px-3 py-1 text-xs transition ${
+                      checked ? "border-primary bg-primary/15 text-primary" : "border-border text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    {c.name}
+                  </button>
+                );
+              })}
+          </div>
+        </div>
+        <div className="space-y-2 sm:col-span-2 rounded-md border border-border p-4">
+          <Label>Mostra anche in altre sottocategorie (facoltativo)</Label>
+          <p className="text-xs text-muted-foreground">
+            Stesso principio, ma per le sottocategorie di qualunque categoria (non solo quella scelta sopra).
+          </p>
+          <div className="flex flex-wrap gap-2 pt-1">
+            {subcategories
+              .filter((s: any) => s.id !== form.subcategoryId)
+              .map((s: any) => {
+                const checked = form.extraSubcategoryIds.includes(s.id);
+                const parentCategory = categories.find((c: any) => c.id === s.category_id);
+                return (
+                  <button
+                    type="button"
+                    key={s.id}
+                    onClick={() =>
+                      setForm({
+                        ...form,
+                        extraSubcategoryIds: checked
+                          ? form.extraSubcategoryIds.filter((id) => id !== s.id)
+                          : [...form.extraSubcategoryIds, s.id],
+                      })
+                    }
+                    className={`rounded-full border px-3 py-1 text-xs transition ${
+                      checked ? "border-primary bg-primary/15 text-primary" : "border-border text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    {s.name}{parentCategory ? ` (${parentCategory.name})` : ""}
+                  </button>
+                );
+              })}
+          </div>
         </div>
         <div className="space-y-2">
           <Label htmlFor="minOrderQty">Quantità minima ordinabile</Label>

@@ -97,7 +97,7 @@ function Catalog() {
     : allProducts;
 
   const products = subcategory
-    ? textFiltered.filter((p) => p.subcategory_id === subcategory)
+    ? textFiltered.filter((p) => p.subcategory_id === subcategory || p.extra_subcategory_ids?.includes(subcategory))
     : textFiltered;
 
   const subcategoriesForCategory = category
@@ -186,7 +186,7 @@ function Catalog() {
           ) : (
             <div className="space-y-10">
               {subcategoriesForCategory.map((s) => {
-                const inSub = products.filter((p) => p.subcategory_id === s.id);
+                const inSub = products.filter((p) => p.subcategory_id === s.id || p.extra_subcategory_ids?.includes(s.id));
                 if (inSub.length === 0) return null;
                 return (
                   <section key={s.id}>
@@ -196,9 +196,12 @@ function Catalog() {
                 );
               })}
               {(() => {
-                const withoutSub = products.filter(
-                  (p) => !p.subcategory_id || !subcategoriesForCategory.some((s) => s.id === p.subcategory_id)
-                );
+                const withoutSub = products.filter((p) => {
+                  const belongsToShown =
+                    (p.subcategory_id && subcategoriesForCategory.some((s) => s.id === p.subcategory_id)) ||
+                    p.extra_subcategory_ids?.some((id: string) => subcategoriesForCategory.some((s) => s.id === id));
+                  return !belongsToShown;
+                });
                 if (withoutSub.length === 0) return null;
                 return (
                   <section>
@@ -212,7 +215,7 @@ function Catalog() {
         ) : (
           <div className="space-y-12">
             {categories.map((c) => {
-              const productsInCategory = products.filter((p) => p.category_id === c.id);
+              const productsInCategory = products.filter((p) => p.category_id === c.id || p.extra_category_ids?.includes(c.id));
               if (productsInCategory.length === 0) return null;
               return (
                 <section key={c.id}>
@@ -222,9 +225,12 @@ function Catalog() {
               );
             })}
             {(() => {
-              const uncategorized = products.filter(
-                (p) => !categories.some((c) => c.id === p.category_id)
-              );
+              const uncategorized = products.filter((p) => {
+                const belongsToShown =
+                  categories.some((c: any) => c.id === p.category_id) ||
+                  p.extra_category_ids?.some((id: string) => categories.some((c: any) => c.id === id));
+                return !belongsToShown;
+              });
               if (uncategorized.length === 0) return null;
               return (
                 <section>
