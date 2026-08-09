@@ -833,3 +833,32 @@ export const updateCustomerNote = createServerFn({ method: "POST" })
     if (error) throw error;
     return { ok: true };
   });
+
+// ---------- Storico caricamenti prodotti ----------
+// Ogni prodotto registra già da solo quando è stato creato (created_at):
+// qui li rileggiamo semplicemente ordinati dal più recente, raggruppabili
+// per giorno lato interfaccia.
+
+export const listProductUploadLog = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await requireAdmin(context);
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_PUBLISHABLE_KEY) {
+      const { db } = await import("./mockDb");
+      return [...db.products]
+        .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+        .map((p: any) => ({ id: p.id, name: p.name, product_code: p.product_code, created_at: p.created_at }));
+    }
+    const { createClient } = await import("@supabase/supabase-js");
+    const fallbackClient = createClient(
+      process.env.SUPABASE_URL as string,
+      process.env.SUPABASE_PUBLISHABLE_KEY as string,
+      { auth: { storage: undefined, persistSession: false, autoRefreshToken: false } },
+    );
+    const { data, error } = await fallbackClient
+      .from("products")
+      .select("id, name, product_code, created_at")
+      .order("created_at", { ascending: false });
+    if (error) throw new Error("listProductUploadLog: " + error.message);
+    return data ?? [];
+  });
