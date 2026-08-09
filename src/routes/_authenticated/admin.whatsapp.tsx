@@ -40,7 +40,7 @@ function WhatsappPage() {
   const unreadTotal = contacts.filter((c: any) => c.unread_count > 0 && !c.archived).length;
 
   return (
-    <div className="flex h-[80vh] overflow-hidden rounded-xl border border-border">
+    <div className="card-elevated flex h-[80vh] overflow-hidden rounded-xl border border-border">
       {/* Menu laterale, stessa struttura dell'originale */}
       <aside className="flex w-16 shrink-0 flex-col justify-between border-r border-border bg-card/40 md:w-56">
         <nav className="space-y-1 p-2 pt-4">
@@ -54,7 +54,7 @@ function WhatsappPage() {
                 onClick={() => setActiveTab(item.id)}
                 className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-xs font-medium transition-all ${
                   isActive
-                    ? "border border-primary/30 bg-primary/15 text-primary shadow-sm"
+                    ? "border border-primary/30 bg-primary/15 text-primary shadow-[0_0_18px_-6px_rgb(71_188_238_/_45%)]"
                     : "border border-transparent text-muted-foreground hover:bg-accent hover:text-foreground"
                 }`}
               >

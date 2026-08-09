@@ -4,6 +4,7 @@ import { Menu, LayoutDashboard, Tags, Package, ClipboardList, Palette, Users, Me
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle, SheetClose } from "@/components/ui/sheet";
+import logoAsset from "@/assets/aurora-logo.png";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -32,8 +33,8 @@ function AuthenticatedLayout() {
     <div className="min-h-screen bg-background">
       <nav className="border-b border-border px-6 py-4">
         <div className="mx-auto flex max-w-6xl items-center justify-between">
-          <Link to="/admin" className="text-lg font-semibold text-foreground">
-            Aurora Admin
+          <Link to="/admin" className="flex items-center">
+            <img src={logoAsset} alt="Aurora" className="h-9 w-auto" width={140} height={36} />
           </Link>
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
