@@ -31,6 +31,20 @@ export const Route = createFileRoute("/")({
     // Home deve aprirsi comunque, solo senza questa sezione in più.
     await context.queryClient.ensureQueryData(subcategoriesQO).catch(() => {});
   },
+  head: () => ({
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "Organization",
+          name: "Aurora",
+          url: "https://aurora-app-nine.vercel.app",
+          description: "Forniture Ho.Re.Ca e packaging personalizzato.",
+        }),
+      },
+    ],
+  }),
   component: Home,
   errorComponent: ({ error }: { error: any }) => (
     <div className="p-8 text-center text-muted-foreground">

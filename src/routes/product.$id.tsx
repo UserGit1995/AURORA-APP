@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useSuspenseQuery, useQuery, queryOptions } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,7 +12,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
 import { Info } from "lucide-react";
 import logoAsset from "@/assets/aurora-logo.png";
-import { getPublicProduct, listPublicVariants, submitProductRequest, incrementProductView } from "@/lib/public.functions";
+import { getPublicProduct, listPublicVariants, submitProductRequest } from "@/lib/public.functions";
 import { useCart } from "@/lib/cart-context";
 import { CartLink } from "@/components/CartLink";
 import { ShoppingCart } from "lucide-react";
@@ -47,6 +47,50 @@ export const Route = createFileRoute("/product/$id")({
     await context.queryClient.ensureQueryData(variantsQO).catch(() => {});
     return { product };
   },
+  head: ({ loaderData }) => {
+    const product = loaderData?.product;
+    if (!product) {
+      return { meta: [{ title: "Prodotto - Aurora" }] };
+    }
+    const title = `${product.name} - Aurora`;
+    const description = product.description
+      ? product.description.slice(0, 155)
+      : `Scopri ${product.name} nel catalogo Aurora. Invia la tua richiesta, ti rispondiamo per email.`;
+    const url = `https://aurora-app-nine.vercel.app/product/${product.id}`;
+    return {
+      meta: [
+        { title },
+        { name: "description", content: description },
+        { property: "og:title", content: title },
+        { property: "og:description", content: description },
+        { property: "og:type", content: "product" },
+        { property: "og:url", content: url },
+        ...(product.image_url ? [{ property: "og:image", content: product.image_url }] : []),
+        { property: "product:price:amount", content: String(product.price) },
+        { property: "product:price:currency", content: "EUR" },
+      ],
+      links: [{ rel: "canonical", href: url }],
+      scripts: [
+        {
+          type: "application/ld+json",
+          children: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Product",
+            name: product.name,
+            description: product.description || undefined,
+            image: product.image_url || undefined,
+            offers: {
+              "@type": "Offer",
+              priceCurrency: "EUR",
+              price: product.price,
+              availability: "https://schema.org/InStock",
+              url,
+            },
+          }),
+        },
+      ],
+    };
+  },
   component: ProductPage,
   errorComponent: ({ error }: { error: any }) => (
     <div className="p-8 text-center">
@@ -68,14 +112,6 @@ function ProductPage() {
   const [variantId, setVariantId] = useState<string>("");
   const selectedVariant = variants.find((v) => v.id === variantId);
   const { addItem } = useCart();
-
-  // Conta la visualizzazione una volta sola per apertura pagina, in modo
-  // silenzioso (nessun effetto visibile, nessun errore mostrato se fallisce).
-  const incrementView = useServerFn(incrementProductView);
-  useEffect(() => {
-    incrementView({ data: { productId: id } }).catch(() => {});
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id]);
   const submit = useServerFn(submitProductRequest);
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState({
