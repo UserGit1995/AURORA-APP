@@ -862,3 +862,81 @@ export const listProductUploadLog = createServerFn({ method: "GET" })
     if (error) throw new Error("listProductUploadLog: " + error.message);
     return data ?? [];
   });
+
+// ---------- Statistiche prodotti (venduti e visualizzati) ----------
+// Le vendite si calcolano dalle richieste ordine già esistenti
+// (product_requests), niente tabella nuova. Le visualizzazioni usano
+// il contatore products.view_count aggiunto con la migrazione 11.
+
+export const getProductStats = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await requireAdmin(context);
+
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_PUBLISHABLE_KEY) {
+      const { db } = await import("./mockDb");
+      return {
+        topSelling: [],
+        leastSelling: [],
+        mostViewed: [],
+        leastViewed: [],
+        totalUnitsSold: 0,
+        totalViews: 0,
+      };
+    }
+
+    const { createClient } = await import("@supabase/supabase-js");
+    const fallbackClient = createClient(
+      process.env.SUPABASE_URL as string,
+      process.env.SUPABASE_PUBLISHABLE_KEY as string,
+      { auth: { storage: undefined, persistSession: false, autoRefreshToken: false } },
+    );
+
+    const { data: requests, error: reqErr } = await fallbackClient
+      .from("product_requests")
+      .select("product_id, product_name, quantity");
+    if (reqErr) throw new Error("getProductStats (richieste): " + reqErr.message);
+
+    const { data: products, error: prodErr } = await fallbackClient
+      .from("products")
+      .select("id, name, view_count, is_active");
+    if (prodErr) throw new Error("getProductStats (prodotti): " + prodErr.message);
+
+    // Somma le quantità vendute per prodotto (per nome, così un
+    // prodotto poi eliminato resta comunque visibile nello storico)
+    const soldByProduct = new Map<string, { productId: string | null; name: string; quantity: number }>();
+    for (const r of requests ?? []) {
+      const key = r.product_id || r.product_name || "sconosciuto";
+      const existing = soldByProduct.get(key);
+      const qty = r.quantity || 0;
+      if (existing) {
+        existing.quantity += qty;
+      } else {
+        soldByProduct.set(key, { productId: r.product_id, name: r.product_name || "Prodotto rimosso", quantity: qty });
+      }
+    }
+
+    const totalUnitsSold = [...soldByProduct.values()].reduce((sum, p) => sum + p.quantity, 0);
+    const soldList = [...soldByProduct.values()]
+      .map((p) => ({ ...p, percentage: totalUnitsSold > 0 ? Math.round((p.quantity / totalUnitsSold) * 1000) / 10 : 0 }))
+      .sort((a, b) => b.quantity - a.quantity);
+
+    const topSelling = soldList.slice(0, 5);
+    const leastSelling = [...soldList].reverse().slice(0, 5);
+
+    const activeProducts = (products ?? []).filter((p: any) => p.is_active);
+    const totalViews = activeProducts.reduce((sum: number, p: any) => sum + (p.view_count || 0), 0);
+    const viewedList = activeProducts
+      .map((p: any) => ({
+        productId: p.id,
+        name: p.name,
+        views: p.view_count || 0,
+        percentage: totalViews > 0 ? Math.round(((p.view_count || 0) / totalViews) * 1000) / 10 : 0,
+      }))
+      .sort((a: any, b: any) => b.views - a.views);
+
+    const mostViewed = viewedList.slice(0, 5);
+    const leastViewed = [...viewedList].reverse().slice(0, 5);
+
+    return { topSelling, leastSelling, mostViewed, leastViewed, totalUnitsSold, totalViews };
+  });

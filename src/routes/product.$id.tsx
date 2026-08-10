@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useSuspenseQuery, useQuery, queryOptions } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,7 +12,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
 import { Info } from "lucide-react";
 import logoAsset from "@/assets/aurora-logo.png";
-import { getPublicProduct, listPublicVariants, submitProductRequest } from "@/lib/public.functions";
+import { getPublicProduct, listPublicVariants, submitProductRequest, incrementProductView } from "@/lib/public.functions";
 import { useCart } from "@/lib/cart-context";
 import { CartLink } from "@/components/CartLink";
 import { ShoppingCart } from "lucide-react";
@@ -68,6 +68,14 @@ function ProductPage() {
   const [variantId, setVariantId] = useState<string>("");
   const selectedVariant = variants.find((v) => v.id === variantId);
   const { addItem } = useCart();
+
+  // Conta la visualizzazione una volta sola per apertura pagina, in modo
+  // silenzioso (nessun effetto visibile, nessun errore mostrato se fallisce).
+  const incrementView = useServerFn(incrementProductView);
+  useEffect(() => {
+    incrementView({ data: { productId: id } }).catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
   const submit = useServerFn(submitProductRequest);
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState({

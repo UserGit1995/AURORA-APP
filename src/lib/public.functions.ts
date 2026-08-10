@@ -137,6 +137,19 @@ export const getPublicProduct = createServerFn({ method: "GET" })
     return row;
   });
 
+// Incrementa in modo silenzioso il contatore di visualizzazioni di un
+// prodotto — usata dalla scheda prodotto ogni volta che viene aperta.
+// Non blocca né mostra errori all'utente se fallisce (statistica, non
+// funzione critica).
+export const incrementProductView = createServerFn({ method: "POST" })
+  .inputValidator((data: { productId: string }) => z.object({ productId: z.string().uuid() }).parse(data))
+  .handler(async ({ data }) => {
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_PUBLISHABLE_KEY) return { ok: true };
+    const supabase = publicClient();
+    await supabase.rpc("increment_product_view", { p_product_id: data.productId });
+    return { ok: true };
+  });
+
 const requestSchema = z.object({
   productId: z.string().uuid(),
   variantId: z.string().uuid().optional(),

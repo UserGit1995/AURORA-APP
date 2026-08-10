@@ -463,6 +463,7 @@ export type Database = {
           offer_price: number | null
           min_order_qty: number | null
           unit_label: string | null
+          view_count: number
         }
         Insert: {
           category_id?: string | null
@@ -481,6 +482,7 @@ export type Database = {
           offer_price?: number | null
           min_order_qty?: number | null
           unit_label?: string | null
+          view_count?: number
         }
         Update: {
           category_id?: string | null
@@ -499,6 +501,7 @@ export type Database = {
           offer_price?: number | null
           min_order_qty?: number | null
           unit_label?: string | null
+          view_count?: number
         }
         Relationships: [
           {
