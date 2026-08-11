@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Outlet, redirect } from "@tanstack/react-router";
 import { useState } from "react";
-import { Menu, LayoutDashboard, Tags, Package, ClipboardList, Palette, Users, MessageCircle, History, Tag, LogOut } from "lucide-react";
+import { Menu, LayoutDashboard, Tags, Package, ClipboardList, Palette, Users, MessageCircle, History, Tag, Mail, LogOut } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle, SheetClose } from "@/components/ui/sheet";
@@ -22,6 +22,7 @@ const NAV_ITEMS = [
   { to: "/admin/products", label: "Prodotti", icon: Package },
   { to: "/admin/upload-log", label: "Storico Caricamenti", icon: History },
   { to: "/admin/requests", label: "Richieste", icon: ClipboardList },
+  { to: "/admin/order-comms", label: "Comunicazioni Ordini", icon: Mail },
   { to: "/admin/customizations", label: "Personalizzazioni", icon: Palette },
   { to: "/admin/customization-pricing", label: "Prezzi Personalizzazione", icon: Tag },
   { to: "/admin/customers", label: "Clienti", icon: Users },

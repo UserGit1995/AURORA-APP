@@ -114,6 +114,18 @@ function Dashboard() {
             <CardContent className="text-sm text-primary">Gestisci →</CardContent>
           </Card>
         </Link>
+        <Link to="/admin/order-comms">
+          <Card className="card-elevated aurora-glow overflow-hidden transition hover:border-primary">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Mail className="h-4 w-4 text-primary" />
+                Comunicazioni Ordini
+              </CardTitle>
+              <CardDescription>Scrivi email vere ai clienti sui loro ordini.</CardDescription>
+            </CardHeader>
+            <CardContent className="text-sm text-primary">Gestisci →</CardContent>
+          </Card>
+        </Link>
         <Link to="/admin/products">
           <Card className="card-elevated aurora-glow overflow-hidden transition hover:border-primary">
             <CardHeader>

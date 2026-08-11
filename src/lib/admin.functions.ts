@@ -981,3 +981,64 @@ export const updatePackagingPrice = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+// ---------- Comunicazioni Ordini (invio email reale ai clienti) ----------
+// Riusa listRequests già esistente per l'elenco ordini/clienti — qui
+// solo la generazione della bozza (IA reale, Gemini) e l'invio vero.
+
+export const generateOrderReplyDraft = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { instructions: string; customerName: string; orderContext: string }) =>
+    z.object({ instructions: z.string().max(1000), customerName: z.string(), orderContext: z.string().max(2000) }).parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    await requireAdmin(context);
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) throw new Error("Manca GEMINI_API_KEY nelle variabili d'ambiente del progetto.");
+
+    const prompt = `Sei l'assistente che scrive email per Aurora, un'azienda che vende forniture Ho.Re.Ca e packaging.
+Scrivi un'email breve, professionale e cortese in italiano per il cliente "${data.customerName}".
+Contesto dell'ordine: ${data.orderContext}
+Istruzioni su cosa scrivere: ${data.instructions || "Rispondi in modo generico e disponibile riguardo al suo ordine."}
+
+Restituisci SOLO il testo del corpo dell'email (niente oggetto, niente "Gentile/Ciao" iniziale se non richiesto esplicitamente, niente firma finale — quella viene aggiunta automaticamente dal sistema).`;
+
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.5 } }),
+      },
+    );
+    if (!response.ok) throw new Error(`Errore dal servizio IA (${response.status})`);
+    const result = await response.json();
+    const draft: string | undefined = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!draft) throw new Error("L'IA non ha restituito alcun testo. Riprova.");
+    return { draft: draft.trim() };
+  });
+
+const sendOrderCommunicationSchema = z.object({
+  toEmail: z.string().email(),
+  customerName: z.string().min(1).max(200),
+  subject: z.string().min(1).max(200),
+  message: z.string().min(1).max(4000),
+  orderReference: z.string().max(200).optional(),
+});
+
+export const sendOrderCommunication = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => sendOrderCommunicationSchema.parse(data))
+  .handler(async ({ data, context }) => {
+    await requireAdmin(context);
+    const { sendTemplateEmail } = await import("./email-templates/send-email");
+    const result = await sendTemplateEmail("admin_message", data.toEmail, {
+      templateData: {
+        customerName: data.customerName,
+        message: data.message,
+        orderReference: data.orderReference,
+        subject: data.subject,
+      },
+    });
+    return { ok: true, result };
+  });

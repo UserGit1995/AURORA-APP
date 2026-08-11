@@ -1,5 +1,6 @@
 import NewOrderEmail from "./new-order";
 import OrderConfirmationEmail from "./order-confirmation";
+import AdminMessageEmail from "./admin-message";
 
 export interface TemplateEntry {
   component: React.FC<any>;
@@ -18,5 +19,10 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
     component: OrderConfirmationEmail,
     subject: (data: any) => `Il tuo ${data.orderType ?? "ordine"} è stato ricevuto — Aurora`,
     displayName: "Conferma ordine (cliente)",
+  },
+  admin_message: {
+    component: AdminMessageEmail,
+    subject: (data: any) => data.subject || `Un messaggio da Aurora riguardo al tuo ordine`,
+    displayName: "Messaggio libero dell'admin al cliente",
   },
 };
