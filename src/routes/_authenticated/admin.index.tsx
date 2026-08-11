@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Mail, MessageCircle, Settings, ClipboardList, Package, Tags, Tag, Clock, CalendarDays, Palette, Users, TrendingUp, TrendingDown, Eye, EyeOff, BarChart3 } from "lucide-react";
+import { Mail, MessageCircle, Settings, ClipboardList, Package, Tags, Tag, History, Clock, CalendarDays, Palette, Users, TrendingUp, TrendingDown, Eye, EyeOff, BarChart3 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import { toast } from "sonner";
 import { listRequests, getOrderDestinationEmail, updateOrderDestinationEmail, getProductStats } from "@/lib/admin.functions";
@@ -22,7 +22,7 @@ function Dashboard() {
   const updateEmailFn = useServerFn(updateOrderDestinationEmail);
   const fetchStats = useServerFn(getProductStats);
 
-  const { data: stats } = useQuery({
+  const { data: stats, isError: statsError, error: statsErrorDetail } = useQuery({
     queryKey: ["admin", "productStats"],
     queryFn: () => fetchStats({ data: undefined }),
   });
@@ -150,6 +150,18 @@ function Dashboard() {
             <CardContent className="text-sm text-primary">Gestisci →</CardContent>
           </Card>
         </Link>
+        <Link to="/admin/upload-log">
+          <Card className="card-elevated aurora-glow overflow-hidden transition hover:border-primary">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <History className="h-4 w-4 text-primary" />
+                Storico Caricamenti
+              </CardTitle>
+              <CardDescription>Ogni prodotto caricato, con data e ora.</CardDescription>
+            </CardHeader>
+            <CardContent className="text-sm text-primary">Gestisci →</CardContent>
+          </Card>
+        </Link>
         <Link to="/admin/customizations">
           <Card className="card-elevated aurora-glow overflow-hidden transition hover:border-primary">
             <CardHeader>
@@ -199,6 +211,16 @@ function Dashboard() {
           </Card>
         </Link>
       </div>
+
+      {statsError && (
+        <div className="rounded-md border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive">
+          <p className="font-semibold">Le statistiche prodotti non si caricano</p>
+          <p className="mt-1">{(statsErrorDetail as any)?.message || "Errore sconosciuto"}</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Probabile causa: manca ancora la migrazione "aurora_app_migrazione_11_statistiche.sql" sul database.
+          </p>
+        </div>
+      )}
 
       {/* Statistiche prodotti: venduti e visualizzati */}
       {stats && (stats.totalUnitsSold > 0 || stats.totalViews > 0) && (

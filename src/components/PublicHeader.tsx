@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { Menu, Home, Grid3x3, Tags, FileText, Palette, ShieldCheck, LogIn, Search, Download } from "lucide-react";
+import { Menu, Home, Grid3x3, Tags, FileText, Palette, ShieldCheck, FileCheck, LogIn, Search, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle, SheetClose } from "@/components/ui/sheet";
@@ -15,6 +15,7 @@ const NAV_ITEMS = [
   { to: "/catalogo-pdf", label: "Catalogo PDF", icon: FileText },
   { to: "/personalizza", label: "Personalizza con il tuo logo", icon: Palette },
   { to: "/installa", label: "Installa l'app", icon: Download },
+  { to: "/termini-vendita", label: "Termini e Condizioni di Vendita", icon: FileCheck },
   { to: "/privacy", label: "Informativa Privacy", icon: ShieldCheck },
 ] as const;
 
