@@ -1,11 +1,12 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { Menu, Home, Grid3x3, Tags, FileText, Palette, ShieldCheck, LogIn, Search } from "lucide-react";
+import { Menu, Home, Grid3x3, Tags, FileText, Palette, ShieldCheck, LogIn, Search, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle, SheetClose } from "@/components/ui/sheet";
 import logoAsset from "@/assets/aurora-logo.png";
 import { CartLink } from "@/components/CartLink";
+import { InstallAppBanner } from "@/components/InstallAppBanner";
 
 const NAV_ITEMS = [
   { to: "/", label: "Home", icon: Home },
@@ -13,6 +14,7 @@ const NAV_ITEMS = [
   { to: "/catalog", label: "Categorie", icon: Tags },
   { to: "/catalogo-pdf", label: "Catalogo PDF", icon: FileText },
   { to: "/personalizza", label: "Personalizza con il tuo logo", icon: Palette },
+  { to: "/installa", label: "Installa l'app", icon: Download },
   { to: "/privacy", label: "Informativa Privacy", icon: ShieldCheck },
 ] as const;
 
@@ -31,6 +33,7 @@ export function PublicHeader() {
   }
 
   return (
+    <>
     <header className="glass-header sticky top-0 z-40 border-b border-border/40">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-4">
         <Link to="/" className="flex shrink-0 items-center">
@@ -103,5 +106,7 @@ export function PublicHeader() {
         </form>
       </div>
     </header>
+    <InstallAppBanner />
+    </>
   );
 }
