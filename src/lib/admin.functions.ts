@@ -940,3 +940,44 @@ export const getProductStats = createServerFn({ method: "GET" })
 
     return { topSelling, leastSelling, mostViewed, leastViewed, totalUnitsSold, totalViews };
   });
+
+// ---------- Prezzi personalizzazione packaging (gestiti a mano) ----------
+
+export const listPackagingPricesAdmin = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await requireAdmin(context);
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_PUBLISHABLE_KEY) return [];
+    const { data, error } = await context.supabase
+      .from("packaging_prices")
+      .select("id, category_id, size_key, base_price_per_unit, moq, updated_at");
+    if (error) throw new Error(error.message);
+    return data ?? [];
+  });
+
+const updatePackagingPriceSchema = z.object({
+  categoryId: z.string().min(1),
+  sizeKey: z.string().min(1),
+  basePricePerUnit: z.number().positive(),
+  moq: z.number().int().min(1),
+});
+
+export const updatePackagingPrice = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => updatePackagingPriceSchema.parse(data))
+  .handler(async ({ data, context }) => {
+    await requireAdmin(context);
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_PUBLISHABLE_KEY) return { ok: true };
+    const { error } = await context.supabase.from("packaging_prices").upsert(
+      {
+        category_id: data.categoryId,
+        size_key: data.sizeKey,
+        base_price_per_unit: data.basePricePerUnit,
+        moq: data.moq,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "category_id,size_key" },
+    );
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });

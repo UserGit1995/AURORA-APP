@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useRef, useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
@@ -32,6 +33,7 @@ import {
 import { PublicHeader } from "@/components/PublicHeader";
 import { supabase } from "@/integrations/supabase/client";
 import { submitCustomizationRequest } from "@/lib/customization.functions";
+import { listPackagingPrices } from "@/lib/public.functions";
 import {
   PACKAGING_CATALOG,
   calculatePackagingEstimate,
@@ -58,6 +60,26 @@ export function PersonalizzaPage() {
   const submit = useServerFn(submitCustomizationRequest);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const fetchPrices = useServerFn(listPackagingPrices);
+  const { data: livePrices = [] } = useQuery({
+    queryKey: ["packagingPrices"],
+    queryFn: () => fetchPrices({ data: undefined }),
+  });
+
+  // Stesso catalogo statico (nomi, colori, misure) ma con i prezzi e le
+  // quantità minime prese dal database, dove l'admin le ha impostate —
+  // così cambiarle non richiede mai un aggiornamento del sito.
+  const liveCatalog: PackagingCategory[] = useMemo(() => {
+    if (livePrices.length === 0) return PACKAGING_CATALOG;
+    return PACKAGING_CATALOG.map((cat) => ({
+      ...cat,
+      sizes: cat.sizes.map((size) => {
+        const live = livePrices.find((p: any) => p.category_id === cat.id && p.size_key === size.key);
+        return live ? { ...size, basePricePerUnit: live.base_price_per_unit, moq: live.moq } : size;
+      }),
+    }));
+  }, [livePrices]);
+
   // Selected Product Category & Variants
   const [selectedCategoryId, setSelectedCategoryId] = useState<
     "kraft_bags" | "pizza_boxes" | "pinsa_boxes" | "shoppers" | "napkins" | "cups"
@@ -65,10 +87,10 @@ export function PersonalizzaPage() {
 
   const currentCategory: PackagingCategory = useMemo(() => {
     return (
-      PACKAGING_CATALOG.find((c) => c.id === selectedCategoryId) ||
-      PACKAGING_CATALOG[0]
+      liveCatalog.find((c) => c.id === selectedCategoryId) ||
+      liveCatalog[0]
     );
-  }, [selectedCategoryId]);
+  }, [selectedCategoryId, liveCatalog]);
 
   // Selected Size, Color, Material
   const [selectedSizeKey, setSelectedSizeKey] = useState<string>(
@@ -119,7 +141,7 @@ export function PersonalizzaPage() {
   // Auto update size and color default when category changes
   const handleCategoryChange = (catId: any) => {
     setSelectedCategoryId(catId);
-    const cat = PACKAGING_CATALOG.find((c) => c.id === catId);
+    const cat = liveCatalog.find((c) => c.id === catId);
     if (cat) {
       setSelectedSizeKey(cat.sizes[0].key);
       setSelectedColorHex(cat.colors[0].hex);
@@ -307,7 +329,7 @@ export function PersonalizzaPage() {
             1. Scegli la Categoria di Prodotto
           </Label>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-            {PACKAGING_CATALOG.map((cat) => {
+            {liveCatalog.map((cat) => {
               const isSelected = selectedCategoryId === cat.id;
               return (
                 <button

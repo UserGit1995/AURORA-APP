@@ -375,3 +375,16 @@ export const getCustomizationByToken = createServerFn({ method: "GET" })
     if (error) throw error;
     return rows?.[0] ?? null;
   });
+
+// Prezzi base della personalizzazione packaging, gestiti a mano
+// dall'admin (tabella packaging_prices) invece che scritti nel
+// codice — servono al calcolo del preventivo sulla pagina
+// "Personalizza con il tuo logo".
+export const listPackagingPrices = createServerFn({ method: "GET" })
+  .handler(async () => {
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_PUBLISHABLE_KEY) return [];
+    const supabase = publicClient();
+    const { data, error } = await supabase.from("packaging_prices").select("category_id, size_key, base_price_per_unit, moq");
+    if (error) throw error;
+    return data ?? [];
+  });

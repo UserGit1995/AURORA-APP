@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Mail, MessageCircle, Settings, ClipboardList, Package, Tags, Clock, CalendarDays, Palette, Users, TrendingUp, TrendingDown, Eye, EyeOff, BarChart3 } from "lucide-react";
+import { Mail, MessageCircle, Settings, ClipboardList, Package, Tags, Tag, Clock, CalendarDays, Palette, Users, TrendingUp, TrendingDown, Eye, EyeOff, BarChart3 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import { toast } from "sonner";
 import { listRequests, getOrderDestinationEmail, updateOrderDestinationEmail, getProductStats } from "@/lib/admin.functions";
@@ -146,6 +146,18 @@ function Dashboard() {
                 Personalizzazioni
               </CardTitle>
               <CardDescription>Richieste logo su monouso e packaging.</CardDescription>
+            </CardHeader>
+            <CardContent className="text-sm text-primary">Gestisci →</CardContent>
+          </Card>
+        </Link>
+        <Link to="/admin/customization-pricing">
+          <Card className="card-elevated aurora-glow overflow-hidden transition hover:border-primary">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Tag className="h-4 w-4 text-primary" />
+                Prezzi Personalizzazione
+              </CardTitle>
+              <CardDescription>Prezzo base di ogni misura del packaging su misura.</CardDescription>
             </CardHeader>
             <CardContent className="text-sm text-primary">Gestisci →</CardContent>
           </Card>
