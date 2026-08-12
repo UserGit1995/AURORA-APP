@@ -36,18 +36,14 @@ function AuthenticatedLayout() {
 
   return (
     <div className="relative isolate min-h-screen bg-background">
-      {/* Solo l'immagine di sfondo richiesta, dietro a tutto il
-          contenuto — nessuno stile o colore esistente è stato toccato.
-          Posizionamento "assoluto" (non "fisso allo schermo") apposta:
-          su alcuni telefoni un'immagine fissa lascia un vuoto in fondo
-          quando si scrolla fino in fondo alla pagina. Così invece copre
-          sempre l'intera altezza della pagina, anche quella lunga. */}
-      <img
-        src={adminBg}
-        alt=""
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 -z-10 h-full w-full object-cover"
-      />
+      {/* Solo l'immagine di sfondo richiesta, in una fascia in alto alla
+          sua proporzione naturale (prima copriva tutta la pagina stirata,
+          da qui la sgranatura), con una dissolvenza verso lo sfondo
+          scuro sotto — nessuno stile o colore esistente è stato toccato. */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[420px] overflow-hidden">
+        <img src={adminBg} alt="" aria-hidden="true" className="h-full w-full object-cover object-top" />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background" />
+      </div>
       <nav className="border-b border-border px-6 py-4">
         <div className="mx-auto flex max-w-6xl items-center justify-between">
           <Link to="/admin" className="flex items-center">
