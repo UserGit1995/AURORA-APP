@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle, SheetClose } from "@/components/ui/sheet";
 import logoAsset from "@/assets/aurora-logo.png";
+import adminBg from "@/assets/admin-bg.png";
 import { AdminNotificationBell } from "@/components/AdminNotificationBell";
 
 export const Route = createFileRoute("/_authenticated")({
@@ -34,7 +35,15 @@ function AuthenticatedLayout() {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="relative min-h-screen bg-background">
+      {/* Solo l'immagine di sfondo richiesta, fissa dietro a tutto il
+          contenuto — nessuno stile o colore esistente è stato toccato. */}
+      <img
+        src={adminBg}
+        alt=""
+        aria-hidden="true"
+        className="pointer-events-none fixed inset-0 -z-10 h-full w-full object-cover"
+      />
       <nav className="border-b border-border px-6 py-4">
         <div className="mx-auto flex max-w-6xl items-center justify-between">
           <Link to="/admin" className="flex items-center">
@@ -43,44 +52,44 @@ function AuthenticatedLayout() {
           <div className="flex items-center gap-2">
             <AdminNotificationBell />
             <Sheet open={open} onOpenChange={setOpen}>
-            <SheetTrigger asChild>
-              <Button variant="outline" size="icon" aria-label="Apri menu">
-                <Menu className="h-5 w-5" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left">
-              <SheetHeader>
-                <SheetTitle>Aurora Admin</SheetTitle>
-              </SheetHeader>
-              <div className="mt-6 flex flex-col gap-1">
-                {NAV_ITEMS.map(({ to, label, icon: Icon }) => (
-                  <SheetClose asChild key={to}>
-                    <Link
-                      to={to}
-                      activeOptions={{ exact: to === "/admin" }}
-                      className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-foreground hover:bg-accent"
-                      activeProps={{ className: "bg-accent text-primary font-medium" }}
+              <SheetTrigger asChild>
+                <Button variant="outline" size="icon" aria-label="Apri menu">
+                  <Menu className="h-5 w-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left">
+                <SheetHeader>
+                  <SheetTitle>Aurora Admin</SheetTitle>
+                </SheetHeader>
+                <div className="mt-6 flex flex-col gap-1">
+                  {NAV_ITEMS.map(({ to, label, icon: Icon }) => (
+                    <SheetClose asChild key={to}>
+                      <Link
+                        to={to}
+                        activeOptions={{ exact: to === "/admin" }}
+                        className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-foreground hover:bg-accent"
+                        activeProps={{ className: "bg-accent text-primary font-medium" }}
+                      >
+                        <Icon className="h-4 w-4" />
+                        {label}
+                      </Link>
+                    </SheetClose>
+                  ))}
+                  <SheetClose asChild>
+                    <button
+                      onClick={async () => {
+                        await supabase.auth.signOut();
+                        window.location.href = "/auth";
+                      }}
+                      className="mt-4 flex items-center gap-3 rounded-md border-t border-border px-3 pt-4 text-sm text-muted-foreground hover:text-foreground"
                     >
-                      <Icon className="h-4 w-4" />
-                      {label}
-                    </Link>
+                      <LogOut className="h-4 w-4" />
+                      Esci
+                    </button>
                   </SheetClose>
-                ))}
-                <SheetClose asChild>
-                  <button
-                    onClick={async () => {
-                      await supabase.auth.signOut();
-                      window.location.href = "/auth";
-                    }}
-                    className="mt-4 flex items-center gap-3 rounded-md border-t border-border px-3 pt-4 text-sm text-muted-foreground hover:text-foreground"
-                  >
-                    <LogOut className="h-4 w-4" />
-                    Esci
-                  </button>
-                </SheetClose>
-              </div>
-            </SheetContent>
-          </Sheet>
+                </div>
+              </SheetContent>
+            </Sheet>
           </div>
         </div>
       </nav>
