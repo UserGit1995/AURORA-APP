@@ -35,7 +35,7 @@ function AuthenticatedLayout() {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="relative min-h-screen bg-background">
+    <div className="relative isolate min-h-screen bg-background">
       {/* Solo l'immagine di sfondo richiesta, dietro a tutto il
           contenuto — nessuno stile o colore esistente è stato toccato.
           Posizionamento "assoluto" (non "fisso allo schermo") apposta:
