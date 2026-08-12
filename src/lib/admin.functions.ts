@@ -1035,3 +1035,76 @@ export const sendOrderCommunication = createServerFn({ method: "POST" })
     });
     return { ok: true, result };
   });
+
+// ---------- Notifiche admin (campanella nel pannello) ----------
+// Raccoglie in un'unica chiamata i tre tipi di "cose nuove da vedere":
+// ordini nuovi, richieste di personalizzazione nuove, messaggi
+// WhatsApp non letti — così il pannello può mostrare un contatore
+// senza dover controllare l'email.
+
+export const getAdminNotifications = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await requireAdmin(context);
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_PUBLISHABLE_KEY) {
+      return { items: [], total: 0 };
+    }
+
+    const [ordersRes, customizationsRes, whatsappRes] = await Promise.all([
+      context.supabase
+        .from("product_requests")
+        .select("id, customer_name, product_name, created_at")
+        .eq("status", "new")
+        .order("created_at", { ascending: false })
+        .limit(5),
+      context.supabase
+        .from("customization_requests")
+        .select("id, customer_name, created_at")
+        .eq("status", "new")
+        .order("created_at", { ascending: false })
+        .limit(5),
+      context.supabase
+        .from("whatsapp_contacts")
+        .select("id, name, unread_count, last_message_at")
+        .gt("unread_count", 0)
+        .eq("archived", false)
+        .order("last_message_at", { ascending: false })
+        .limit(5),
+    ]);
+
+    const orders = (ordersRes.data ?? []).map((o: any) => ({
+      type: "order" as const,
+      id: o.id,
+      title: `Nuovo ordine — ${o.customer_name}`,
+      subtitle: o.product_name || "",
+      createdAt: o.created_at,
+      link: "/admin/requests",
+    }));
+    const customizations = (customizationsRes.data ?? []).map((c: any) => ({
+      type: "customization" as const,
+      id: c.id,
+      title: `Nuova personalizzazione — ${c.customer_name}`,
+      subtitle: "",
+      createdAt: c.created_at,
+      link: "/admin/customizations",
+    }));
+    const whatsapp = (whatsappRes.data ?? []).map((w: any) => ({
+      type: "whatsapp" as const,
+      id: w.id,
+      title: `${w.unread_count} ${w.unread_count === 1 ? "messaggio" : "messaggi"} da ${w.name}`,
+      subtitle: "WhatsApp",
+      createdAt: w.last_message_at,
+      link: "/admin/whatsapp",
+    }));
+
+    const items = [...orders, ...customizations, ...whatsapp].sort(
+      (a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime(),
+    );
+
+    const total =
+      (ordersRes.count ?? orders.length) +
+      (customizationsRes.count ?? customizations.length) +
+      (whatsappRes.data ?? []).reduce((sum: number, w: any) => sum + (w.unread_count || 0), 0);
+
+    return { items, total };
+  });

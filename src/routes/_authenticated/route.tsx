@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle, SheetClose } from "@/components/ui/sheet";
 import logoAsset from "@/assets/aurora-logo.png";
+import { AdminNotificationBell } from "@/components/AdminNotificationBell";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -39,7 +40,9 @@ function AuthenticatedLayout() {
           <Link to="/admin" className="flex items-center">
             <img src={logoAsset} alt="Aurora" className="h-9 w-auto" width={140} height={36} />
           </Link>
-          <Sheet open={open} onOpenChange={setOpen}>
+          <div className="flex items-center gap-2">
+            <AdminNotificationBell />
+            <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
               <Button variant="outline" size="icon" aria-label="Apri menu">
                 <Menu className="h-5 w-5" />
@@ -78,6 +81,7 @@ function AuthenticatedLayout() {
               </div>
             </SheetContent>
           </Sheet>
+          </div>
         </div>
       </nav>
       <main className="mx-auto max-w-6xl p-6">
