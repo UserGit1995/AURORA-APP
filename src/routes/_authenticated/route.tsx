@@ -36,13 +36,17 @@ function AuthenticatedLayout() {
 
   return (
     <div className="relative min-h-screen bg-background">
-      {/* Solo l'immagine di sfondo richiesta, fissa dietro a tutto il
-          contenuto — nessuno stile o colore esistente è stato toccato. */}
+      {/* Solo l'immagine di sfondo richiesta, dietro a tutto il
+          contenuto — nessuno stile o colore esistente è stato toccato.
+          Posizionamento "assoluto" (non "fisso allo schermo") apposta:
+          su alcuni telefoni un'immagine fissa lascia un vuoto in fondo
+          quando si scrolla fino in fondo alla pagina. Così invece copre
+          sempre l'intera altezza della pagina, anche quella lunga. */}
       <img
         src={adminBg}
         alt=""
         aria-hidden="true"
-        className="pointer-events-none fixed inset-0 -z-10 h-full w-full object-cover"
+        className="pointer-events-none absolute inset-0 -z-10 h-full w-full object-cover"
       />
       <nav className="border-b border-border px-6 py-4">
         <div className="mx-auto flex max-w-6xl items-center justify-between">
