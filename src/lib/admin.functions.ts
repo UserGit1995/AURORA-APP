@@ -691,7 +691,7 @@ export const updateOrderDestinationEmail = createServerFn({ method: "POST" })
     }
     const { error } = await context.supabase
       .from("settings")
-      .upsert({ key: "order_destination_email", value: data.email });
+      .upsert({ key: "order_destination_email", value: data.email }, { onConflict: "key" });
     if (error) throw error;
     return { ok: true };
   });
@@ -782,7 +782,7 @@ export const updateWhatsappConfig = createServerFn({ method: "POST" })
       }
       return { ok: true };
     }
-    const { error } = await context.supabase.from("settings").upsert(rows);
+    const { error } = await context.supabase.from("settings").upsert(rows, { onConflict: "key" });
     if (error) throw error;
     return { ok: true };
   });
@@ -829,7 +829,7 @@ export const updateCustomerNote = createServerFn({ method: "POST" })
     }
     const { error } = await context.supabase
       .from("settings")
-      .upsert({ key, value: data.note });
+      .upsert({ key, value: data.note }, { onConflict: "key" });
     if (error) throw error;
     return { ok: true };
   });
