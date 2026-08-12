@@ -592,17 +592,11 @@ export const listRequests = createServerFn({ method: "GET" })
       const { db } = await import("./mockDb");
       return [...db.requests].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
     }
-    const { createClient } = await import("@supabase/supabase-js");
-    const fallbackClient = createClient(
-      process.env.SUPABASE_URL as string,
-      process.env.SUPABASE_PUBLISHABLE_KEY as string,
-      { auth: { storage: undefined, persistSession: false, autoRefreshToken: false } },
-    );
-    const { data, error } = await fallbackClient
+    const { data, error } = await context.supabase
       .from("product_requests")
       .select("*")
       .order("created_at", { ascending: false });
-    if (error) throw new Error("listRequests fallback: " + error.message);
+    if (error) throw new Error("listRequests: " + error.message);
     return data ?? [];
   });
 
