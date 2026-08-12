@@ -885,19 +885,12 @@ export const getProductStats = createServerFn({ method: "GET" })
       };
     }
 
-    const { createClient } = await import("@supabase/supabase-js");
-    const fallbackClient = createClient(
-      process.env.SUPABASE_URL as string,
-      process.env.SUPABASE_PUBLISHABLE_KEY as string,
-      { auth: { storage: undefined, persistSession: false, autoRefreshToken: false } },
-    );
-
-    const { data: requests, error: reqErr } = await fallbackClient
+    const { data: requests, error: reqErr } = await context.supabase
       .from("product_requests")
       .select("product_id, product_name, quantity");
     if (reqErr) throw new Error("getProductStats (richieste): " + reqErr.message);
 
-    const { data: products, error: prodErr } = await fallbackClient
+    const { data: products, error: prodErr } = await context.supabase
       .from("products")
       .select("id, name, view_count, is_active");
     if (prodErr) throw new Error("getProductStats (prodotti): " + prodErr.message);
