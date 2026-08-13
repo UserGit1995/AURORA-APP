@@ -44,6 +44,15 @@ function AuthenticatedLayout() {
         <img src={adminBg} alt="" aria-hidden="true" className="h-full w-full object-cover object-top" />
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background" />
       </div>
+      {/* Logo grande e sbiadito, centrato dietro alla zona delle card —
+          essendo un disegno pulito (non una foto), ingrandito non si
+          sgrana come succedeva con la fascia fotografica sopra. */}
+      <img
+        src={logoAsset}
+        alt=""
+        aria-hidden="true"
+        className="pointer-events-none absolute left-1/2 top-[260px] -z-10 w-[640px] max-w-[85vw] -translate-x-1/2 opacity-[0.07]"
+      />
       <nav className="border-b border-border px-6 py-4">
         <div className="mx-auto flex max-w-6xl items-center justify-between">
           <Link to="/admin" className="flex items-center">
