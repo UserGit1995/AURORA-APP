@@ -40,8 +40,8 @@ function AuthenticatedLayout() {
           sua proporzione naturale (prima copriva tutta la pagina stirata,
           da qui la sgranatura), con una dissolvenza verso lo sfondo
           scuro sotto — nessuno stile o colore esistente è stato toccato. */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[420px] overflow-hidden">
-        <img src={adminBg} alt="" aria-hidden="true" className="h-full w-full object-cover object-top" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[640px] overflow-hidden">
+        <img src={adminBg} alt="" aria-hidden="true" className="h-full w-full object-cover object-center" />
         <div className="absolute inset-0 bg-gradient-to-b from-transparent from-70% to-background" />
       </div>
       <nav className="border-b border-border px-6 py-4">
