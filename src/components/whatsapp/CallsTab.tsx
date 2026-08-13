@@ -92,7 +92,7 @@ export function CallsTab() {
   }
 
   return (
-    <Card className="card-elevated aurora-glow overflow-hidden overflow-hidden border-primary/20 p-0">
+    <Card className="card-elevated aurora-glow overflow-hidden card-glass overflow-hidden border-primary/20 p-0">
       <div className="grid lg:grid-cols-[340px_1fr]">
         <div className="border-b border-border lg:border-b-0 lg:border-r">
           <div className="space-y-3 p-4">

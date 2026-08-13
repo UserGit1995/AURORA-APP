@@ -44,7 +44,7 @@ function CustomizationPricingPage() {
 
       <div className="space-y-4">
         {PACKAGING_CATALOG.map((cat) => (
-          <Card key={cat.id} className="card-elevated aurora-glow overflow-hidden">
+          <Card key={cat.id} className="card-elevated aurora-glow overflow-hidden card-glass">
             <CardHeader>
               <CardTitle className="text-base">{cat.name}</CardTitle>
             </CardHeader>

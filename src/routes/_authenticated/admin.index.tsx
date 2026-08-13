@@ -75,7 +75,7 @@ function Dashboard() {
 
   return (
     <div className="space-y-6">
-      <Card className="card-elevated aurora-glow overflow-hidden border border-primary/20">
+      <Card className="card-elevated aurora-glow overflow-hidden card-glass border border-primary/20">
         <CardContent className="flex flex-wrap items-center justify-between gap-4 py-6">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-lg bg-primary/10 text-primary">
@@ -100,7 +100,7 @@ function Dashboard() {
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Link to="/admin/requests">
-          <Card className="card-elevated aurora-glow overflow-hidden transition hover:border-primary">
+          <Card className="card-elevated aurora-glow overflow-hidden card-glass transition hover:border-primary">
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
                 <span className="flex items-center gap-2">
@@ -115,7 +115,7 @@ function Dashboard() {
           </Card>
         </Link>
         <Link to="/admin/order-comms">
-          <Card className="card-elevated aurora-glow overflow-hidden transition hover:border-primary">
+          <Card className="card-elevated aurora-glow overflow-hidden card-glass transition hover:border-primary">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Mail className="h-4 w-4 text-primary" />
@@ -127,7 +127,7 @@ function Dashboard() {
           </Card>
         </Link>
         <Link to="/admin/products">
-          <Card className="card-elevated aurora-glow overflow-hidden transition hover:border-primary">
+          <Card className="card-elevated aurora-glow overflow-hidden card-glass transition hover:border-primary">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Package className="h-4 w-4 text-primary" />
@@ -139,7 +139,7 @@ function Dashboard() {
           </Card>
         </Link>
         <Link to="/admin/categories">
-          <Card className="card-elevated aurora-glow overflow-hidden transition hover:border-primary">
+          <Card className="card-elevated aurora-glow overflow-hidden card-glass transition hover:border-primary">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Tags className="h-4 w-4 text-primary" />
@@ -151,7 +151,7 @@ function Dashboard() {
           </Card>
         </Link>
         <Link to="/admin/upload-log">
-          <Card className="card-elevated aurora-glow overflow-hidden transition hover:border-primary">
+          <Card className="card-elevated aurora-glow overflow-hidden card-glass transition hover:border-primary">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <History className="h-4 w-4 text-primary" />
@@ -163,7 +163,7 @@ function Dashboard() {
           </Card>
         </Link>
         <Link to="/admin/customizations">
-          <Card className="card-elevated aurora-glow overflow-hidden transition hover:border-primary">
+          <Card className="card-elevated aurora-glow overflow-hidden card-glass transition hover:border-primary">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Palette className="h-4 w-4 text-primary" />
@@ -175,7 +175,7 @@ function Dashboard() {
           </Card>
         </Link>
         <Link to="/admin/customization-pricing">
-          <Card className="card-elevated aurora-glow overflow-hidden transition hover:border-primary">
+          <Card className="card-elevated aurora-glow overflow-hidden card-glass transition hover:border-primary">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Tag className="h-4 w-4 text-primary" />
@@ -187,7 +187,7 @@ function Dashboard() {
           </Card>
         </Link>
         <Link to="/admin/customers">
-          <Card className="card-elevated aurora-glow overflow-hidden transition hover:border-primary">
+          <Card className="card-elevated aurora-glow overflow-hidden card-glass transition hover:border-primary">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Users className="h-4 w-4 text-primary" />
@@ -199,7 +199,7 @@ function Dashboard() {
           </Card>
         </Link>
         <Link to="/admin/whatsapp">
-          <Card className="card-elevated aurora-glow overflow-hidden transition hover:border-primary">
+          <Card className="card-elevated aurora-glow overflow-hidden card-glass transition hover:border-primary">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <MessageCircle className="h-4 w-4 text-primary" />
@@ -270,7 +270,7 @@ function Dashboard() {
       )}
 
       {/* Dynamic Email Configuration Card */}
-      <Card className="card-elevated aurora-glow overflow-hidden border border-primary/20">
+      <Card className="card-elevated aurora-glow overflow-hidden card-glass border border-primary/20">
         <CardHeader className="flex flex-row items-center gap-3">
           <div className="p-2 rounded-lg bg-primary/10 text-primary">
             <Settings className="h-5 w-5" />
@@ -337,7 +337,7 @@ function StatsChartCard({
   }));
 
   return (
-    <Card className="card-elevated aurora-glow overflow-hidden">
+    <Card className="card-elevated aurora-glow overflow-hidden card-glass">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">{icon} {title}</CardTitle>
       </CardHeader>

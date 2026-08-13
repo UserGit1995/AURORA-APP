@@ -91,7 +91,7 @@ export function AiCopilotTab() {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <Card className="card-elevated aurora-glow overflow-hidden">
+        <Card className="card-elevated aurora-glow overflow-hidden card-glass">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base"><Sliders className="h-4 w-4 text-primary" /> Tono e comportamento</CardTitle>
           </CardHeader>
@@ -129,7 +129,7 @@ export function AiCopilotTab() {
           </CardContent>
         </Card>
 
-        <Card className="card-elevated aurora-glow overflow-hidden">
+        <Card className="card-elevated aurora-glow overflow-hidden card-glass">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base"><Sparkles className="h-4 w-4 text-primary" /> Prova dal vivo</CardTitle>
             <CardDescription>Fai una domanda di prova e vedi davvero cosa risponderebbe Gemini con queste regole.</CardDescription>

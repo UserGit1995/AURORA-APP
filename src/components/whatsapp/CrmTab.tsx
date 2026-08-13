@@ -50,7 +50,7 @@ export function CrmTab() {
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map((c: any) => (
-            <Card key={c.id} className="card-elevated aurora-glow overflow-hidden transition hover:border-primary">
+            <Card key={c.id} className="card-elevated aurora-glow overflow-hidden card-glass transition hover:border-primary">
               <CardContent className="p-4">
                 <div className="mb-2 flex items-center justify-between">
                   <div className="flex items-center gap-1.5 font-semibold">

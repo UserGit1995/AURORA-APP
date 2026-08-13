@@ -77,7 +77,7 @@ function UploadLogPage() {
             <h3 className="mb-2 text-sm font-semibold capitalize text-muted-foreground">
               {group.label} · {group.items.length} {group.items.length === 1 ? "prodotto" : "prodotti"}
             </h3>
-            <Card className="card-elevated aurora-glow overflow-hidden">
+            <Card className="card-elevated aurora-glow overflow-hidden card-glass">
               <CardContent className="divide-y divide-border p-0">
                 {group.items.map((p: any) => (
                   <div key={p.id} className="flex items-center justify-between gap-4 px-4 py-3">

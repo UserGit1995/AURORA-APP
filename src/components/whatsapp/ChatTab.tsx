@@ -72,7 +72,7 @@ export function ChatTab() {
   }
 
   return (
-    <Card className="card-elevated aurora-glow overflow-hidden overflow-hidden border-primary/20 p-0">
+    <Card className="card-elevated aurora-glow overflow-hidden card-glass overflow-hidden border-primary/20 p-0">
       <div className="flex items-center justify-between border-b border-border bg-primary/5 px-4 py-3">
         <div className="flex items-center gap-2 font-semibold">Centro WhatsApp</div>
         <Button size="sm" onClick={() => setNewOpen((v) => !v)}>

@@ -110,7 +110,7 @@ requests.post(
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <Card className="card-elevated aurora-glow overflow-hidden border-primary/20">
+        <Card className="card-elevated aurora-glow overflow-hidden card-glass border-primary/20">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base"><Building2 className="h-4 w-4 text-primary" /> Numero e credenziali</CardTitle>
           </CardHeader>
@@ -143,7 +143,7 @@ requests.post(
           </CardContent>
         </Card>
 
-        <Card className="card-elevated aurora-glow overflow-hidden border-border">
+        <Card className="card-elevated aurora-glow overflow-hidden card-glass border-border">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base"><ShieldCheck className="h-4 w-4 text-primary" /> Webhook</CardTitle>
             <CardDescription>Da incollare nel pannello Meta for Developers, sezione Webhook.</CardDescription>
@@ -178,7 +178,7 @@ requests.post(
         </Card>
       </div>
 
-      <Card className="card-elevated aurora-glow overflow-hidden">
+      <Card className="card-elevated aurora-glow overflow-hidden card-glass">
         <CardHeader>
           <CardTitle className="flex items-center justify-between text-base">
             <span className="flex items-center gap-2"><Code className="h-4 w-4 text-primary" /> Snippet di codice</span>
@@ -198,7 +198,7 @@ requests.post(
         </CardContent>
       </Card>
 
-      <Card className="card-elevated aurora-glow overflow-hidden">
+      <Card className="card-elevated aurora-glow overflow-hidden card-glass">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base"><Layers className="h-4 w-4 text-primary" /> Registro eventi webhook</CardTitle>
           <CardDescription>Ogni richiesta reale ricevuta da Meta compare qui — utile per verificare che il collegamento funzioni.</CardDescription>
