@@ -137,6 +137,17 @@
     border-color: var(--color-border);
   }
 
+  /* Impedisce lo scorrimento orizzontale a livello di intero sito:
+     se un elemento risulta anche solo un po' più largo dello schermo
+     (es. un testo lungo senza spazi), il telefono non deve poter
+     "scivolare" di lato spostando tutto il resto della pagina — quel
+     pezzo in eccesso viene semplicemente tagliato invece di causare
+     uno scorrimento indesiderato. */
+  html, body {
+    overflow-x: hidden;
+    max-width: 100%;
+  }
+
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);

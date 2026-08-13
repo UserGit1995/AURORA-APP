@@ -9,10 +9,35 @@
 
 const APP_NAME = "Aurora";
 const APP_URL = "https://aurora-app-nine.vercel.app";
+const ICON_PATH = "/icon-192.png";
 
-function generateMobileConfigXML(): string {
+// Legge l'icona come dati grezzi in base64: Apple richiede l'immagine
+// incorporata DIRETTAMENTE dentro al file .mobileconfig (chiave
+// "Icon" con dati <data>, non un link a un'immagine esterna) — senza
+// questo pezzo, il profilo si installa ma senza nessuna icona vera.
+async function fetchIconBase64(): Promise<string> {
+  const response = await fetch(ICON_PATH);
+  const blob = await response.blob();
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const result = reader.result as string;
+      // reader.result è tipo "data:image/png;base64,AAAA..." — teniamo
+      // solo la parte dopo la virgola.
+      resolve(result.split(",")[1] || "");
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
+function generateMobileConfigXML(iconBase64: string): string {
   const uuid1 = "9B8380D4-1F32-4E90-B8A8-" + Math.floor(100000000000 + Math.random() * 900000000000);
   const uuid2 = "A1B2C3D4-E5F6-7890-1234-" + Math.floor(100000000000 + Math.random() * 900000000000);
+
+  // I dati base64 vanno spezzati su più righe (formato plist
+  // standard): li dividiamo ogni 76 caratteri.
+  const wrappedIcon = iconBase64.match(/.{1,76}/g)?.join("\n            ") || "";
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -23,6 +48,10 @@ function generateMobileConfigXML(): string {
         <dict>
             <key>FullScreen</key>
             <true/>
+            <key>Icon</key>
+            <data>
+            ${wrappedIcon}
+            </data>
             <key>IsRemovable</key>
             <true/>
             <key>Label</key>
@@ -63,8 +92,9 @@ function generateMobileConfigXML(): string {
 </plist>`;
 }
 
-export function downloadAuroraMobileConfig(): void {
-  const xmlContent = generateMobileConfigXML();
+export async function downloadAuroraMobileConfig(): Promise<void> {
+  const iconBase64 = await fetchIconBase64();
+  const xmlContent = generateMobileConfigXML(iconBase64);
   const blob = new Blob([xmlContent], { type: "application/x-apple-aspen-config" });
   const url = URL.createObjectURL(blob);
 
