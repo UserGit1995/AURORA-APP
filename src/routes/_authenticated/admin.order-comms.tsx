@@ -38,7 +38,7 @@ function OrderCommsPage() {
   const selected = filtered.find((r: any) => r.id === selectedId) ?? filtered[0] ?? null;
 
   return (
-    <div className="space-y-4">
+    <div className="max-w-full space-y-4 overflow-x-hidden">
       <div className="flex items-center gap-3">
         <img src={logoAsset} alt="Aurora" className="h-8 w-auto" />
         <div>
@@ -143,10 +143,10 @@ function ComposePanel({ order }: { order: any }) {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 overflow-hidden">
       <div className="rounded-lg border border-border bg-background/40 p-3 text-sm">
-        <p className="font-medium">{order.customer_name} <span className="font-normal text-muted-foreground">— {order.customer_email}</span></p>
-        <p className="mt-1 text-xs text-muted-foreground">
+        <p className="break-words font-medium">{order.customer_name} <span className="font-normal text-muted-foreground">— {order.customer_email}</span></p>
+        <p className="mt-1 break-words text-xs text-muted-foreground">
           {order.product_name} · Quantità {order.quantity} · € {Number(order.total_amount || 0).toFixed(2)} · Stato: {order.status || "in lavorazione"}
         </p>
       </div>
