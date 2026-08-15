@@ -229,6 +229,16 @@
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
   }
+
+  /* Su schermi stretti (smartphone) la foto di sfondo mostra un pezzo
+     diverso, con il logo molto luminoso spesso vicino al bordo — a
+     parità di trasparenza si vede troppo attraverso le card. Qui
+     solo un po' più opache, il resto (sfocatura, desktop) invariato. */
+  @media (max-width: 767px) {
+    .card-glass {
+      background: rgb(20 24 36 / 96%) !important;
+    }
+  }
 }
 
 /*

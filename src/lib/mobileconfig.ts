@@ -9,7 +9,7 @@
 
 const APP_NAME = "Aurora";
 const APP_URL = "https://aurora-app-nine.vercel.app";
-const ICON_PATH = "/icon-192.png";
+const ICON_PATH = "/webclip-icon.png";
 
 // Legge l'icona come dati grezzi in base64: Apple richiede l'immagine
 // incorporata DIRETTAMENTE dentro al file .mobileconfig (chiave
