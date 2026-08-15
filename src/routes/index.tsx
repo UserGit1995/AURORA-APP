@@ -4,6 +4,7 @@ import { useSuspenseQuery, useQuery, queryOptions } from "@tanstack/react-query"
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import logoAsset from "@/assets/aurora-logo.png";
+import sectionBg from "@/assets/admin-bg.png";
 import { listPublicCategories, listPublicProducts, listPublicSubcategories } from "@/lib/public.functions";
 import { CartLink } from "@/components/CartLink";
 import { PublicHeader } from "@/components/PublicHeader";
@@ -164,20 +165,26 @@ function SubcategorySlider({ groups }: { groups: SubcategoryGroup[] }) {
   return (
     <section className="mx-auto max-w-6xl px-4 py-14">
       <div
-        className="glass-header aurora-glow overflow-hidden rounded-2xl border border-border/50 p-6 sm:p-10"
+        className="glass-header-light aurora-glow relative isolate overflow-hidden rounded-2xl border border-border/50 p-6 sm:p-10"
         onMouseEnter={() => setPaused(true)}
         onMouseLeave={() => setPaused(false)}
       >
-        <div key={active.category.id} className="animate-in fade-in-0 slide-in-from-right-4 duration-500">
+        <img
+          src={sectionBg}
+          alt=""
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 -z-10 h-full w-full object-cover object-center"
+        />
+        <div key={active.category.id} className="relative animate-in fade-in-0 slide-in-from-right-4 duration-500">
           <h2 className="mb-1 text-xl font-semibold">{active.category.name}</h2>
           <p className="mb-8 text-sm text-muted-foreground">Sfoglia per tipo di prodotto.</p>
-          <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-4">
+          <div className="-mx-6 flex gap-6 overflow-x-auto px-6 pb-2 snap-x snap-mandatory sm:mx-0 sm:px-0">
             {active.subs.map((s) => (
               <Link
                 key={s.id}
                 to="/catalog"
                 search={{ category: active.category.id, subcategory: s.id }}
-                className="group flex flex-col items-center gap-3 text-center"
+                className="group flex shrink-0 snap-start flex-col items-center gap-3 text-center"
               >
                 <div className="card-elevated h-24 w-24 overflow-hidden rounded-full border border-border bg-card sm:h-28 sm:w-28">
                   {s.image_url ? (

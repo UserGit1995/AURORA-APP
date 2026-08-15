@@ -220,6 +220,15 @@
     -webkit-backdrop-filter: blur(12px);
   }
 
+  /* Versione più trasparente di .glass-header, per i riquadri pensati
+     per avere una foto di sfondo visibile dietro (es. la sezione
+     sottocategorie in homepage). */
+  .glass-header-light {
+    background: rgb(12 15 24 / 45%);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+
   /* Card "di vetro" per il pannello admin: semi-trasparenti con
      sfocatura, così lo sfondo (foto + logo in cima alla pagina) si
      vede anche attraverso le card, non solo negli spazi vuoti tra una
