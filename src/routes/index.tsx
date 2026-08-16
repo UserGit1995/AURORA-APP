@@ -166,18 +166,22 @@ function SubcategorySlider({ groups }: { groups: SubcategoryGroup[] }) {
   }
 
   return (
-    <section className="relative isolate mx-auto max-w-6xl px-4 py-14">
-      {/* Sfondo dietro a tutta la sezione (non dentro al singolo
-          riquadro, che restava tagliato ai suoi bordi) — visibile
-          attraverso i riquadri "di vetro" di ogni categoria. */}
+    <section className="relative isolate py-14">
+      {/* Sfondo a tutta larghezza, non chiuso dentro a un riquadro con
+          angoli arrotondati — copre l'intera fascia della sezione,
+          da bordo a bordo dello schermo. */}
       <img
         src={sectionBg}
         alt=""
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 -z-10 h-full w-full rounded-2xl object-cover object-center"
+        className="pointer-events-none absolute inset-0 -z-10 h-full w-full object-cover object-center"
+      />
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-b from-background/10 via-background/40 to-background/70"
       />
 
-      <div className="relative">
+      <div className="relative mx-auto max-w-6xl px-4">
         {/* Frecce di scorrimento (visibili soprattutto da computer;
             su smartphone si può comunque scorrere a dito). */}
         {groups.length > 1 && (
@@ -204,20 +208,20 @@ function SubcategorySlider({ groups }: { groups: SubcategoryGroup[] }) {
         <div
           ref={(el) => { scrollRef.current = el; }}
           onScroll={handleScroll}
-          className="flex snap-x snap-mandatory overflow-x-auto scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="flex w-full max-w-full snap-x snap-mandatory overflow-x-auto scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
           {groups.map((g) => (
             <div key={g.category.id} className="w-full shrink-0 snap-center px-1 sm:px-10">
               <div className="glass-header-light aurora-glow overflow-hidden rounded-2xl border border-border/50 p-6 sm:p-10">
                 <h2 className="mb-1 text-xl font-semibold">{g.category.name}</h2>
                 <p className="mb-8 text-sm text-muted-foreground">Sfoglia per tipo di prodotto — scorri con un dito, o usa le frecce.</p>
-                <div className="-mx-6 flex gap-6 overflow-x-auto px-6 pb-2 snap-x snap-mandatory sm:mx-0 sm:px-0">
+                <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-4">
                   {g.subs.map((s) => (
                     <Link
                       key={s.id}
                       to="/catalog"
                       search={{ category: g.category.id, subcategory: s.id }}
-                      className="group flex shrink-0 snap-start flex-col items-center gap-3 text-center"
+                      className="group flex flex-col items-center gap-3 text-center"
                     >
                       <div className="card-elevated h-24 w-24 overflow-hidden rounded-full border border-border bg-card sm:h-28 sm:w-28">
                         {s.image_url ? (
