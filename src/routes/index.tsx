@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState, useEffect } from "react";
+import { useState, useRef } from "react";
 import { useSuspenseQuery, useQuery, queryOptions } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -147,66 +147,102 @@ interface SubcategoryGroup {
 // nel progetto (le stesse usate dal menu e dai popup).
 function SubcategorySlider({ groups }: { groups: SubcategoryGroup[] }) {
   const [activeIndex, setActiveIndex] = useState(0);
-  const [paused, setPaused] = useState(false);
+  const scrollRef = useRef<HTMLDivElement | null>(null);
 
-  useEffect(() => {
-    if (groups.length <= 1 || paused) return;
-    const timer = setInterval(() => {
-      setActiveIndex((i) => (i + 1) % groups.length);
-    }, 4500);
-    return () => clearInterval(timer);
-  }, [groups.length, paused]);
-
-  // Se il numero di categorie disponibili cambia (es. dati aggiornati) e
-  // l'indice corrente non esiste più, torniamo al primo per sicurezza.
   const safeIndex = activeIndex < groups.length ? activeIndex : 0;
-  const active = groups[safeIndex];
+
+  function scrollToIndex(i: number) {
+    const container = scrollRef.current;
+    if (!container) return;
+    const target = container.children[i] as HTMLElement | undefined;
+    target?.scrollIntoView({ behavior: "smooth", inline: "start", block: "nearest" });
+    setActiveIndex(i);
+  }
+
+  function handleScroll(e: React.UIEvent<HTMLDivElement>) {
+    const container = e.currentTarget;
+    const newIndex = Math.round(container.scrollLeft / container.clientWidth);
+    if (newIndex !== activeIndex && newIndex >= 0 && newIndex < groups.length) setActiveIndex(newIndex);
+  }
 
   return (
-    <section className="mx-auto max-w-6xl px-4 py-14">
-      <div
-        className="glass-header-light aurora-glow relative isolate overflow-hidden rounded-2xl border border-border/50 p-6 sm:p-10"
-        onMouseEnter={() => setPaused(true)}
-        onMouseLeave={() => setPaused(false)}
-      >
-        <img
-          src={sectionBg}
-          alt=""
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 -z-10 h-full w-full object-cover object-center"
-        />
-        <div key={active.category.id} className="relative animate-in fade-in-0 slide-in-from-right-4 duration-500">
-          <h2 className="mb-1 text-xl font-semibold">{active.category.name}</h2>
-          <p className="mb-8 text-sm text-muted-foreground">Sfoglia per tipo di prodotto.</p>
-          <div className="-mx-6 flex gap-6 overflow-x-auto px-6 pb-2 snap-x snap-mandatory sm:mx-0 sm:px-0">
-            {active.subs.map((s) => (
-              <Link
-                key={s.id}
-                to="/catalog"
-                search={{ category: active.category.id, subcategory: s.id }}
-                className="group flex shrink-0 snap-start flex-col items-center gap-3 text-center"
-              >
-                <div className="card-elevated h-24 w-24 overflow-hidden rounded-full border border-border bg-card sm:h-28 sm:w-28">
-                  {s.image_url ? (
-                    <img src={s.image_url} alt={s.name} className="h-full w-full object-cover transition group-hover:scale-105" />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground">{s.name}</div>
-                  )}
+    <section className="relative isolate mx-auto max-w-6xl px-4 py-14">
+      {/* Sfondo dietro a tutta la sezione (non dentro al singolo
+          riquadro, che restava tagliato ai suoi bordi) — visibile
+          attraverso i riquadri "di vetro" di ogni categoria. */}
+      <img
+        src={sectionBg}
+        alt=""
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 -z-10 h-full w-full rounded-2xl object-cover object-center"
+      />
+
+      <div className="relative">
+        {/* Frecce di scorrimento (visibili soprattutto da computer;
+            su smartphone si può comunque scorrere a dito). */}
+        {groups.length > 1 && (
+          <>
+            <button
+              type="button"
+              aria-label="Categoria precedente"
+              onClick={() => scrollToIndex(safeIndex === 0 ? groups.length - 1 : safeIndex - 1)}
+              className="absolute left-2 top-1/2 z-10 hidden -translate-y-1/2 items-center justify-center rounded-full bg-primary p-2.5 text-primary-foreground shadow-lg transition hover:bg-primary/90 sm:flex"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="m15 18-6-6 6-6" /></svg>
+            </button>
+            <button
+              type="button"
+              aria-label="Categoria successiva"
+              onClick={() => scrollToIndex((safeIndex + 1) % groups.length)}
+              className="absolute right-2 top-1/2 z-10 hidden -translate-y-1/2 items-center justify-center rounded-full bg-primary p-2.5 text-primary-foreground shadow-lg transition hover:bg-primary/90 sm:flex"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="m9 18 6-6-6-6" /></svg>
+            </button>
+          </>
+        )}
+
+        <div
+          ref={(el) => { scrollRef.current = el; }}
+          onScroll={handleScroll}
+          className="flex snap-x snap-mandatory overflow-x-auto scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        >
+          {groups.map((g) => (
+            <div key={g.category.id} className="w-full shrink-0 snap-center px-1 sm:px-10">
+              <div className="glass-header-light aurora-glow overflow-hidden rounded-2xl border border-border/50 p-6 sm:p-10">
+                <h2 className="mb-1 text-xl font-semibold">{g.category.name}</h2>
+                <p className="mb-8 text-sm text-muted-foreground">Sfoglia per tipo di prodotto — scorri con un dito, o usa le frecce.</p>
+                <div className="-mx-6 flex gap-6 overflow-x-auto px-6 pb-2 snap-x snap-mandatory sm:mx-0 sm:px-0">
+                  {g.subs.map((s) => (
+                    <Link
+                      key={s.id}
+                      to="/catalog"
+                      search={{ category: g.category.id, subcategory: s.id }}
+                      className="group flex shrink-0 snap-start flex-col items-center gap-3 text-center"
+                    >
+                      <div className="card-elevated h-24 w-24 overflow-hidden rounded-full border border-border bg-card sm:h-28 sm:w-28">
+                        {s.image_url ? (
+                          <img src={s.image_url} alt={s.name} className="h-full w-full object-cover transition group-hover:scale-105" />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground">{s.name}</div>
+                        )}
+                      </div>
+                      <span className="text-sm font-medium leading-tight">{s.name}</span>
+                    </Link>
+                  ))}
                 </div>
-                <span className="text-sm font-medium leading-tight">{s.name}</span>
-              </Link>
-            ))}
-          </div>
+              </div>
+            </div>
+          ))}
         </div>
 
         {groups.length > 1 && (
-          <div className="mt-8 flex items-center justify-center gap-2">
+          <div className="mt-6 flex items-center justify-center gap-2">
             {groups.map((g, i) => (
               <button
                 key={g.category.id}
                 type="button"
                 aria-label={`Mostra ${g.category.name}`}
-                onClick={() => setActiveIndex(i)}
+                onClick={() => scrollToIndex(i)}
                 className={
                   i === safeIndex
                     ? "h-2 w-6 rounded-full bg-primary transition-all"
