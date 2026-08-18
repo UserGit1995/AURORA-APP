@@ -174,11 +174,11 @@ function SubcategorySlider({ groups }: { groups: SubcategoryGroup[] }) {
         src={sectionBg}
         alt=""
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 -z-10 h-full w-full object-cover object-center"
+        className="pointer-events-none absolute inset-0 -z-10 h-full w-full object-cover object-center opacity-25 sm:opacity-40"
       />
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-b from-background/10 via-background/40 to-background/70"
+        className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-b from-background/40 via-background/60 to-background/85"
       />
 
       <div className="relative mx-auto max-w-6xl px-4">
