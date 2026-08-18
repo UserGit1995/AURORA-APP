@@ -98,7 +98,7 @@ function Home() {
       {subcategoryGroups.length > 0 && <SubcategorySlider groups={subcategoryGroups} />}
 
       {featured.length > 0 && (
-        <section className="mx-auto max-w-6xl px-4 py-4">
+        <section className="mx-auto max-w-6xl px-4 pt-0 pb-4">
           <h2 className="mb-1 text-xl font-semibold">In evidenza</h2>
           <p className="mb-6 text-sm text-muted-foreground">Una selezione dal nostro catalogo.</p>
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -211,7 +211,7 @@ function SubcategorySlider({ groups }: { groups: SubcategoryGroup[] }) {
         >
           {groups.map((g) => (
             <div key={g.category.id} className="w-full shrink-0 snap-center px-1 sm:px-10">
-              <div className="glass-header-light aurora-glow overflow-hidden rounded-2xl border border-border/50 p-2 sm:p-3">
+              <div className="glass-header-light overflow-hidden rounded-2xl p-2 sm:p-3">
                 <h2 className="mb-1 text-xl font-semibold">{g.category.name}</h2>
                 <p className="mb-2 text-sm text-muted-foreground">Sfoglia per tipo di prodotto — scorri con un dito, o usa le frecce.</p>
                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
