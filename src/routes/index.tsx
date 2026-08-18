@@ -211,10 +211,10 @@ function SubcategorySlider({ groups }: { groups: SubcategoryGroup[] }) {
         >
           {groups.map((g) => (
             <div key={g.category.id} className="w-full shrink-0 snap-center px-1 sm:px-10">
-              <div className="glass-header-light aurora-glow overflow-hidden rounded-2xl border border-border/50 p-6 sm:p-10">
+              <div className="glass-header-light aurora-glow overflow-hidden rounded-2xl border border-border/50 p-2 sm:p-3">
                 <h2 className="mb-1 text-xl font-semibold">{g.category.name}</h2>
-                <p className="mb-8 text-sm text-muted-foreground">Sfoglia per tipo di prodotto — scorri con un dito, o usa le frecce.</p>
-                <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-4">
+                <p className="mb-2 text-sm text-muted-foreground">Sfoglia per tipo di prodotto — scorri con un dito, o usa le frecce.</p>
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
                   {g.subs.map((s) => (
                     <Link
                       key={s.id}
