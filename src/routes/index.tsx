@@ -170,15 +170,14 @@ function SubcategorySlider({ groups }: { groups: SubcategoryGroup[] }) {
       {/* Sfondo a tutta larghezza, non chiuso dentro a un riquadro con
           angoli arrotondati — copre l'intera fascia della sezione,
           da bordo a bordo dello schermo. */}
-      <img
-        src={sectionBg}
-        alt=""
+      <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 -z-10 h-full w-full object-cover object-center opacity-25 sm:opacity-40"
+        className="pointer-events-none absolute inset-0 -z-10 bg-background bg-no-repeat bg-center bg-contain sm:bg-cover"
+        style={{ backgroundImage: `url(${sectionBg})` }}
       />
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-b from-background/40 via-background/60 to-background/85"
+        className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-b from-background/10 via-background/25 to-background/60"
       />
 
       <div className="relative mx-auto max-w-6xl px-4">
