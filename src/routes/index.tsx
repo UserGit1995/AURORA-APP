@@ -166,7 +166,7 @@ function SubcategorySlider({ groups }: { groups: SubcategoryGroup[] }) {
   }
 
   return (
-    <section className="relative isolate py-16">
+    <section className="relative isolate py-2">
       {/* Sfondo a tutta larghezza, non chiuso dentro a un riquadro con
           angoli arrotondati — copre l'intera fascia della sezione,
           da bordo a bordo dello schermo. */}
