@@ -72,7 +72,7 @@ function Home() {
     <div className="min-h-screen bg-background">
       <PublicHeader />
 
-      <section className="aurora-glow border-b border-border/40 px-4 py-20 text-center sm:py-28">
+      <section className="aurora-glow border-b border-border/40 px-4 py-8 text-center sm:py-16">
         <div className="mx-auto max-w-3xl">
           <img src={logoAsset} alt="Aurora" className="mx-auto mb-10 h-auto w-full max-w-xs" width={400} height={120} />
           <p className="mb-3 text-xs font-semibold uppercase tracking-[0.25em] text-primary">
