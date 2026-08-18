@@ -98,7 +98,7 @@ function Home() {
       {subcategoryGroups.length > 0 && <SubcategorySlider groups={subcategoryGroups} />}
 
       {featured.length > 0 && (
-        <section className="mx-auto max-w-6xl px-4 py-14">
+        <section className="mx-auto max-w-6xl px-4 py-4">
           <h2 className="mb-1 text-xl font-semibold">In evidenza</h2>
           <p className="mb-6 text-sm text-muted-foreground">Una selezione dal nostro catalogo.</p>
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
