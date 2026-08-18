@@ -224,7 +224,7 @@
      per avere una foto di sfondo visibile dietro (es. la sezione
      sottocategorie in homepage). */
   .glass-header-light {
-    background: rgb(12 15 24 / 7%);
+    background: rgb(12 15 24 / 2%);
     backdrop-filter: blur(6px);
     -webkit-backdrop-filter: blur(6px);
   }

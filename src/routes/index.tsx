@@ -166,18 +166,18 @@ function SubcategorySlider({ groups }: { groups: SubcategoryGroup[] }) {
   }
 
   return (
-    <section className="relative isolate py-14">
+    <section className="relative isolate py-8">
       {/* Sfondo a tutta larghezza, non chiuso dentro a un riquadro con
           angoli arrotondati — copre l'intera fascia della sezione,
           da bordo a bordo dello schermo. */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute left-0 right-0 top-0 -z-10 h-96 bg-background bg-no-repeat bg-center bg-contain sm:bg-cover"
+        className="pointer-events-none absolute left-0 right-0 top-0 -z-10 h-screen bg-background bg-no-repeat bg-center bg-contain sm:bg-cover"
         style={{ backgroundImage: `url(${sectionBg})` }}
       />
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-b from-background/0 via-background/30 to-background"
+        className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-b from-background/0 via-background/15 to-background"
       />
 
       <div className="relative mx-auto max-w-6xl px-4">
