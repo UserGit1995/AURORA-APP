@@ -172,12 +172,12 @@ function SubcategorySlider({ groups }: { groups: SubcategoryGroup[] }) {
           da bordo a bordo dello schermo. */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 -z-10 bg-background bg-no-repeat bg-center bg-contain sm:bg-cover"
+        className="pointer-events-none absolute left-0 right-0 top-0 -z-10 h-96 bg-background bg-no-repeat bg-center bg-contain sm:bg-cover"
         style={{ backgroundImage: `url(${sectionBg})` }}
       />
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-b from-background/10 via-background/25 to-background/60"
+        className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-b from-background/0 via-background/30 to-background"
       />
 
       <div className="relative mx-auto max-w-6xl px-4">
