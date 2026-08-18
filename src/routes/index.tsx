@@ -166,7 +166,7 @@ function SubcategorySlider({ groups }: { groups: SubcategoryGroup[] }) {
   }
 
   return (
-    <section className="relative isolate py-8">
+    <section className="relative isolate py-16">
       {/* Sfondo a tutta larghezza, non chiuso dentro a un riquadro con
           angoli arrotondati — copre l'intera fascia della sezione,
           da bordo a bordo dello schermo. */}
@@ -239,7 +239,7 @@ function SubcategorySlider({ groups }: { groups: SubcategoryGroup[] }) {
         </div>
 
         {groups.length > 1 && (
-          <div className="mt-6 flex items-center justify-center gap-2">
+          <div className="mt-2 flex items-center justify-center gap-2">
             {groups.map((g, i) => (
               <button
                 key={g.category.id}
