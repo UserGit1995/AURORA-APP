@@ -166,7 +166,7 @@ function SubcategorySlider({ groups }: { groups: SubcategoryGroup[] }) {
   }
 
   return (
-    <section className="relative isolate py-2">
+    <section className="relative isolate pt-2 pb-0">
       {/* Sfondo a tutta larghezza, non chiuso dentro a un riquadro con
           angoli arrotondati — copre l'intera fascia della sezione,
           da bordo a bordo dello schermo. */}
@@ -174,10 +174,6 @@ function SubcategorySlider({ groups }: { groups: SubcategoryGroup[] }) {
         aria-hidden="true"
         className="pointer-events-none absolute left-0 right-0 top-0 -z-10 h-72 bg-background bg-no-repeat bg-center bg-contain sm:bg-cover"
         style={{ backgroundImage: `url(${sectionBg})` }}
-      />
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-b from-background/0 via-background/15 to-background"
       />
 
       <div className="relative mx-auto max-w-6xl px-4">
@@ -211,7 +207,7 @@ function SubcategorySlider({ groups }: { groups: SubcategoryGroup[] }) {
         >
           {groups.map((g) => (
             <div key={g.category.id} className="w-full shrink-0 snap-center px-1 sm:px-10">
-              <div className="glass-header-light overflow-hidden rounded-2xl p-2 sm:p-3">
+              <div className="glass-header-light overflow-hidden rounded-2xl border border-white/10 p-4 sm:p-6">
                 <h2 className="mb-1 text-xl font-semibold">{g.category.name}</h2>
                 <p className="mb-2 text-sm text-muted-foreground">Sfoglia per tipo di prodotto — scorri con un dito, o usa le frecce.</p>
                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
