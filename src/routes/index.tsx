@@ -4,7 +4,9 @@ import { useSuspenseQuery, useQuery, queryOptions } from "@tanstack/react-query"
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import logoAsset from "@/assets/aurora-logo.png";
-import sectionBg from "@/assets/admin-bg.png";
+import subcategoryBgDesktop from "@/assets/subcategory-bg-desktop.webp";
+import subcategoryBgMobile from "@/assets/subcategory-bg-mobile.webp";
+import subcategoryLogo from "@/assets/subcategory-logo.webp";
 import { listPublicCategories, listPublicProducts, listPublicSubcategories } from "@/lib/public.functions";
 import { CartLink } from "@/components/CartLink";
 import { PublicHeader } from "@/components/PublicHeader";
@@ -186,13 +188,31 @@ function SubcategorySlider({ groups }: { groups: SubcategoryGroup[] }) {
   return (
     <section className="relative isolate pt-2 pb-0">
       {/* Sfondo a tutta larghezza, non chiuso dentro a un riquadro con
-          angoli arrotondati — copre l'intera fascia della sezione,
-          da bordo a bordo dello schermo. */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute left-0 right-0 top-0 -z-10 h-72 bg-background bg-no-repeat bg-center bg-contain sm:bg-cover"
-        style={{ backgroundImage: `url(${sectionBg})` }}
-      />
+          angoli arrotondati — copre l'intera fascia della sezione, da
+          bordo a bordo dello schermo, e sta SOTTO al box del carosello
+          (non è il background del box). Il box sopra è reso semi
+          trasparente (.glass-header-light) apposta per lasciar vedere
+          questo sfondo con il logo. Immagine diversa per mobile e per
+          desktop, sostituita automaticamente in base alla larghezza
+          schermo. L'altezza segue quella reale del carosello (h-full),
+          che ora è dinamica in base alla slide attiva. */}
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 overflow-hidden bg-background">
+        <img
+          src={subcategoryBgDesktop}
+          alt=""
+          className="hidden h-full w-full object-cover sm:block"
+        />
+        <img
+          src={subcategoryBgMobile}
+          alt=""
+          className="h-full w-full object-cover sm:hidden"
+        />
+        <img
+          src={subcategoryLogo}
+          alt=""
+          className="absolute left-1/2 top-1/2 w-32 -translate-x-1/2 -translate-y-1/2 opacity-95 drop-shadow-[0_0_20px_rgba(0,0,0,0.6)] sm:w-52"
+        />
+      </div>
 
       <div className="relative mx-auto max-w-6xl px-4">
         {/* Frecce di scorrimento (visibili soprattutto da computer;
