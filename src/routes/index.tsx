@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState, useRef } from "react";
+import { useState, useRef, useLayoutEffect } from "react";
 import { useSuspenseQuery, useQuery, queryOptions } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -148,6 +148,12 @@ interface SubcategoryGroup {
 function SubcategorySlider({ groups }: { groups: SubcategoryGroup[] }) {
   const [activeIndex, setActiveIndex] = useState(0);
   const scrollRef = useRef<HTMLDivElement | null>(null);
+  // Altezza (in px) della sola slide attualmente visibile. Senza questo,
+  // il contenitore flex assume sempre l'altezza della slide più alta tra
+  // tutte (es. la categoria con più sottocategorie), lasciando uno spazio
+  // vuoto enorme sotto le slide più corte. Viene ricalcolata ogni volta
+  // che cambia la slide attiva o la larghezza dello schermo.
+  const [sliderHeight, setSliderHeight] = useState<number | undefined>(undefined);
 
   const safeIndex = activeIndex < groups.length ? activeIndex : 0;
 
@@ -164,6 +170,18 @@ function SubcategorySlider({ groups }: { groups: SubcategoryGroup[] }) {
     const newIndex = Math.round(container.scrollLeft / container.clientWidth);
     if (newIndex !== activeIndex && newIndex >= 0 && newIndex < groups.length) setActiveIndex(newIndex);
   }
+
+  useLayoutEffect(() => {
+    function measure() {
+      const container = scrollRef.current;
+      if (!container) return;
+      const active = container.children[safeIndex] as HTMLElement | undefined;
+      if (active) setSliderHeight(active.offsetHeight);
+    }
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, [safeIndex, groups]);
 
   return (
     <section className="relative isolate pt-2 pb-0">
@@ -203,7 +221,8 @@ function SubcategorySlider({ groups }: { groups: SubcategoryGroup[] }) {
         <div
           ref={(el) => { scrollRef.current = el; }}
           onScroll={handleScroll}
-          className="flex w-full max-w-full snap-x snap-mandatory overflow-x-auto scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          style={sliderHeight ? { height: sliderHeight, transition: "height 250ms ease" } : undefined}
+          className="flex w-full max-w-full items-start snap-x snap-mandatory overflow-x-auto overflow-y-hidden scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
           {groups.map((g) => (
             <div key={g.category.id} className="w-full shrink-0 snap-center px-1 sm:px-10">
