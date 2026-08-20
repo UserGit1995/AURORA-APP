@@ -162,8 +162,12 @@ function SubcategorySlider({ groups }: { groups: SubcategoryGroup[] }) {
   function scrollToIndex(i: number) {
     const container = scrollRef.current;
     if (!container) return;
-    const target = container.children[i] as HTMLElement | undefined;
-    target?.scrollIntoView({ behavior: "smooth", inline: "start", block: "nearest" });
+    // Scorre SOLO questo contenitore (non usiamo più scrollIntoView: sul
+    // figlio della slide, che può far muovere anche lo scroll dell'intera
+    // pagina — causa del bug "la pagina si decentra a sinistra cliccando
+    // le freccette"). scrollTo mirato al container evita del tutto quel
+    // rischio.
+    container.scrollTo({ left: i * container.clientWidth, behavior: "smooth" });
     setActiveIndex(i);
   }
 
