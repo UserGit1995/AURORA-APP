@@ -162,12 +162,15 @@ function SubcategorySlider({ groups }: { groups: SubcategoryGroup[] }) {
   function scrollToIndex(i: number) {
     const container = scrollRef.current;
     if (!container) return;
-    // Scorre SOLO questo contenitore (non usiamo più scrollIntoView: sul
-    // figlio della slide, che può far muovere anche lo scroll dell'intera
-    // pagina — causa del bug "la pagina si decentra a sinistra cliccando
-    // le freccette"). scrollTo mirato al container evita del tutto quel
-    // rischio.
-    container.scrollTo({ left: i * container.clientWidth, behavior: "smooth" });
+    const target = container.children[i] as HTMLElement | undefined;
+    if (!target) return;
+    // Scorre SOLO questo contenitore, chiamando scrollTo direttamente su
+    // di esso (non su scrollIntoView del figlio, che poteva far muovere
+    // anche lo scroll dell'intera pagina — causa del bug "la pagina si
+    // decentra a sinistra"). La posizione si basa sulla posizione reale
+    // della slide nel DOM (offsetLeft), non su un calcolo a moltiplicare
+    // che poteva risultare impreciso e far sembrare le freccette rotte.
+    container.scrollTo({ left: target.offsetLeft, behavior: "smooth" });
     setActiveIndex(i);
   }
 
