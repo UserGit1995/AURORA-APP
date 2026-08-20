@@ -228,9 +228,9 @@
      per avere una foto di sfondo visibile dietro (es. la sezione
      sottocategorie in homepage). */
   .glass-header-light {
-    background: rgb(12 15 24 / 12%);
-    backdrop-filter: blur(3px);
-    -webkit-backdrop-filter: blur(3px);
+    background: rgb(12 15 24 / 3%);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
   }
 
   /* Card "di vetro" per il pannello admin: semi-trasparenti con
