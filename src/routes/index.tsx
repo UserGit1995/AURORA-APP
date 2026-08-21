@@ -150,12 +150,15 @@ interface SubcategoryGroup {
 function SubcategorySlider({ groups }: { groups: SubcategoryGroup[] }) {
   const [activeIndex, setActiveIndex] = useState(0);
   const scrollRef = useRef<HTMLDivElement | null>(null);
-  // Altezza (in px) della sola slide attualmente visibile. Senza questo,
-  // il contenitore flex assume sempre l'altezza della slide più alta tra
-  // tutte (es. la categoria con più sottocategorie), lasciando uno spazio
-  // vuoto enorme sotto le slide più corte. Viene ricalcolata ogni volta
-  // che cambia la slide attiva o la larghezza dello schermo.
-  const [sliderHeight, setSliderHeight] = useState<number | undefined>(undefined);
+  // Altezza massima (in px) tra TUTTE le categorie, non solo quella
+  // attiva. Viene applicata come altezza fissa alla sezione, così lo
+  // sfondo con il logo non cambia mai proporzioni/zoom passando da una
+  // categoria più piccola a una più grande — resta sempre grande come
+  // la categoria più alta (oggi "Packaging | Delivery - Asporto", ma si
+  // ricalcola da sola se in futuro un'altra categoria diventasse più
+  // alta). Le categorie più corte mostrano semplicemente più sfondo
+  // sotto la loro card invece di ridimensionare la foto.
+  const [maxHeight, setMaxHeight] = useState<number | undefined>(undefined);
 
   const safeIndex = activeIndex < groups.length ? activeIndex : 0;
 
@@ -184,13 +187,21 @@ function SubcategorySlider({ groups }: { groups: SubcategoryGroup[] }) {
     function measure() {
       const container = scrollRef.current;
       if (!container) return;
-      const active = container.children[safeIndex] as HTMLElement | undefined;
-      if (active) setSliderHeight(active.offsetHeight);
+      let max = 0;
+      for (const child of Array.from(container.children)) {
+        const h = (child as HTMLElement).offsetHeight;
+        if (h > max) max = h;
+      }
+      if (max > 0) setMaxHeight(max);
     }
     measure();
     window.addEventListener("resize", measure);
     return () => window.removeEventListener("resize", measure);
-  }, [safeIndex, groups]);
+    // Si ricalcola solo quando cambiano le categorie o la larghezza
+    // schermo — MAI quando cambia solo la slide attiva (activeIndex non
+    // è tra le dipendenze), per non interferire con lo scroll animato
+    // delle freccette.
+  }, [groups]);
 
   return (
     <section className="relative isolate pt-2 pb-0">
@@ -201,8 +212,9 @@ function SubcategorySlider({ groups }: { groups: SubcategoryGroup[] }) {
           trasparente (.glass-header-light) apposta per lasciar vedere
           questo sfondo con il logo. Immagine diversa per mobile e per
           desktop, sostituita automaticamente in base alla larghezza
-          schermo. L'altezza segue quella reale del carosello (h-full),
-          che ora è dinamica in base alla slide attiva. */}
+          schermo. L'altezza è quella FISSA (maxHeight) calcolata sopra,
+          non quella della slide attiva: così lo sfondo non cambia mai
+          proporzioni passando da una categoria all'altra. */}
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 overflow-hidden bg-background">
         <img
           src={subcategoryBgDesktop}
@@ -214,10 +226,16 @@ function SubcategorySlider({ groups }: { groups: SubcategoryGroup[] }) {
           alt=""
           className="h-full w-full object-cover sm:hidden"
         />
+        {/* Logo centrato (50%/50%) con larghezza calibrata sulla linea
+            azzurra e sul testo "MONOUSO · HO.RE.CA · PACKAGING" già
+            presenti nelle foto (misurati: ~48% larghezza su mobile,
+            ~35% larghezza su desktop), così il logo risulta
+            proporzionato a quegli elementi invece che a dimensione
+            fissa arbitraria. */}
         <img
           src={subcategoryLogo}
           alt=""
-          className="absolute left-1/2 top-1/2 w-32 -translate-x-1/2 -translate-y-1/2 opacity-95 drop-shadow-[0_0_20px_rgba(0,0,0,0.6)] sm:w-52"
+          className="absolute left-1/2 top-1/2 w-[48%] -translate-x-1/2 -translate-y-1/2 opacity-95 drop-shadow-[0_0_20px_rgba(0,0,0,0.6)] sm:w-[35%]"
         />
       </div>
 
@@ -248,7 +266,7 @@ function SubcategorySlider({ groups }: { groups: SubcategoryGroup[] }) {
         <div
           ref={(el) => { scrollRef.current = el; }}
           onScroll={handleScroll}
-          style={sliderHeight ? { height: sliderHeight, transition: "height 250ms ease" } : undefined}
+          style={maxHeight ? { height: maxHeight } : undefined}
           className="flex w-full max-w-full items-start snap-x snap-mandatory overflow-x-auto overflow-y-hidden scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
           {groups.map((g) => (
