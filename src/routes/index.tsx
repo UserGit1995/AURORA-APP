@@ -263,11 +263,17 @@ function SubcategorySlider({ groups }: { groups: SubcategoryGroup[] }) {
           </>
         )}
 
+        {/* NIENTE classe "scroll-smooth" qui: applicata via CSS a un
+            contenitore che riceve anche lo scorrimento diretto col dito,
+            va in conflitto con il touch su iOS/Safari e causa il blocco
+            a metà durante lo swipe. Lo scroll animato delle freccette
+            resta comunque fluido: lo richiediamo esplicitamente via JS
+            (scrollTo con behavior:"smooth") solo in quel caso. */}
         <div
           ref={(el) => { scrollRef.current = el; }}
           onScroll={handleScroll}
           style={maxHeight ? { height: maxHeight } : undefined}
-          className="flex w-full max-w-full items-start snap-x snap-mandatory overflow-x-auto overflow-y-hidden scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="flex w-full max-w-full items-start snap-x snap-mandatory overflow-x-auto overflow-y-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
           {groups.map((g) => (
             <div key={g.category.id} className="w-full shrink-0 snap-center px-1 sm:px-10">
