@@ -1,56 +1,38 @@
-@import "tailwindcss" source(none);
-@source "../src";
-@import "tw-animate-css";
-
-@custom-variant dark (&:is(.dark *));
-
-/*
- * Design system definition.
- *
- * The @theme inline block maps CSS custom properties to Tailwind utility
- * classes (e.g. --color-primary -> bg-primary, text-primary).
- *
- * The :root and .dark blocks define the actual color values using oklch.
- * All colors MUST use oklch format.
- *
- * To add a new semantic color:
- * 1. Add the variable to :root (light value) and .dark (dark value)
- * 2. Register it in @theme inline as --color-<name>: var(--<name>)
- */
+@import "tailwindcss";
 
 @theme inline {
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-  --radius-2xl: calc(var(--radius) + 8px);
-  --radius-3xl: calc(var(--radius) + 12px);
-  --radius-4xl: calc(var(--radius) + 16px);
+  --font-sans: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-heading: "Outfit", "Plus Jakarta Sans", sans-serif;
+  --font-logo: "Cinzel", serif;
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
+
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
+
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
+
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
+
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
+
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
+
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --color-ring-offset-background: var(--background);
-  --color-chart-1: var(--chart-1);
-  --color-chart-2: var(--chart-2);
-  --color-chart-3: var(--chart-3);
-  --color-chart-4: var(--chart-4);
-  --color-chart-5: var(--chart-5);
+
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
@@ -59,210 +41,113 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
 }
 
 :root {
-  --radius: 0.625rem;
-  --background: #0C0F18;
-  --foreground: #FEFEFE;
-  --card: #141824;
-  --card-foreground: #FEFEFE;
-  --popover: #141824;
-  --popover-foreground: #FEFEFE;
-  --primary: #47BCEE;
-  --primary-foreground: #0C0F18;
-  --secondary: #94969A;
-  --secondary-foreground: #0C0F18;
-  --muted: rgb(148 150 154 / 15%);
-  --muted-foreground: #94969A;
-  --accent: rgb(71 188 238 / 15%);
-  --accent-foreground: #FEFEFE;
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: #FEFEFE;
-  --border: rgb(148 150 154 / 20%);
-  --input: rgb(148 150 154 / 15%);
-  --ring: #47BCEE;
-  --chart-1: #47BCEE;
-  --chart-2: #94969A;
-  --chart-3: #FEFEFE;
-  --chart-4: rgb(71 188 238 / 70%);
-  --chart-5: rgb(148 150 154 / 70%);
-  --sidebar: #141824;
-  --sidebar-foreground: #FEFEFE;
-  --sidebar-primary: #47BCEE;
-  --sidebar-primary-foreground: #0C0F18;
-  --sidebar-accent: rgb(71 188 238 / 15%);
-  --sidebar-accent-foreground: #FEFEFE;
-  --sidebar-border: rgb(148 150 154 / 20%);
-  --sidebar-ring: #47BCEE;
+  --radius: 1rem;
+
+  /* Base surfaces — presa 1:1 dal riferimento (#040813) */
+  --background: #040813;
+  --foreground: #e2e8f0;
+
+  --card: #081326;
+  --card-foreground: #e2e8f0;
+
+  --popover: #0a1424;
+  --popover-foreground: #e2e8f0;
+
+  /* Accento Aurora: azzurro elettrico "sky" del riferimento */
+  --primary: #0284c7;
+  --primary-foreground: #ffffff;
+
+  --secondary: #0e203f;
+  --secondary-foreground: #cbd5e1;
+
+  --muted: #0c1c36;
+  --muted-foreground: #94a3b8;
+
+  --accent: #0e203f;
+  --accent-foreground: #e2e8f0;
+
+  --destructive: #f43f5e;
+  --destructive-foreground: #fff1f2;
+
+  --border: #142646;
+  --input: #142646;
+  --ring: #0284c7;
+
+  --sidebar: #050b17;
+  --sidebar-foreground: #cbd5e1;
+  --sidebar-primary: #0284c7;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #0e203f;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #0e1b30;
+  --sidebar-ring: #0284c7;
+
+  /* Gradiente hero, stesso tono del banner del mockup */
+  --gradient-hero: linear-gradient(135deg, #071329 0%, #091b38 55%, #0c264d 100%);
+
+  --shadow-elegant: 0 8px 30px -8px rgba(2, 6, 16, 0.6);
+  --shadow-glow: 0 0 0 1px rgba(56, 189, 248, 0.15), 0 8px 24px -6px rgba(56, 189, 248, 0.25);
 }
 
-.dark {
-  --background: #0C0F18;
-  --foreground: #FEFEFE;
-  --card: #141824;
-  --card-foreground: #FEFEFE;
-  --popover: #141824;
-  --popover-foreground: #FEFEFE;
-  --primary: #47BCEE;
-  --primary-foreground: #0C0F18;
-  --secondary: #94969A;
-  --secondary-foreground: #0C0F18;
-  --muted: rgb(148 150 154 / 15%);
-  --muted-foreground: #94969A;
-  --accent: rgb(71 188 238 / 15%);
-  --accent-foreground: #FEFEFE;
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: #FEFEFE;
-  --border: rgb(148 150 154 / 20%);
-  --input: rgb(148 150 154 / 15%);
-  --ring: #47BCEE;
-  --chart-1: #47BCEE;
-  --chart-2: #94969A;
-  --chart-3: #FEFEFE;
-  --chart-4: rgb(71 188 238 / 70%);
-  --chart-5: rgb(148 150 154 / 70%);
-  --sidebar: #141824;
-  --sidebar-foreground: #FEFEFE;
-  --sidebar-primary: #47BCEE;
-  --sidebar-primary-foreground: #0C0F18;
-  --sidebar-accent: rgb(71 188 238 / 15%);
-  --sidebar-accent-foreground: #FEFEFE;
-  --sidebar-border: rgb(148 150 154 / 20%);
-  --sidebar-ring: #47BCEE;
+body {
+  font-family: var(--font-sans);
+  background-color: var(--background);
+  color: var(--foreground);
+  -webkit-font-smoothing: antialiased;
 }
 
-@layer base {
-  * {
-    border-color: var(--color-border);
-  }
-
-  /* Impedisce lo scorrimento orizzontale a livello di intero sito:
-     se un elemento risulta anche solo un po' più largo dello schermo
-     (es. un testo lungo senza spazi), il telefono non deve poter
-     "scivolare" di lato spostando tutto il resto della pagina — quel
-     pezzo in eccesso viene semplicemente tagliato invece di causare
-     uno scorrimento indesiderato. */
-  html, body {
-    overflow-x: hidden;
-    max-width: 100%;
-  }
-
-  html {
-    scrollbar-gutter: stable;
-  }
-
-  body {
-    background-color: var(--color-background);
-    color: var(--color-foreground);
-  }
+h1, h2, h3, h4, .font-heading {
+  font-family: var(--font-heading);
+  letter-spacing: -0.01em;
 }
 
-@layer utilities {
-  /*
-   * Il marchio si chiama "Aurora": questa sfumatura richiama l'aurora
-   * boreale (ciano + un violetto tenue), sfocata e posizionata in modo
-   * asimmetrico per non sembrare un blob generico centrato. Va usata con
-   * parsimonia — nell'hero e in pochi altri punti chiave, non ovunque.
-   */
-  .aurora-glow {
-    position: relative;
-    isolation: isolate;
-  }
-  .aurora-glow::before {
-    content: "";
-    position: absolute;
-    inset: -20% -10% auto -10%;
-    height: 140%;
-    z-index: -1;
-    background:
-      radial-gradient(ellipse 60% 50% at 20% 15%, rgb(71 188 238 / 30%), transparent 60%),
-      radial-gradient(ellipse 45% 40% at 80% 0%, rgb(139 124 246 / 22%), transparent 65%),
-      radial-gradient(ellipse 50% 45% at 55% 35%, rgb(78 235 192 / 12%), transparent 70%);
-    filter: blur(40px);
-    pointer-events: none;
-  }
-
-  /* Card con profondità reale: ombra a più livelli, si solleva leggermente
-     al passaggio del mouse, e il bordo si illumina invece di limitarsi a
-     cambiare colore. */
-  .card-elevated {
-    box-shadow:
-      0 1px 2px rgb(0 0 0 / 30%),
-      0 8px 24px -12px rgb(0 0 0 / 50%);
-    transition: transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease;
-  }
-  .card-elevated:hover {
-    transform: translateY(-3px);
-    border-color: rgb(71 188 238 / 60%);
-    box-shadow:
-      0 1px 2px rgb(0 0 0 / 30%),
-      0 16px 32px -14px rgb(0 0 0 / 60%),
-      0 0 0 1px rgb(71 188 238 / 15%),
-      0 0 24px -4px rgb(71 188 238 / 25%);
-  }
-  /* Su schermi touch non esiste un vero "passaggio del mouse": toccare una
-     card attiva l'hover e lo lascia bloccato acceso anche dopo aver tolto
-     il dito, e su forme rotonde il bagliore fuoriesce dal bordo. Per
-     questo l'effetto sopra si attiva solo se il dispositivo ha davvero
-     un puntatore preciso (mouse), mai su smartphone/tablet. */
-  @media (hover: none) or (pointer: coarse) {
-    .card-elevated:hover {
-      transform: none;
-      border-color: inherit;
-      box-shadow:
-        0 1px 2px rgb(0 0 0 / 30%),
-        0 8px 24px -12px rgb(0 0 0 / 50%);
-    }
-  }
-
-  /* Header "di vetro": leggermente trasparente con sfocatura sullo sfondo,
-     invece di un blocco piatto a tinta unita. */
-  .glass-header {
-    background: rgb(12 15 24 / 75%);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-  }
-
-  /* Versione più trasparente di .glass-header, per i riquadri pensati
-     per avere una foto di sfondo visibile dietro (es. la sezione
-     sottocategorie in homepage). */
-  .glass-header-light {
-    background: rgb(12 15 24 / 3%);
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-  }
-
-  /* Card "di vetro" per il pannello admin: semi-trasparenti con
-     sfocatura, così lo sfondo (foto + logo in cima alla pagina) si
-     vede anche attraverso le card, non solo negli spazi vuoti tra una
-     e l'altra. */
-  .card-glass {
-    background: rgb(20 24 36 / 85%) !important;
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-  }
-
-  /* Su schermi stretti (smartphone) la foto di sfondo mostra un pezzo
-     diverso, con il logo molto luminoso spesso vicino al bordo — a
-     parità di trasparenza si vede troppo attraverso le card. Qui
-     solo un po' più opache, il resto (sfocatura, desktop) invariato. */
-  @media (max-width: 767px) {
-    .card-glass {
-      background: rgb(20 24 36 / 96%) !important;
-    }
-  }
+.font-logo {
+  font-family: var(--font-logo);
 }
 
-/*
- * Regole di stampa, usate dalla pagina "Catalogo PDF": quando si stampa
- * o si salva come PDF, si forza sfondo bianco e testo nero (il tema
- * scuro del sito costerebbe inchiostro e sarebbe illeggibile stampato),
- * e si nasconde tutto ciò che è marcato con la classe print:hidden.
- */
-@media print {
-  body {
-    background: #ffffff !important;
-    color: #000000 !important;
-  }
+.input-field {
+  width: 100%;
+  background-color: var(--background);
+  border: 1px solid var(--border);
+  border-radius: 0.6rem;
+  padding: 0.55rem 0.75rem;
+  font-size: 0.8rem;
+  color: var(--foreground);
+  outline: none;
+}
+.input-field:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 1px var(--primary);
+}
+
+* {
+  border-color: var(--border);
+}
+
+::selection {
+  background-color: rgba(2, 132, 199, 0.35);
+  color: var(--foreground);
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--background);
+}
+::-webkit-scrollbar-thumb {
+  background: #1e293b;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #334155;
 }

@@ -1,99 +1,74 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 
 export interface CartItem {
-  productId: string;
-  variantId?: string | null;
-  variantLabel?: string | null;
+  id: string;
   name: string;
-  price: number; // prezzo unitario mostrato nel carrello (indicativo: il prezzo
-                 // definitivo viene sempre ricalcolato dal server all'invio)
-  imageUrl: string | null;
-  quantity: number;
-  minOrderQty?: number;
-  unitLabel?: string | null;
+  price: number;
+  image_url: string | null;
+  qty: number;
 }
 
 interface CartContextValue {
   items: CartItem[];
-  itemCount: number;
-  addItem: (item: Omit<CartItem, "quantity">, quantity?: number) => void;
-  removeItem: (productId: string, variantId?: string | null) => void;
-  updateQuantity: (productId: string, quantity: number, variantId?: string | null) => void;
+  count: number;
+  total: number;
+  isPulsing: boolean;
+  addedProductId: string | null;
+  addItem: (product: { id: string; name: string; price: number; image_url: string | null }, qty?: number) => void;
+  removeItem: (id: string) => void;
+  setQty: (id: string, qty: number) => void;
   clear: () => void;
 }
 
-const STORAGE_KEY = "aurora_cart_v1";
-
 const CartContext = createContext<CartContextValue | null>(null);
-
-// Due righe del carrello sono la "stessa riga" solo se hanno lo stesso
-// prodotto E la stessa variante (una taglia S e una taglia M dello stesso
-// articolo restano righe separate).
-function sameLine(a: { productId: string; variantId?: string | null }, b: { productId: string; variantId?: string | null }) {
-  return a.productId === b.productId && (a.variantId ?? null) === (b.variantId ?? null);
-}
-
-function loadFromStorage(): CartItem[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-    return parsed;
-  } catch {
-    return [];
-  }
-}
+const STORAGE_KEY = "aurora_cart_v1";
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
-  const [hydrated, setHydrated] = useState(false);
+  const [isPulsing, setIsPulsing] = useState(false);
+  const [addedProductId, setAddedProductId] = useState<string | null>(null);
 
-  // Carica il carrello salvato solo lato client (evita problemi con il rendering server)
   useEffect(() => {
-    setItems(loadFromStorage());
-    setHydrated(true);
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) setItems(JSON.parse(raw));
+    } catch {
+      // ignora storage non disponibile
+    }
   }, []);
 
   useEffect(() => {
-    if (!hydrated || typeof window === "undefined") return;
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-  }, [items, hydrated]);
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    } catch {
+      // ignora storage non disponibile
+    }
+  }, [items]);
 
-  const addItem: CartContextValue["addItem"] = (item, quantity) => {
-    const step = quantity ?? item.minOrderQty ?? 1;
+  const addItem: CartContextValue["addItem"] = (product, qty = 1) => {
     setItems((prev) => {
-      const existing = prev.find((i) => sameLine(i, item));
+      const existing = prev.find((i) => i.id === product.id);
       if (existing) {
-        return prev.map((i) => (sameLine(i, item) ? { ...i, quantity: i.quantity + step } : i));
+        return prev.map((i) => (i.id === product.id ? { ...i, qty: i.qty + qty } : i));
       }
-      return [...prev, { ...item, quantity: step }];
+      return [...prev, { ...product, qty }];
     });
+    setAddedProductId(product.id);
+    setIsPulsing(true);
+    window.setTimeout(() => setIsPulsing(false), 700);
+    window.setTimeout(() => setAddedProductId(null), 1200);
   };
 
-  const removeItem: CartContextValue["removeItem"] = (productId, variantId = null) => {
-    setItems((prev) => prev.filter((i) => !sameLine(i, { productId, variantId })));
-  };
-
-  const updateQuantity: CartContextValue["updateQuantity"] = (productId, quantity, variantId = null) => {
-    setItems((prev) =>
-      quantity <= 0
-        ? prev.filter((i) => !sameLine(i, { productId, variantId }))
-        : prev.map((i) => {
-            if (!sameLine(i, { productId, variantId })) return i;
-            const min = i.minOrderQty ?? 1;
-            return { ...i, quantity: Math.max(quantity, min) };
-          }),
-    );
-  };
-
+  const removeItem = (id: string) => setItems((prev) => prev.filter((i) => i.id !== id));
+  const setQty = (id: string, qty: number) =>
+    setItems((prev) => (qty <= 0 ? prev.filter((i) => i.id !== id) : prev.map((i) => (i.id === id ? { ...i, qty } : i))));
   const clear = () => setItems([]);
 
-  const itemCount = useMemo(() => items.reduce((sum, i) => sum + i.quantity, 0), [items]);
+  const count = useMemo(() => items.reduce((s, i) => s + i.qty, 0), [items]);
+  const total = useMemo(() => items.reduce((s, i) => s + i.qty * i.price, 0), [items]);
 
   return (
-    <CartContext.Provider value={{ items, itemCount, addItem, removeItem, updateQuantity, clear }}>
+    <CartContext.Provider value={{ items, count, total, isPulsing, addedProductId, addItem, removeItem, setQty, clear }}>
       {children}
     </CartContext.Provider>
   );
@@ -101,6 +76,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
 export function useCart() {
   const ctx = useContext(CartContext);
-  if (!ctx) throw new Error("useCart deve essere usato dentro <CartProvider>");
+  if (!ctx) throw new Error("useCart deve essere usato dentro CartProvider");
   return ctx;
 }

@@ -9,26 +9,48 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as ThanksRouteImport } from './routes/thanks'
-import { Route as CatalogRouteImport } from './routes/catalog'
-import { Route as AuthRouteImport } from './routes/auth'
-import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as ProductIdRouteImport } from './routes/product.$id'
-import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
-import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
-import { Route as AuthenticatedAdminRequestsRouteImport } from './routes/_authenticated/admin.requests'
-import { Route as AuthenticatedAdminProductsRouteImport } from './routes/_authenticated/admin.products'
-import { Route as AuthenticatedAdminCategoriesRouteImport } from './routes/_authenticated/admin.categories'
+import { Route as AppRouteImport } from './routes/_app'
+import { Route as AdminRouteImport } from './routes/admin'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AppAccountRouteImport } from './routes/_app.account'
+import { Route as AppCataloghiRouteImport } from './routes/_app.cataloghi'
+import { Route as AppCategorieRouteImport } from './routes/_app.categorie'
+import { Route as AppCercaRouteImport } from './routes/_app.cerca'
+import { Route as AppChiSiamoRouteImport } from './routes/_app.chi-siamo'
+import { Route as AppConfrontaRouteImport } from './routes/_app.confronta'
+import { Route as AppConsegneRouteImport } from './routes/_app.consegne'
+import { Route as AppContattiRouteImport } from './routes/_app.contatti'
+import { Route as AppDoveSiamoRouteImport } from './routes/_app.dove-siamo'
+import { Route as AppHomeRouteImport } from './routes/_app.home'
+import { Route as AppIMieiOrdiniRouteImport } from './routes/_app.i-miei-ordini'
+import { Route as AppNovitaRouteImport } from './routes/_app.novita'
+import { Route as AppOfferteRouteImport } from './routes/_app.offerte'
+import { Route as AppPiuVendutiRouteImport } from './routes/_app.piu-venduti'
+import { Route as AppPreferitiRouteImport } from './routes/_app.preferiti'
+import { Route as AdminIndexRouteImport } from './routes/admin.index'
+import { Route as AdminCategorieRouteImport } from './routes/admin.categorie'
+import { Route as AdminClientiRouteImport } from './routes/admin.clienti'
+import { Route as AdminImpostazioniRouteImport } from './routes/admin.impostazioni'
+import { Route as AdminOrdiniRouteImport } from './routes/admin.ordini'
+import { Route as AdminProdottiRouteImport } from './routes/admin.prodotti'
+import { Route as AdminSottocategorieRouteImport } from './routes/admin.sottocategorie'
+import { Route as AdminUtentiRouteImport } from './routes/admin.utenti'
+import { Route as AppCategorieSlugRouteImport } from './routes/_app.categorie.$slug'
+import { Route as AppProdottoIdRouteImport } from './routes/_app.prodotto.$id'
 
-const ThanksRoute = ThanksRouteImport.update({
-  id: '/thanks',
-  path: '/thanks',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const CatalogRoute = CatalogRouteImport.update({
-  id: '/catalog',
-  path: '/catalog',
+const AppRoute = AppRouteImport.update({
+  id: '/_app',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -36,148 +58,344 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
-  id: '/_authenticated',
-  getParentRoute: () => rootRouteImport,
+const AppAccountRoute = AppAccountRouteImport.update({
+  id: '/account',
+  path: '/account',
+  getParentRoute: () => AppRoute,
 } as any)
-const IndexRoute = IndexRouteImport.update({
+const AppCataloghiRoute = AppCataloghiRouteImport.update({
+  id: '/cataloghi',
+  path: '/cataloghi',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppCategorieRoute = AppCategorieRouteImport.update({
+  id: '/categorie',
+  path: '/categorie',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppCercaRoute = AppCercaRouteImport.update({
+  id: '/cerca',
+  path: '/cerca',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppChiSiamoRoute = AppChiSiamoRouteImport.update({
+  id: '/chi-siamo',
+  path: '/chi-siamo',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppConfrontaRoute = AppConfrontaRouteImport.update({
+  id: '/confronta',
+  path: '/confronta',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppConsegneRoute = AppConsegneRouteImport.update({
+  id: '/consegne',
+  path: '/consegne',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppContattiRoute = AppContattiRouteImport.update({
+  id: '/contatti',
+  path: '/contatti',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppDoveSiamoRoute = AppDoveSiamoRouteImport.update({
+  id: '/dove-siamo',
+  path: '/dove-siamo',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppHomeRoute = AppHomeRouteImport.update({
+  id: '/home',
+  path: '/home',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppIMieiOrdiniRoute = AppIMieiOrdiniRouteImport.update({
+  id: '/i-miei-ordini',
+  path: '/i-miei-ordini',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppNovitaRoute = AppNovitaRouteImport.update({
+  id: '/novita',
+  path: '/novita',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppOfferteRoute = AppOfferteRouteImport.update({
+  id: '/offerte',
+  path: '/offerte',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPiuVendutiRoute = AppPiuVendutiRouteImport.update({
+  id: '/piu-venduti',
+  path: '/piu-venduti',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPreferitiRoute = AppPreferitiRouteImport.update({
+  id: '/preferiti',
+  path: '/preferiti',
+  getParentRoute: () => AppRoute,
+} as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AdminRoute,
 } as any)
-const ProductIdRoute = ProductIdRouteImport.update({
-  id: '/product/$id',
-  path: '/product/$id',
-  getParentRoute: () => rootRouteImport,
+const AdminCategorieRoute = AdminCategorieRouteImport.update({
+  id: '/categorie',
+  path: '/categorie',
+  getParentRoute: () => AdminRoute,
 } as any)
-const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
-  id: '/admin',
-  path: '/admin',
-  getParentRoute: () => AuthenticatedRouteRoute,
+const AdminClientiRoute = AdminClientiRouteImport.update({
+  id: '/clienti',
+  path: '/clienti',
+  getParentRoute: () => AdminRoute,
 } as any)
-const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => AuthenticatedAdminRoute,
+const AdminImpostazioniRoute = AdminImpostazioniRouteImport.update({
+  id: '/impostazioni',
+  path: '/impostazioni',
+  getParentRoute: () => AdminRoute,
 } as any)
-const AuthenticatedAdminRequestsRoute =
-  AuthenticatedAdminRequestsRouteImport.update({
-    id: '/requests',
-    path: '/requests',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminProductsRoute =
-  AuthenticatedAdminProductsRouteImport.update({
-    id: '/products',
-    path: '/products',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminCategoriesRoute =
-  AuthenticatedAdminCategoriesRouteImport.update({
-    id: '/categories',
-    path: '/categories',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
+const AdminOrdiniRoute = AdminOrdiniRouteImport.update({
+  id: '/ordini',
+  path: '/ordini',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminProdottiRoute = AdminProdottiRouteImport.update({
+  id: '/prodotti',
+  path: '/prodotti',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminSottocategorieRoute = AdminSottocategorieRouteImport.update({
+  id: '/sottocategorie',
+  path: '/sottocategorie',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminUtentiRoute = AdminUtentiRouteImport.update({
+  id: '/utenti',
+  path: '/utenti',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AppCategorieSlugRoute = AppCategorieSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => AppCategorieRoute,
+} as any)
+const AppProdottoIdRoute = AppProdottoIdRouteImport.update({
+  id: '/prodotto/$id',
+  path: '/prodotto/$id',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRoute
-  '/catalog': typeof CatalogRoute
-  '/thanks': typeof ThanksRoute
-  '/admin': typeof AuthenticatedAdminRouteWithChildren
-  '/product/$id': typeof ProductIdRoute
-  '/admin/categories': typeof AuthenticatedAdminCategoriesRoute
-  '/admin/products': typeof AuthenticatedAdminProductsRoute
-  '/admin/requests': typeof AuthenticatedAdminRequestsRoute
-  '/admin/': typeof AuthenticatedAdminIndexRoute
+  '/account': typeof AppAccountRoute
+  '/cataloghi': typeof AppCataloghiRoute
+  '/categorie': typeof AppCategorieRouteWithChildren
+  '/cerca': typeof AppCercaRoute
+  '/chi-siamo': typeof AppChiSiamoRoute
+  '/confronta': typeof AppConfrontaRoute
+  '/consegne': typeof AppConsegneRoute
+  '/contatti': typeof AppContattiRoute
+  '/dove-siamo': typeof AppDoveSiamoRoute
+  '/home': typeof AppHomeRoute
+  '/i-miei-ordini': typeof AppIMieiOrdiniRoute
+  '/novita': typeof AppNovitaRoute
+  '/offerte': typeof AppOfferteRoute
+  '/piu-venduti': typeof AppPiuVendutiRoute
+  '/preferiti': typeof AppPreferitiRoute
+  '/admin/categorie': typeof AdminCategorieRoute
+  '/admin/clienti': typeof AdminClientiRoute
+  '/admin/impostazioni': typeof AdminImpostazioniRoute
+  '/admin/ordini': typeof AdminOrdiniRoute
+  '/admin/prodotti': typeof AdminProdottiRoute
+  '/admin/sottocategorie': typeof AdminSottocategorieRoute
+  '/admin/utenti': typeof AdminUtentiRoute
+  '/admin/': typeof AdminIndexRoute
+  '/categorie/$slug': typeof AppCategorieSlugRoute
+  '/prodotto/$id': typeof AppProdottoIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
-  '/catalog': typeof CatalogRoute
-  '/thanks': typeof ThanksRoute
-  '/product/$id': typeof ProductIdRoute
-  '/admin/categories': typeof AuthenticatedAdminCategoriesRoute
-  '/admin/products': typeof AuthenticatedAdminProductsRoute
-  '/admin/requests': typeof AuthenticatedAdminRequestsRoute
-  '/admin': typeof AuthenticatedAdminIndexRoute
+  '/account': typeof AppAccountRoute
+  '/cataloghi': typeof AppCataloghiRoute
+  '/categorie': typeof AppCategorieRouteWithChildren
+  '/cerca': typeof AppCercaRoute
+  '/chi-siamo': typeof AppChiSiamoRoute
+  '/confronta': typeof AppConfrontaRoute
+  '/consegne': typeof AppConsegneRoute
+  '/contatti': typeof AppContattiRoute
+  '/dove-siamo': typeof AppDoveSiamoRoute
+  '/home': typeof AppHomeRoute
+  '/i-miei-ordini': typeof AppIMieiOrdiniRoute
+  '/novita': typeof AppNovitaRoute
+  '/offerte': typeof AppOfferteRoute
+  '/piu-venduti': typeof AppPiuVendutiRoute
+  '/preferiti': typeof AppPreferitiRoute
+  '/admin/categorie': typeof AdminCategorieRoute
+  '/admin/clienti': typeof AdminClientiRoute
+  '/admin/impostazioni': typeof AdminImpostazioniRoute
+  '/admin/ordini': typeof AdminOrdiniRoute
+  '/admin/prodotti': typeof AdminProdottiRoute
+  '/admin/sottocategorie': typeof AdminSottocategorieRoute
+  '/admin/utenti': typeof AdminUtentiRoute
+  '/admin': typeof AdminIndexRoute
+  '/categorie/$slug': typeof AppCategorieSlugRoute
+  '/prodotto/$id': typeof AppProdottoIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/_app': typeof AppRouteWithChildren
+  '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRoute
-  '/catalog': typeof CatalogRoute
-  '/thanks': typeof ThanksRoute
-  '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
-  '/product/$id': typeof ProductIdRoute
-  '/_authenticated/admin/categories': typeof AuthenticatedAdminCategoriesRoute
-  '/_authenticated/admin/products': typeof AuthenticatedAdminProductsRoute
-  '/_authenticated/admin/requests': typeof AuthenticatedAdminRequestsRoute
-  '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
+  '/_app/account': typeof AppAccountRoute
+  '/_app/cataloghi': typeof AppCataloghiRoute
+  '/_app/categorie': typeof AppCategorieRouteWithChildren
+  '/_app/cerca': typeof AppCercaRoute
+  '/_app/chi-siamo': typeof AppChiSiamoRoute
+  '/_app/confronta': typeof AppConfrontaRoute
+  '/_app/consegne': typeof AppConsegneRoute
+  '/_app/contatti': typeof AppContattiRoute
+  '/_app/dove-siamo': typeof AppDoveSiamoRoute
+  '/_app/home': typeof AppHomeRoute
+  '/_app/i-miei-ordini': typeof AppIMieiOrdiniRoute
+  '/_app/novita': typeof AppNovitaRoute
+  '/_app/offerte': typeof AppOfferteRoute
+  '/_app/piu-venduti': typeof AppPiuVendutiRoute
+  '/_app/preferiti': typeof AppPreferitiRoute
+  '/admin/categorie': typeof AdminCategorieRoute
+  '/admin/clienti': typeof AdminClientiRoute
+  '/admin/impostazioni': typeof AdminImpostazioniRoute
+  '/admin/ordini': typeof AdminOrdiniRoute
+  '/admin/prodotti': typeof AdminProdottiRoute
+  '/admin/sottocategorie': typeof AdminSottocategorieRoute
+  '/admin/utenti': typeof AdminUtentiRoute
+  '/admin/': typeof AdminIndexRoute
+  '/_app/categorie/$slug': typeof AppCategorieSlugRoute
+  '/_app/prodotto/$id': typeof AppProdottoIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/auth'
-    | '/catalog'
-    | '/thanks'
     | '/admin'
-    | '/product/$id'
-    | '/admin/categories'
-    | '/admin/products'
-    | '/admin/requests'
+    | '/auth'
+    | '/account'
+    | '/cataloghi'
+    | '/categorie'
+    | '/cerca'
+    | '/chi-siamo'
+    | '/confronta'
+    | '/consegne'
+    | '/contatti'
+    | '/dove-siamo'
+    | '/home'
+    | '/i-miei-ordini'
+    | '/novita'
+    | '/offerte'
+    | '/piu-venduti'
+    | '/preferiti'
+    | '/admin/categorie'
+    | '/admin/clienti'
+    | '/admin/impostazioni'
+    | '/admin/ordini'
+    | '/admin/prodotti'
+    | '/admin/sottocategorie'
+    | '/admin/utenti'
     | '/admin/'
+    | '/categorie/$slug'
+    | '/prodotto/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
-    | '/catalog'
-    | '/thanks'
-    | '/product/$id'
-    | '/admin/categories'
-    | '/admin/products'
-    | '/admin/requests'
+    | '/account'
+    | '/cataloghi'
+    | '/categorie'
+    | '/cerca'
+    | '/chi-siamo'
+    | '/confronta'
+    | '/consegne'
+    | '/contatti'
+    | '/dove-siamo'
+    | '/home'
+    | '/i-miei-ordini'
+    | '/novita'
+    | '/offerte'
+    | '/piu-venduti'
+    | '/preferiti'
+    | '/admin/categorie'
+    | '/admin/clienti'
+    | '/admin/impostazioni'
+    | '/admin/ordini'
+    | '/admin/prodotti'
+    | '/admin/sottocategorie'
+    | '/admin/utenti'
     | '/admin'
+    | '/categorie/$slug'
+    | '/prodotto/$id'
   id:
     | '__root__'
     | '/'
-    | '/_authenticated'
+    | '/_app'
+    | '/admin'
     | '/auth'
-    | '/catalog'
-    | '/thanks'
-    | '/_authenticated/admin'
-    | '/product/$id'
-    | '/_authenticated/admin/categories'
-    | '/_authenticated/admin/products'
-    | '/_authenticated/admin/requests'
-    | '/_authenticated/admin/'
+    | '/_app/account'
+    | '/_app/cataloghi'
+    | '/_app/categorie'
+    | '/_app/cerca'
+    | '/_app/chi-siamo'
+    | '/_app/confronta'
+    | '/_app/consegne'
+    | '/_app/contatti'
+    | '/_app/dove-siamo'
+    | '/_app/home'
+    | '/_app/i-miei-ordini'
+    | '/_app/novita'
+    | '/_app/offerte'
+    | '/_app/piu-venduti'
+    | '/_app/preferiti'
+    | '/admin/categorie'
+    | '/admin/clienti'
+    | '/admin/impostazioni'
+    | '/admin/ordini'
+    | '/admin/prodotti'
+    | '/admin/sottocategorie'
+    | '/admin/utenti'
+    | '/admin/'
+    | '/_app/categorie/$slug'
+    | '/_app/prodotto/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AppRoute: typeof AppRouteWithChildren
+  AdminRoute: typeof AdminRouteWithChildren
   AuthRoute: typeof AuthRoute
-  CatalogRoute: typeof CatalogRoute
-  ThanksRoute: typeof ThanksRoute
-  ProductIdRoute: typeof ProductIdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/thanks': {
-      id: '/thanks'
-      path: '/thanks'
-      fullPath: '/thanks'
-      preLoaderRoute: typeof ThanksRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/catalog': {
-      id: '/catalog'
-      path: '/catalog'
-      fullPath: '/catalog'
-      preLoaderRoute: typeof CatalogRouteImport
+    '/_app': {
+      id: '/_app'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -187,101 +405,276 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated': {
-      id: '/_authenticated'
-      path: ''
-      fullPath: '/'
-      preLoaderRoute: typeof AuthenticatedRouteRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_app/account': {
+      id: '/_app/account'
+      path: '/account'
+      fullPath: '/account'
+      preLoaderRoute: typeof AppAccountRouteImport
+      parentRoute: typeof AppRoute
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_app/cataloghi': {
+      id: '/_app/cataloghi'
+      path: '/cataloghi'
+      fullPath: '/cataloghi'
+      preLoaderRoute: typeof AppCataloghiRouteImport
+      parentRoute: typeof AppRoute
     }
-    '/product/$id': {
-      id: '/product/$id'
-      path: '/product/$id'
-      fullPath: '/product/$id'
-      preLoaderRoute: typeof ProductIdRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_app/categorie': {
+      id: '/_app/categorie'
+      path: '/categorie'
+      fullPath: '/categorie'
+      preLoaderRoute: typeof AppCategorieRouteImport
+      parentRoute: typeof AppRoute
     }
-    '/_authenticated/admin': {
-      id: '/_authenticated/admin'
-      path: '/admin'
-      fullPath: '/admin'
-      preLoaderRoute: typeof AuthenticatedAdminRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/_app/cerca': {
+      id: '/_app/cerca'
+      path: '/cerca'
+      fullPath: '/cerca'
+      preLoaderRoute: typeof AppCercaRouteImport
+      parentRoute: typeof AppRoute
     }
-    '/_authenticated/admin/': {
-      id: '/_authenticated/admin/'
+    '/_app/chi-siamo': {
+      id: '/_app/chi-siamo'
+      path: '/chi-siamo'
+      fullPath: '/chi-siamo'
+      preLoaderRoute: typeof AppChiSiamoRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/confronta': {
+      id: '/_app/confronta'
+      path: '/confronta'
+      fullPath: '/confronta'
+      preLoaderRoute: typeof AppConfrontaRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/consegne': {
+      id: '/_app/consegne'
+      path: '/consegne'
+      fullPath: '/consegne'
+      preLoaderRoute: typeof AppConsegneRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/contatti': {
+      id: '/_app/contatti'
+      path: '/contatti'
+      fullPath: '/contatti'
+      preLoaderRoute: typeof AppContattiRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/dove-siamo': {
+      id: '/_app/dove-siamo'
+      path: '/dove-siamo'
+      fullPath: '/dove-siamo'
+      preLoaderRoute: typeof AppDoveSiamoRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/home': {
+      id: '/_app/home'
+      path: '/home'
+      fullPath: '/home'
+      preLoaderRoute: typeof AppHomeRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/i-miei-ordini': {
+      id: '/_app/i-miei-ordini'
+      path: '/i-miei-ordini'
+      fullPath: '/i-miei-ordini'
+      preLoaderRoute: typeof AppIMieiOrdiniRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/novita': {
+      id: '/_app/novita'
+      path: '/novita'
+      fullPath: '/novita'
+      preLoaderRoute: typeof AppNovitaRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/offerte': {
+      id: '/_app/offerte'
+      path: '/offerte'
+      fullPath: '/offerte'
+      preLoaderRoute: typeof AppOfferteRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/piu-venduti': {
+      id: '/_app/piu-venduti'
+      path: '/piu-venduti'
+      fullPath: '/piu-venduti'
+      preLoaderRoute: typeof AppPiuVendutiRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/preferiti': {
+      id: '/_app/preferiti'
+      path: '/preferiti'
+      fullPath: '/preferiti'
+      preLoaderRoute: typeof AppPreferitiRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/admin/': {
+      id: '/admin/'
       path: '/'
       fullPath: '/admin/'
-      preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRoute
     }
-    '/_authenticated/admin/requests': {
-      id: '/_authenticated/admin/requests'
-      path: '/requests'
-      fullPath: '/admin/requests'
-      preLoaderRoute: typeof AuthenticatedAdminRequestsRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
+    '/admin/categorie': {
+      id: '/admin/categorie'
+      path: '/categorie'
+      fullPath: '/admin/categorie'
+      preLoaderRoute: typeof AdminCategorieRouteImport
+      parentRoute: typeof AdminRoute
     }
-    '/_authenticated/admin/products': {
-      id: '/_authenticated/admin/products'
-      path: '/products'
-      fullPath: '/admin/products'
-      preLoaderRoute: typeof AuthenticatedAdminProductsRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
+    '/admin/clienti': {
+      id: '/admin/clienti'
+      path: '/clienti'
+      fullPath: '/admin/clienti'
+      preLoaderRoute: typeof AdminClientiRouteImport
+      parentRoute: typeof AdminRoute
     }
-    '/_authenticated/admin/categories': {
-      id: '/_authenticated/admin/categories'
-      path: '/categories'
-      fullPath: '/admin/categories'
-      preLoaderRoute: typeof AuthenticatedAdminCategoriesRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
+    '/admin/impostazioni': {
+      id: '/admin/impostazioni'
+      path: '/impostazioni'
+      fullPath: '/admin/impostazioni'
+      preLoaderRoute: typeof AdminImpostazioniRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/ordini': {
+      id: '/admin/ordini'
+      path: '/ordini'
+      fullPath: '/admin/ordini'
+      preLoaderRoute: typeof AdminOrdiniRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/prodotti': {
+      id: '/admin/prodotti'
+      path: '/prodotti'
+      fullPath: '/admin/prodotti'
+      preLoaderRoute: typeof AdminProdottiRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/sottocategorie': {
+      id: '/admin/sottocategorie'
+      path: '/sottocategorie'
+      fullPath: '/admin/sottocategorie'
+      preLoaderRoute: typeof AdminSottocategorieRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/utenti': {
+      id: '/admin/utenti'
+      path: '/utenti'
+      fullPath: '/admin/utenti'
+      preLoaderRoute: typeof AdminUtentiRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/_app/categorie/$slug': {
+      id: '/_app/categorie/$slug'
+      path: '/$slug'
+      fullPath: '/categorie/$slug'
+      preLoaderRoute: typeof AppCategorieSlugRouteImport
+      parentRoute: typeof AppCategorieRoute
+    }
+    '/_app/prodotto/$id': {
+      id: '/_app/prodotto/$id'
+      path: '/prodotto/$id'
+      fullPath: '/prodotto/$id'
+      preLoaderRoute: typeof AppProdottoIdRouteImport
+      parentRoute: typeof AppRoute
     }
   }
 }
 
-interface AuthenticatedAdminRouteChildren {
-  AuthenticatedAdminCategoriesRoute: typeof AuthenticatedAdminCategoriesRoute
-  AuthenticatedAdminProductsRoute: typeof AuthenticatedAdminProductsRoute
-  AuthenticatedAdminRequestsRoute: typeof AuthenticatedAdminRequestsRoute
-  AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
+interface AppCategorieRouteChildren {
+  AppCategorieSlugRoute: typeof AppCategorieSlugRoute
 }
 
-const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
-  AuthenticatedAdminCategoriesRoute: AuthenticatedAdminCategoriesRoute,
-  AuthenticatedAdminProductsRoute: AuthenticatedAdminProductsRoute,
-  AuthenticatedAdminRequestsRoute: AuthenticatedAdminRequestsRoute,
-  AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
+const AppCategorieRouteChildren: AppCategorieRouteChildren = {
+  AppCategorieSlugRoute: AppCategorieSlugRoute,
 }
 
-const AuthenticatedAdminRouteWithChildren =
-  AuthenticatedAdminRoute._addFileChildren(AuthenticatedAdminRouteChildren)
+const AppCategorieRouteWithChildren = AppCategorieRoute._addFileChildren(
+  AppCategorieRouteChildren,
+)
 
-interface AuthenticatedRouteRouteChildren {
-  AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
+interface AppRouteChildren {
+  AppAccountRoute: typeof AppAccountRoute
+  AppCataloghiRoute: typeof AppCataloghiRoute
+  AppCategorieRoute: typeof AppCategorieRouteWithChildren
+  AppCercaRoute: typeof AppCercaRoute
+  AppChiSiamoRoute: typeof AppChiSiamoRoute
+  AppConfrontaRoute: typeof AppConfrontaRoute
+  AppConsegneRoute: typeof AppConsegneRoute
+  AppContattiRoute: typeof AppContattiRoute
+  AppDoveSiamoRoute: typeof AppDoveSiamoRoute
+  AppHomeRoute: typeof AppHomeRoute
+  AppIMieiOrdiniRoute: typeof AppIMieiOrdiniRoute
+  AppNovitaRoute: typeof AppNovitaRoute
+  AppOfferteRoute: typeof AppOfferteRoute
+  AppPiuVendutiRoute: typeof AppPiuVendutiRoute
+  AppPreferitiRoute: typeof AppPreferitiRoute
+  AppProdottoIdRoute: typeof AppProdottoIdRoute
 }
 
-const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
-  AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
+const AppRouteChildren: AppRouteChildren = {
+  AppAccountRoute: AppAccountRoute,
+  AppCataloghiRoute: AppCataloghiRoute,
+  AppCategorieRoute: AppCategorieRouteWithChildren,
+  AppCercaRoute: AppCercaRoute,
+  AppChiSiamoRoute: AppChiSiamoRoute,
+  AppConfrontaRoute: AppConfrontaRoute,
+  AppConsegneRoute: AppConsegneRoute,
+  AppContattiRoute: AppContattiRoute,
+  AppDoveSiamoRoute: AppDoveSiamoRoute,
+  AppHomeRoute: AppHomeRoute,
+  AppIMieiOrdiniRoute: AppIMieiOrdiniRoute,
+  AppNovitaRoute: AppNovitaRoute,
+  AppOfferteRoute: AppOfferteRoute,
+  AppPiuVendutiRoute: AppPiuVendutiRoute,
+  AppPreferitiRoute: AppPreferitiRoute,
+  AppProdottoIdRoute: AppProdottoIdRoute,
 }
 
-const AuthenticatedRouteRouteWithChildren =
-  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
+
+interface AdminRouteChildren {
+  AdminCategorieRoute: typeof AdminCategorieRoute
+  AdminClientiRoute: typeof AdminClientiRoute
+  AdminImpostazioniRoute: typeof AdminImpostazioniRoute
+  AdminOrdiniRoute: typeof AdminOrdiniRoute
+  AdminProdottiRoute: typeof AdminProdottiRoute
+  AdminSottocategorieRoute: typeof AdminSottocategorieRoute
+  AdminUtentiRoute: typeof AdminUtentiRoute
+  AdminIndexRoute: typeof AdminIndexRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminCategorieRoute: AdminCategorieRoute,
+  AdminClientiRoute: AdminClientiRoute,
+  AdminImpostazioniRoute: AdminImpostazioniRoute,
+  AdminOrdiniRoute: AdminOrdiniRoute,
+  AdminProdottiRoute: AdminProdottiRoute,
+  AdminSottocategorieRoute: AdminSottocategorieRoute,
+  AdminUtentiRoute: AdminUtentiRoute,
+  AdminIndexRoute: AdminIndexRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AppRoute: AppRouteWithChildren,
+  AdminRoute: AdminRouteWithChildren,
   AuthRoute: AuthRoute,
-  CatalogRoute: CatalogRoute,
-  ThanksRoute: ThanksRoute,
-  ProductIdRoute: ProductIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
